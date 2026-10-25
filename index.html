@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>骗子牌酒馆 v100 - Liar's Deck</title>
+  <link rel="preload" href="assets/fonts/title.woff2" as="font" type="font/woff2" crossorigin>
+  <script src="js/vendor/react.production.min.js"></script>
+  <script src="js/vendor/react-dom.production.min.js"></script>
+  <script src="js/vendor/peerjs.min.js"></script>
+  <style>
+    /* ── 主题变量体系（C3 主题包）────────────────────────────
+       色板分五层：底/文字/强调/语义/纹理。JS 内联色值已批量映射到 var(--c-*)。
+       新增主题：复制任一 body[data-theme] 块改值即可。 */
+    :root, body[data-theme='tavern'] {
+      --c-bg: #1a0e06;
+      --c-text: hsl(30 15% 88%);
+      --c-text-bright: hsl(35 30% 85%);
+      --c-text-dim: hsl(0 8% 48%);
+      --c-text-faint: hsl(0 8% 35%);
+      --c-accent: hsl(42 85% 55%);
+      --c-accent-soft: hsl(45 95% 58%);
+      --c-danger: hsl(0 75% 45%);
+      --c-danger-deep: hsl(0 80% 42%);
+      --c-danger-shadow: rgba(180,30,30,0.3);
+      --c-success: hsl(142 70% 50%);
+      --c-ice: hsl(200 70% 70%);
+      --c-border: hsl(0 12% 16%);
+      --c-border-soft: hsl(0 12% 10%);
+      --c-input-bg: hsl(0 15% 7%);
+      --c-panel-bg: rgba(15,8,4,0.7);
+      --c-panel-strong: rgba(20,12,6,0.92);
+      --c-surface: hsl(30 10% 15%);
+      --c-panel-border: rgba(80,50,25,0.3);
+      --c-dust: rgba(255,230,180,0.55);
+      --c-glow-top: hsla(0,60%,35%,0.12);
+      --c-glow-top2: hsla(0,70%,40%,0.1);
+      --c-glow-bottom: hsla(0,50%,30%,0.08);
+      --c-glow-side: hsla(0,40%,30%,0.05);
+      --c-vignette: hsla(25,40%,8%,0.45);
+      --c-smoke1: hsla(0,40%,40%,0.25);
+      --c-smoke2: hsla(0,30%,30%,0.2);
+      --c-candle1: rgba(255,180,80,0.15);
+      --c-candle2: rgba(255,150,60,0.11);
+      --c-wood-line1: rgba(90,55,25,0.18);
+      --c-wood-line2: rgba(70,42,18,0.22);
+      --c-wood-line3: rgba(100,62,28,0.15);
+    }
+    body[data-theme='snow'] {
+      --c-bg: #0a1728;
+      --c-text: hsl(210 20% 88%);
+      --c-text-bright: hsl(205 25% 88%);
+      --c-text-dim: hsl(210 12% 52%);
+      --c-text-faint: hsl(210 12% 38%);
+      --c-accent: hsl(190 70% 55%);
+      --c-accent-soft: hsl(195 65% 62%);
+      --c-danger: hsl(350 70% 52%);
+      --c-danger-deep: hsl(350 75% 46%);
+      --c-danger-shadow: rgba(220,60,90,0.3);
+      --c-success: hsl(160 55% 52%);
+      --c-ice: hsl(200 70% 70%);
+      --c-border: hsl(210 30% 18%);
+      --c-border-soft: hsl(210 30% 12%);
+      --c-input-bg: hsl(210 28% 10%);
+      --c-panel-bg: rgba(8,14,24,0.72);
+      --c-panel-strong: rgba(10,18,30,0.92);
+      --c-surface: hsl(210 20% 16%);
+      --c-panel-border: rgba(100,140,180,0.28);
+      --c-dust: rgba(210,235,255,0.5);
+      --c-glow-top: hsla(210,60%,60%,0.10);
+      --c-glow-top2: hsla(210,70%,70%,0.08);
+      --c-glow-bottom: hsla(215,50%,40%,0.07);
+      --c-glow-side: hsla(210,40%,50%,0.04);
+      --c-vignette: hsla(220,50%,4%,0.5);
+      --c-smoke1: hsla(210,40%,60%,0.20);
+      --c-smoke2: hsla(215,30%,45%,0.16);
+      --c-candle1: rgba(170,215,255,0.12);
+      --c-candle2: rgba(150,200,255,0.09);
+      --c-wood-line1: rgba(80,110,140,0.14);
+      --c-wood-line2: rgba(60,90,120,0.18);
+      --c-wood-line3: rgba(100,130,160,0.12);
+    }
+    body[data-theme='desert'] {
+      --c-bg: #2b1a0a;
+      --c-text: hsl(38 25% 88%);
+      --c-text-bright: hsl(40 30% 86%);
+      --c-text-dim: hsl(35 12% 52%);
+      --c-text-faint: hsl(35 12% 38%);
+      --c-accent: hsl(36 90% 60%);
+      --c-accent-soft: hsl(32 95% 62%);
+      --c-danger: hsl(10 75% 48%);
+      --c-danger-deep: hsl(10 80% 44%);
+      --c-danger-shadow: rgba(200,80,30,0.3);
+      --c-success: hsl(100 45% 52%);
+      --c-ice: hsl(200 70% 70%);
+      --c-border: hsl(30 25% 18%);
+      --c-border-soft: hsl(30 25% 12%);
+      --c-input-bg: hsl(32 22% 9%);
+      --c-panel-bg: rgba(26,16,8,0.72);
+      --c-panel-strong: rgba(32,20,10,0.92);
+      --c-surface: hsl(35 18% 16%);
+      --c-panel-border: rgba(150,105,50,0.32);
+      --c-dust: rgba(255,220,170,0.55);
+      --c-glow-top: hsla(40,70%,45%,0.12);
+      --c-glow-top2: hsla(45,80%,50%,0.10);
+      --c-glow-bottom: hsla(35,55%,35%,0.08);
+      --c-glow-side: hsla(40,45%,40%,0.05);
+      --c-vignette: hsla(30,50%,6%,0.45);
+      --c-smoke1: hsla(40,40%,45%,0.22);
+      --c-smoke2: hsla(38,30%,35%,0.18);
+      --c-candle1: rgba(255,195,90,0.16);
+      --c-candle2: rgba(255,170,60,0.12);
+      --c-wood-line1: rgba(120,85,40,0.18);
+      --c-wood-line2: rgba(95,65,28,0.22);
+      --c-wood-line3: rgba(135,95,45,0.15);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      /* 深色木质底色 */
+      background: var(--c-bg);
+      color: var(--c-text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    /* 全局木质纹理层 */
+    .wood-bg {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        /* 木纹细线 - 水平方向，间距不一模拟自然纹理 */
+        repeating-linear-gradient(
+          92deg,
+          transparent 0px,
+          transparent 3px,
+          var(--c-wood-line1) 3px,
+          var(--c-wood-line1) 4px,
+          transparent 4px,
+          transparent 11px,
+          var(--c-wood-line2) 11px,
+          var(--c-wood-line2) 12px,
+          transparent 12px,
+          transparent 22px,
+          var(--c-wood-line3) 22px,
+          rgba(100,62,28,0.15) 23px,
+          transparent 23px,
+          transparent 37px,
+          rgba(80,48,20,0.2) 37px,
+          rgba(80,48,20,0.2) 38px,
+          transparent 38px,
+          transparent 53px,
+          rgba(60,35,15,0.25) 53px,
+          rgba(60,35,15,0.25) 55px,
+          transparent 55px,
+          transparent 72px,
+          rgba(95,58,25,0.16) 72px,
+          rgba(95,58,25,0.16) 73px,
+          transparent 73px,
+          transparent 91px,
+          rgba(75,44,18,0.22) 91px,
+          rgba(75,44,18,0.22) 93px,
+          transparent 93px,
+          transparent 115px,
+          rgba(85,52,22,0.18) 115px,
+          rgba(85,52,22,0.18) 116px
+        ),
+        /* 木纹粗线 - 年轮感 */
+        repeating-linear-gradient(
+          91deg,
+          transparent 0px,
+          transparent 28px,
+          rgba(50,30,12,0.35) 28px,
+          rgba(50,30,12,0.35) 31px,
+          transparent 31px,
+          transparent 65px,
+          rgba(55,32,14,0.3) 65px,
+          rgba(55,32,14,0.3) 67px,
+          transparent 67px,
+          transparent 110px,
+          rgba(45,28,10,0.32) 110px,
+          rgba(45,28,10,0.32) 113px,
+          transparent 113px,
+          transparent 160px,
+          rgba(60,36,16,0.28) 160px,
+          rgba(60,36,16,0.28) 162px,
+          transparent 162px,
+          transparent 210px,
+          rgba(50,30,12,0.34) 210px,
+          rgba(50,30,12,0.34) 214px
+        ),
+        /* 木节 - 随机分布 */
+        radial-gradient(ellipse 80px 50px at 20% 30%, rgba(40,24,10,0.4) 0%, rgba(40,24,10,0.15) 40%, transparent 70%),
+        radial-gradient(ellipse 60px 35px at 75% 65%, rgba(45,26,10,0.35) 0%, rgba(45,26,10,0.12) 45%, transparent 65%),
+        radial-gradient(ellipse 100px 55px at 50% 85%, rgba(38,22,8,0.3) 0%, rgba(38,22,8,0.1) 50%, transparent 70%),
+        radial-gradient(ellipse 70px 40px at 88% 15%, rgba(42,25,10,0.35) 0%, rgba(42,25,10,0.1) 40%, transparent 60%),
+        /* 基础木色渐变 - 温暖的深棕色 */
+        linear-gradient(
+          175deg,
+          #261709 0%,
+          #21140a 15%,
+          #1c1107 30%,
+          #24160b 45%,
+          #1a0f06 60%,
+          #20130a 75%,
+          #180e07 90%,
+          #25170c 100%
+        );
+    }
+    /* 木质表面光泽层 */
+    .wood-sheen {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background:
+        /* 扇形光束从顶部中央射下 */
+        conic-gradient(from 270deg at 50% -5%, 
+          transparent 38deg,
+          rgba(255,200,80,0.04) 42deg,
+          rgba(255,190,60,0.12) 48deg,
+          rgba(255,180,50,0.18) 50deg,
+          rgba(255,185,55,0.22) 52deg,
+          rgba(255,180,50,0.18) 54deg,
+          rgba(255,190,60,0.12) 56deg,
+          rgba(255,200,80,0.04) 62deg,
+          transparent 66deg
+        ),
+        /* 光束内的柔和光晕 */
+        radial-gradient(ellipse 320px 500px at 50% 15%, rgba(255,200,80,0.08) 0%, rgba(255,180,50,0.03) 50%, transparent 80%),
+        /* 原有的木质光泽 */
+        radial-gradient(ellipse at 30% 20%, rgba(180,140,80,0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 70%, rgba(160,120,60,0.02) 0%, transparent 40%),
+        linear-gradient(180deg, rgba(255,220,160,0.02) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.2) 100%);
+    }
+    #root { min-height: 100vh; }
+
+    @keyframes modal-pop {
+      0% { opacity:0; transform:scale(0.9) translateY(10px); }
+      100% { opacity:1; transform:scale(1) translateY(0); }
+    }
+    @keyframes fade-in { from { opacity:0 } to { opacity:1 } }
+    @keyframes slide-up { from { opacity:0; transform:translateY(20px) } to { opacity:1; transform:translateY(0) } }
+
+    /* ── 仪式感入场动画 ── */
+    @keyframes enter-subtitle {
+      0% { opacity:0; transform:translateY(12px); letter-spacing:0.5em; filter:blur(4px); }
+      100% { opacity:1; transform:translateY(0); letter-spacing:0.3em; filter:blur(0); }
+    }
+    @keyframes enter-title {
+      0% { opacity:0; transform:scale(0.6) translateY(30px); filter:blur(8px); }
+      60% { opacity:1; transform:scale(1.04) translateY(-3px); filter:blur(0); }
+      100% { opacity:1; transform:scale(1) translateY(0); filter:blur(0); }
+    }
+    @keyframes enter-en-title {
+      0% { opacity:0; letter-spacing:0.5em; }
+      100% { opacity:0.48; letter-spacing:0.2em; }
+    }
+    @keyframes enter-divider {
+      0% { width:0; opacity:0; }
+      50% { opacity:1; }
+      100% { width:64px; opacity:0.6; }
+    }
+    @keyframes enter-rise {
+      0% { opacity:0; transform:translateY(40px); }
+      100% { opacity:1; transform:translateY(0); }
+    }
+    @keyframes enter-fade {
+      0% { opacity:0; }
+      100% { opacity:1; }
+    }
+    @keyframes skill-banner {
+      0% { opacity: 0; transform: translate(-50%, -16px) }
+      12%, 80% { opacity: 1; transform: translate(-50%, 0) }
+      100% { opacity: 0; transform: translate(-50%, -8px) }
+    }
+    /* ── 终局演出 ── */
+    .finale-title { display: flex; justify-content: center; gap: 0.35em; margin: 4px 0 10px }
+    .finale-title > span {
+      display: inline-block;
+      font-family: var(--font-title);
+      font-weight: bold; font-size: 44px; line-height: 1.15;
+      opacity: 0;
+      animation: finale-char 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+                 finale-pulse 2.4s ease-in-out 1.2s infinite;
+      animation-delay: var(--d), 1.2s;
+      will-change: transform, opacity;
+    }
+    .finale-win > span { color: var(--c-accent); text-shadow: 0 0 24px color-mix(in hsl, var(--c-accent) 55%, transparent) }
+    .finale-lose > span { color: var(--c-danger-deep); text-shadow: 0 0 22px color-mix(in hsl, var(--c-danger-deep) 50%, transparent) }
+    .finale-draw > span { color: var(--c-accent) }
+    @keyframes finale-char {
+      0% { opacity: 0; transform: translateY(26px) scale(1.45); filter: blur(10px) }
+      100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0) }
+    }
+    @keyframes finale-pulse {
+      0%, 100% { filter: brightness(1) }
+      50% { filter: brightness(1.22) }
+    }
+    .finale-burst {
+      position: absolute; left: 50%; top: 34%; width: 46vmin; height: 46vmin;
+      border-radius: 50%; pointer-events: none;
+      transform: translate(-50%, -50%) scale(0); opacity: 0;
+      animation: finale-burst 1.1s ease-out 0.15s forwards;
+      will-change: transform, opacity;
+    }
+    .finale-victory-bg .finale-burst { background: radial-gradient(circle, color-mix(in hsl, var(--c-accent) 32%, transparent) 0%, transparent 68%) }
+    .finale-lose-bg .finale-burst { background: radial-gradient(circle, color-mix(in hsl, var(--c-danger-deep) 26%, transparent) 0%, transparent 68%); animation-duration: 1.5s }
+    @keyframes finale-burst {
+      0% { transform: translate(-50%, -50%) scale(0); opacity: 0 }
+      35% { opacity: 1 }
+      100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0 }
+    }
+    .finale-victory-bg { animation: finale-vignette-win 0.9s ease-out 0.3s forwards }
+    .finale-lose-bg { animation: finale-vignette-lose 1.3s ease-out forwards }
+    @keyframes finale-vignette-win {
+      0% { background: transparent }
+      100% { background: radial-gradient(ellipse at center, transparent 38%, color-mix(in hsl, var(--c-accent) 14%, transparent) 100%) }
+    }
+    @keyframes finale-vignette-lose {
+      0% { background: transparent }
+      100% { background: radial-gradient(ellipse at center, transparent 30%, color-mix(in hsl, var(--c-danger-deep) 24%, transparent) 100%) }
+    }
+    .finale-confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none }
+    .finale-confetti > i {
+      position: absolute; top: -4vh; width: 7px; height: 11px; border-radius: 1.5px;
+      opacity: 0; animation: finale-fall 2.8s linear var(--d) infinite;
+      will-change: transform;
+    }
+    .finale-lose-bg .finale-confetti > i { animation-duration: 4.2s; opacity: 0.55 }
+    @keyframes finale-fall {
+      0% { opacity: 0; transform: translate(0, -6vh) rotate(0deg) }
+      8% { opacity: 1 }
+      100% { opacity: 0.75; transform: translate(var(--sway), 112vh) rotate(var(--rot)) }
+    }
+    .finale-card {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 8px 18px; border-radius: 12px; margin-top: 2px;
+      background: color-mix(in hsl, var(--c-panel-bg) 70%, transparent);
+      border: 1px solid var(--c-border-soft);
+      opacity: 0; animation: finale-card-in 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) 0.9s forwards;
+      will-change: transform, opacity;
+    }
+    @keyframes finale-card-in {
+      0% { opacity: 0; transform: translateY(14px) scale(0.85) }
+      100% { opacity: 1; transform: translateY(0) scale(1) }
+    }
+    .stat-bar-grow { animation: stat-bar-grow 0.7s cubic-bezier(0.34, 1.2, 0.64, 1) both; animation-delay: var(--d, 0.55s); transform-origin: bottom; will-change: transform }
+    @keyframes stat-bar-grow { from { transform: scaleY(0) } to { transform: scaleY(1) } }
+    @keyframes enter-slide-right {
+      0% { opacity:0; transform:translateX(-30px); }
+      100% { opacity:1; transform:translateX(0); }
+    }
+    @keyframes enter-glow-pulse {
+      0%,100% { text-shadow: 0 0 0 transparent; }
+      50% { text-shadow: 0 0 30px rgba(180,30,30,0.4), 0 0 60px rgba(200,160,50,0.2); }
+    }
+    .no-enter-anim, .no-enter-anim * {
+      animation: none !important;
+      opacity: 1 !important;
+    }
+    .menu-fast, .menu-fast * {
+      animation-duration: .12s !important;
+      animation-delay: 0s !important;
+    }
+    @keyframes fade-out { to { opacity: 0 } }
+    @keyframes slide-down-out { to { opacity: 0; transform: translateY(12px) } }
+    .overlay.overlay-exit { animation: fade-out .25s ease forwards; pointer-events: none; } /* 双类压过 .overlay 的 fade-in */
+    .panel.panel-exit { animation: slide-down-out .25s ease forwards; } /* 双类压过 .animate-slide-up */
+    @keyframes hint-breath {
+      0%, 100% { opacity: .35; }
+      50% { opacity: .85; }
+    }
+    .no-enter-anim .menu-divider {
+      width: 64px !important;
+      opacity: 0.6 !important;
+    }
+    @keyframes enter-settings {
+      0% { opacity:0; transform:rotate(-90deg) scale(0.5); }
+      100% { opacity:1; transform:rotate(0) scale(1); }
+    }
+    @keyframes pulse-glow {
+      0%,100% { box-shadow: 0 0 8px rgba(180,30,30,0.3) }
+      50% { box-shadow: 0 0 20px rgba(180,30,30,0.6) }
+    }
+    @keyframes frenzy-pulse {
+      0%,100% { opacity: 0; }
+      50% { opacity: 0.18; }
+    }
+    @keyframes frenzy-shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-2px); }
+      75% { transform: translateX(2px); }
+    }
+    .frenzy-overlay {
+      position: fixed; inset: 0; pointer-events: none; z-index: 5;
+      background: radial-gradient(ellipse at center, transparent 25%, rgba(180,20,20,0.3) 100%);
+      animation: frenzy-pulse 1.2s ease-in-out infinite;
+    }
+    .frenzy-badge {
+      background: linear-gradient(135deg, #dc2626, #7f1d1d);
+      color: #fef2f2; font-weight: bold; font-size: 10px;
+      padding: 2px 8px; border-radius: 4px;
+      box-shadow: 0 0 12px rgba(220,38,38,0.7);
+      animation: frenzy-shake 0.3s ease-in-out infinite;
+      letter-spacing: 1px;
+    }
+    @keyframes card-deal {
+      from { opacity:0; transform:translateY(-60px) scale(0.5) }
+      70% { opacity:1; transform:translateY(4px) scale(1.05) }
+      to { opacity:1; transform:translateY(0) scale(1) }
+    }
+    /* ── 氛围层 + 动效升级 ─────────────────────────────── */
+    @keyframes candle-sway {
+      0%, 100% { opacity:.5; transform:scale(1) translate(0,0) }
+      25% { opacity:.72; transform:scale(1.07) translate(6px,-5px) }
+      50% { opacity:.45; transform:scale(0.96) translate(-5px,4px) }
+      75% { opacity:.68; transform:scale(1.04) translate(4px,6px) }
+    }
+    .ambient-candle {
+      position:absolute; border-radius:50%; pointer-events:none;
+      filter:blur(32px); animation:candle-sway 7s ease-in-out infinite;
+    }
+    @keyframes dust-float {
+      0% { transform:translate(0,0); opacity:0 }
+      12% { opacity:.55 } 88% { opacity:.35 }
+      100% { transform:translate(26px,-130px); opacity:0 }
+    }
+    .ambient-dust {
+      position:absolute; width:3px; height:3px; border-radius:50%;
+      background:var(--c-dust); pointer-events:none;
+      animation:dust-float linear infinite;
+    }
+    /* 主题专属粒子：雪花（下落+摇摆） / 光斑（上飘+闪烁） */
+    @keyframes snow-fall {
+      0% { transform:translate(0,-4vh); opacity:0 }
+      8% { opacity:.85 }
+      50% { transform:translate(22px,45vh); opacity:.7 }
+      92% { opacity:.4 }
+      100% { transform:translate(-12px,98vh); opacity:0 }
+    }
+    .ambient-snow {
+      position:absolute; border-radius:50%; pointer-events:none;
+      background:radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(210,235,255,0.75) 45%, transparent 70%);
+      box-shadow:0 0 4px rgba(210,235,255,0.5);
+      animation:snow-fall linear infinite;
+    }
+    @keyframes ember-float {
+      0% { transform:translate(0,0) scale(1); opacity:0 }
+      15% { opacity:.5 }
+      40% { transform:translate(-14px,-38vh) scale(1.15); opacity:.32 }
+      70% { transform:translate(10px,-70vh) scale(0.95); opacity:.42 }
+      90% { opacity:.15 }
+      100% { transform:translate(-6px,-96vh) scale(0.8); opacity:0 }
+    }
+    .ambient-ember {
+      position:absolute; border-radius:50%; pointer-events:none;
+      background:radial-gradient(circle, rgba(255,200,110,0.6) 0%, rgba(255,170,60,0.25) 50%, transparent 72%);
+      filter:blur(1px);
+      animation:ember-float linear infinite;
+    }
+    /* 系统级降动效：弱动效偏好下停氛围层、压过渡（入场动画压为瞬时完成，不白屏） */
+    @media (prefers-reduced-motion: reduce) {
+      .ambient-candle, .ambient-dust, .ambient-snow, .ambient-ember { display: none !important; }
+      *, *：before, *：after {
+        animation-duration: .01ms !important;
+        animation-delay: 0s !important;
+        transition-duration: .01ms !important;
+      }
+    }
+    /* 标题字体：霞鹜文楷子集（352字，75KB） */
+    @font-face {
+      font-family: 'LXGWTITLE';
+      src: url('assets/fonts/title.woff2') format('woff2');
+      font-weight: 500; font-style: normal; font-display: swap;
+    }
+    :root { --font-title: 'LXGWTITLE', 'Noto Serif SC', serif; }
+    /* mod 卡箔金：transform 合成层扫光（零 paint，不阻塞主线程） */
+    .foil-angel, .foil-demon {
+      position: absolute; inset: 0; border-radius: 6px; pointer-events: none; overflow: hidden;
+    }
+    .foil-angel::before, .foil-demon::before {
+      content: ''; position: absolute; top: -20%; bottom: -20%; left: -80%; width: 55%;
+      background: linear-gradient(105deg, transparent 0%, var(--foil-c1) 42%, var(--foil-c2) 50%, var(--foil-c1) 58%, transparent 100%);
+      animation: foil-sweep 4.5s linear infinite;
+      animation-delay: var(--foil-delay, 0s);
+      will-change: transform;
+    }
+    .foil-angel { --foil-c1: rgba(140,225,255,0.30); --foil-c2: rgba(230,250,255,0.55) }
+    .foil-demon { --foil-c1: rgba(255,170,80,0.30); --foil-c2: rgba(255,230,180,0.50) }
+    @keyframes foil-sweep {
+      0% { transform: translateX(-130%) skewX(-18deg) }
+      100% { transform: translateX(520%) skewX(-18deg) }
+    }
+    /* 主题专属卡背 */
+    .card-back {
+      background-image:
+        linear-gradient(135deg, rgba(180,30,30,0.15) 0%, transparent 40%, rgba(200,160,50,0.1) 100%),
+        repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(180,30,30,0.06) 4px, rgba(180,30,30,0.06) 5px);
+      border: 1px solid rgba(180,30,30,0.35);
+    }
+    .card-back::after {
+      content: '';
+      position: absolute; inset: 0; border-radius: inherit;
+      background: radial-gradient(circle at 50% 50%, rgba(200,160,50,0.14) 0%, transparent 38%);
+      pointer-events: none;
+    }
+    body[data-theme='snow'] .card-back {
+      background-image:
+        linear-gradient(160deg, rgba(120,180,230,0.16) 0%, transparent 45%, rgba(190,225,255,0.12) 100%),
+        repeating-linear-gradient(-45deg, transparent, transparent 3px, rgba(140,195,240,0.09) 3px, rgba(140,195,240,0.09) 4px, transparent 4px, transparent 7px, rgba(120,180,230,0.07) 7px, rgba(120,180,230,0.07) 8px);
+      border-color: rgba(140,195,240,0.4);
+    }
+    body[data-theme='snow'] .card-back::after {
+      background: radial-gradient(circle at 50% 50%, rgba(190,225,255,0.18) 0%, transparent 40%);
+    }
+    body[data-theme='desert'] .card-back {
+      background-image:
+        linear-gradient(135deg, rgba(220,160,50,0.18) 0%, transparent 42%, rgba(255,200,90,0.14) 100%),
+        repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(220,160,50,0.10) 5px, rgba(220,160,50,0.10) 6px, transparent 6px, transparent 10px, rgba(200,130,30,0.08) 10px, rgba(200,130,30,0.08) 11px);
+      border-color: rgba(220,160,50,0.42);
+    }
+    body[data-theme='desert'] .card-back::after {
+      background: radial-gradient(circle at 50% 50%, rgba(255,200,90,0.20) 0%, transparent 40%);
+    }
+    @keyframes card-sweep {
+      to { transform: translate(calc(-50% - 240px), 170px) rotate(-36deg); opacity:0 }
+    }
+    .animate-card-sweep { animation: card-sweep .55s ease-in forwards; pointer-events:none }
+    @keyframes num-pop {
+      0% { transform:scale(1.55); color:var(--c-accent) }
+      100% { transform:scale(1) }
+    }
+    .num-pop { display:inline-block; animation: num-pop .3s ease forwards }
+    /* 微交互：按钮统一位移反馈 */
+    .btn:hover:not(:disabled) { transform: translateY(-1px) }
+    .btn:active:not(:disabled) { transform: translateY(1px) scale(0.99) }
+    .deal-card-fly {
+      animation: deal-fly 0.38s cubic-bezier(0.22,0.61,0.36,1) forwards;
+      will-change: transform, opacity;
+    }
+    @keyframes deal-fly {
+      0% { transform: translate(0,0) scale(0.45) rotate(0deg); opacity:0; }
+      12% { opacity:1; }
+      100% { transform: translate(calc(var(--dtx) + var(--dox)),calc(var(--dty) + var(--doy))) scale(1) rotate(var(--drot)); opacity:1; }
+    }
+    .deal-card-land {
+      animation: deal-land 0.18s ease forwards;
+    }
+    @keyframes deal-land {
+      0% { filter:brightness(1.3); }
+      100% { filter:brightness(1); }
+    }
+    .deal-deck-pulse {
+      animation: deal-deck-pulse 0.15s ease;
+    }
+    @keyframes deal-deck-pulse {
+      0% { transform:translate(-50%,-50%) scale(1); }
+      50% { transform:translate(-50%,-50%) scale(0.92); }
+      100% { transform:translate(-50%,-50%) scale(1); }
+    }
+    @keyframes shake {
+      0%,100% { transform:translateX(0) }
+      25% { transform:translateX(-5px) }
+      75% { transform:translateX(5px) }
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1 }
+      50% { opacity: 0.6 }
+    }
+    @keyframes smoke-drift {
+      0%,100% { transform:translateX(0) translateY(0); opacity:0.04 }
+      50% { transform:translateX(30px) translateY(-20px); opacity:0.02 }
+    }
+    @keyframes spin { to { transform:rotate(360deg) } }
+
+    @keyframes muzzle-flash {
+      0% { opacity: 0; transform: scale(0.3) }
+      15% { opacity: 1; transform: scale(1.8) }
+      40% { opacity: 0.8; transform: scale(2.2) }
+      100% { opacity: 0; transform: scale(3) }
+    }
+    @keyframes blood-spray {
+      0% { opacity: 0; transform: scale(0.5) }
+      30% { opacity: 0.9; transform: scale(1) }
+      100% { opacity: 0; transform: scale(1.5) translateY(20px) }
+    }
+    @keyframes screen-shake {
+      0%,100% { transform: translate(0,0) }
+      10% { transform: translate(-8px,4px) }
+      20% { transform: translate(6px,-6px) }
+      30% { transform: translate(-4px,8px) }
+      40% { transform: translate(8px,-2px) }
+      50% { transform: translate(-6px,-4px) }
+      60% { transform: translate(4px,6px) }
+      70% { transform: translate(-2px,-8px) }
+      80% { transform: translate(6px,2px) }
+      90% { transform: translate(-4px,4px) }
+    }
+    @keyframes safe-sigh {
+      0% { opacity: 0; transform: scale(0.8) }
+      30% { opacity: 1; transform: scale(1.1) }
+      100% { opacity: 0; transform: scale(1) translateY(-20px) }
+    }
+    @keyframes click-mark {
+      0% { opacity: 0; transform: scale(0) rotate(-30deg) }
+      40% { opacity: 1; transform: scale(1.2) rotate(0deg) }
+      100% { opacity: 0.6; transform: scale(1) rotate(0deg) }
+    }
+    @keyframes red-pulse {
+      0%,100% { opacity: 0 }
+      50% { opacity: 0.3 }
+    }
+    @keyframes bullet-trail {
+      0% { width: 0; opacity: 1 }
+      60% { width: 80px; opacity: 1 }
+      100% { width: 120px; opacity: 0 }
+    }
+
+    .roulette-shake { animation: screen-shake 0.5s ease }
+
+    .animate-fade-in { animation: fade-in 0.5s ease forwards }
+    .animate-slide-up { animation: slide-up 0.4s ease forwards }
+    .animate-pulse-glow { animation: pulse-glow 1.5s ease-in-out infinite }
+    .animate-card-deal { animation: card-deal 0.4s ease forwards }
+    .animate-shake { animation: shake 0.3s ease }
+
+    .game-card {
+      width: 60px; height: 88px; border-radius: 8px;
+      cursor: pointer; transition: all 0.2s;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      user-select: none; position: relative;
+      opacity: 0.85;
+    }
+    .game-card:hover:not(.disabled) { transform: translateY(-12px); box-shadow: 0 8px 20px rgba(0,0,0,0.5); z-index: 99 !important }
+    .game-card.selected { transform: translateY(-16px); box-shadow: 0 0 0 2px hsl(0 75% 45%), 0 8px 20px rgba(180,30,30,0.4); z-index: 99 !important }
+    .game-card.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none }
+    @media (max-width: 640px) { .game-card { width: 48px; height: 70px } }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+      padding: 0.625rem 1.25rem; border-radius: 0.75rem;
+      font-weight: 600; font-size: 0.875rem;
+      border: 1px solid var(--c-border-soft); cursor: pointer; transition: all 0.2s; white-space: nowrap; /* v88：信息块卡片化——全部按钮统一带边框 */
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed }
+    .btn-primary { background: var(--c-danger); color: hsl(0 0% 98%); border-color: hsl(0 45% 30%); box-shadow: 0 4px 12px var(--c-danger-shadow) }
+    .btn-primary:hover:not(:disabled) { filter: brightness(1.1) }
+    .btn-outline { background: transparent; color: var(--c-text); border: 1px solid var(--c-border) }
+    .btn-outline:hover:not(:disabled) { border-color: var(--c-accent); color: var(--c-accent) }
+    .btn-ghost { background: transparent; color: hsl(0 8% 48%) }
+    .btn-ghost:hover:not(:disabled) { color: var(--c-text) }
+    .btn-danger { background: var(--c-danger-deep); color: white }
+    .btn-lg { height: 3.5rem; font-size: 1rem; padding: 0 1.5rem }
+    .btn-sm { height: 2rem; font-size: 0.75rem; padding: 0 0.75rem }
+
+    .input {
+      width: 100%; padding: 0.625rem 1rem;
+      background: hsl(0 15% 7%); border: 1px solid hsl(0 12% 16%);
+      border-radius: 0.75rem; color: hsl(30 15% 88%); font-size: 0.875rem;
+      outline: none; transition: border-color 0.2s;
+    }
+    .input:focus { border-color: hsl(0 75% 45%) }
+    .input::placeholder { color: hsl(0 8% 35%) }
+
+    .panel { background: var(--c-panel-bg); backdrop-filter: blur(6px); border: 1px solid var(--c-panel-border); border-radius: 0.75rem }
+
+    .switch {
+      position: relative; width: 2.2rem; height: 1.25rem;
+      border-radius: 9999px; background: rgba(20,12,6,0.6);
+      cursor: pointer; transition: background 0.2s; border: none; flex-shrink: 0;
+    }
+    .switch.on { background: hsl(0 75% 45%) }
+    .switch::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 1rem; height: 1rem; border-radius: 50%;
+      background: white; transition: transform 0.2s;
+    }
+    .switch.on::after { transform: translateX(calc(100% + 4px)) }
+
+    input[type=range] {
+      -webkit-appearance: none; width: 100%; height: 6px;
+      border-radius: 4px; outline: none; cursor: pointer;
+      background: var(--c-border-soft);
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 18px; height: 18px;
+      border-radius: 50%; background: var(--c-danger); cursor: pointer;
+      border: 2px solid hsl(0 0% 98%);
+      box-shadow: 0 2px 6px rgba(180,30,30,0.5);
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 18px; height: 18px;
+      border-radius: 50%; background: var(--c-danger); cursor: pointer;
+      border: 2px solid hsl(0 0% 98%);
+      box-shadow: 0 2px 6px rgba(180,30,30,0.5);
+    }
+
+    .overlay {
+      position: fixed; inset: 0; background: var(--c-panel-bg); backdrop-filter: blur(4px);
+      z-index: 50;
+      display: flex; align-items: center; justify-content: center;
+      animation: fade-in .25s ease;
+    }
+    .overlay.finale-victory-bg, .overlay.finale-lose-bg { animation: none } /* 结算遮罩走自有 vignette 动画 */
+
+    .toast-box {
+      position: fixed; top: 1rem; right: 1rem; z-index: 99999;
+      display: flex; flex-direction: column; gap: 0.5rem; max-width: 340px;
+    }
+    @keyframes toast-in { from { opacity:0; transform:translateX(24px) scale(0.96) } to { opacity:1; transform:translateX(0) scale(1) } }
+    .toast-item {
+      padding: 0.6rem 1rem; border-radius: 0.5rem; font-size: 0.8rem; font-weight: 500;
+      background: var(--c-input-bg); border: 1px solid var(--c-border);
+      color: var(--c-text); box-shadow: 0 6px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03) inset;
+      animation: toast-in 0.25s cubic-bezier(0.22,0.61,0.36,1);
+    }
+    .toast-item.info { border-left: 3px solid var(--c-danger) }
+    .toast-item.success { border-left: 3px solid var(--c-success) }
+    .toast-item.error { border-left: 3px solid var(--c-danger-deep) }
+    .toast-item.warning { border-left: 3px solid hsl(38 92% 50%) }
+  </style>
+</head>
+<body class="dark">
+  <div id="root"></div>
+  <!-- SPLIT:BEGIN  合并脚本以此标记定位，勿删（开发版走本地相对路径，dist 由 build-single.py 内联） -->
+  <script src="js/00-constants.js"></script>
+  <script src="js/05-i18n.js"></script>
+  <script src="js/08-lobby-beacon.js"></script>
+  <script src="js/25-roles.js"></script>
+  <script src="js/10-utils.js"></script>
+  <script src="js/28-llm.js"></script>
+  <script src="js/20-engine.js"></script>
+  <script src="js/30-ai.js"></script>
+  <script src="js/35-achievements.js"></script>
+  <script src="js/35-ftue.js"></script>
+  <script src="js/40-icons.js"></script>
+  <script src="js/40-components.js"></script>
+  <script src="js/40-audio.js"></script>
+  <script src="js/40-menu.js"></script>
+  <script src="js/40-lobby.js"></script>
+  <script src="js/45-stats-charts.js"></script>
+  <script src="js/45-replay.js"></script>
+  <script src="js/50-game.js"></script>
+  <script src="js/60-main.js"></script>
+  <!-- SPLIT:END -->
+</body>
+</html>
