@@ -28,6 +28,7 @@ const I18N = {
       settingsTitle: '游戏设置',
       setAICfg: ['自定义AI设置', '在主界面显示AI对手选择和参数调节'],
       setSkipPenalty: ['跳过惩罚动画', '轮盘演出直接显示结果，省去转轮等待'],
+      setBgTilt: ['背景 3D 倾斜', '手机倾斜或鼠标移动时背景轻微偏转（跟随系统减动效）'],
       setSound: ['音效', '关闭后氛围与牌局音效全部静音'],
       setAudio: '酒馆氛围音效',
       setSfx: '牌局音效',

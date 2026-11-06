@@ -28,7 +28,7 @@ const ACHIEVEMENTS = [
   { id: 'easy_win', icon: 'Clover', name: '新手的运气', desc: '在新手模式下获胜', check: g => g.st.difficulty === 'easy' && g.won },
   // 吹牌成就阈值 = max(2, 存活数) 且达标即终局：单局吹牌上限即阈值本身，≥6 恒不可达故无 bluff_6；
   // bluff_4 仅 4 人局可达（3 人局阈值 3、2 人局阈值 2），描述如实注明。
-  { id: 'bluff_4', icon: 'Masks', name: '撒谎大师', desc: '单局连续撒谎成功 4 次（4 人局可达）', check: g => (g.me.bluffSuccessCount || 0) >= 4 },
+  { id: 'bluff_4', icon: 'Masks', name: '撒谎大师', desc: '单局累计撒谎成功 4 次（4 人局可达）', check: g => (g.me.bluffSuccessCount || 0) >= 4 },
   { id: 'shots_3', icon: 'Skull', name: '死里逃生', desc: '单局中弹 3 次仍获胜', check: g => (g.ps.shotCount || 0) >= 3 && g.won },
   { id: 'shots_0', icon: 'Shield', name: '完美轮盘', desc: '第 3 轮后获胜且全程未中弹', check: g => !(g.ps.shotCount || 0) && g.won && g.st.round >= 3 },
   { id: 'skyfall', icon: 'Skyfall', name: '天崩地裂', desc: '亲历一次天崩', check: g => (g.tally.skyfall || 0) >= 1 },

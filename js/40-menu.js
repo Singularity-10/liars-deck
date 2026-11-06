@@ -162,7 +162,7 @@ function AuthModal({ onAuth, onClose, onCloseWrap }) {
       }, loading ? '请稍候...' : (mode === 'login' ? '登 录' : '注 册')),
       h('p', {
         style: { fontSize: 10, color: 'hsl(0 8% 45%)', marginTop: 12, lineHeight: 1.5 }
-      }, '账号保存在本地浏览器 · 信誉分初始100 · 每日恢复50 · 联机中途退出扣分'),
+      }, '账号仅保存在本机浏览器（不上传服务器）· 信誉分初始100 · 每日恢复50 · 联机中途退出扣分'),
     )
   );
 }
@@ -196,6 +196,16 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
   const setSkipPenaltyPref = function (next) {
     setSkipPenalty(next);
     try { localStorage.setItem('ld_skip_penalty', next ? '1' : '0'); } catch (e) {}
+  };
+  // v102：背景 3D 倾斜（默认开；iOS 首次开启需允许传感器权限）
+  const [bgTilt, setBgTilt] = useState(function () { try { return localStorage.getItem('ld_bg_tilt') !== '0'; } catch (e) { return true; } });
+  const setBgTiltPref = function (next) {
+    setBgTilt(next);
+    try { localStorage.setItem('ld_bg_tilt', next ? '1' : '0'); } catch (e) {}
+    if (typeof BgTilt !== 'undefined' && BgTilt) {
+      if (next) BgTilt.requestPermission(); // iOS 13+ 手势内请求；拒绝则收不到事件，背景保持静止
+      BgTilt.setEnabled(next);
+    }
   };
   // G3：语言变化时强制重渲染（词典在模块层，state 树不感知）
   const [, setLangVer] = useState(0);
@@ -558,7 +568,8 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
         h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 18, fontWeight: 'bold', marginBottom: 20 } }, t('ui.settingsTitle')),
         [
           t('ui.setAICfg').concat([showAIConfig, setShowAIConfig]), // v86：前两项（渐进轮盘/自动排序）已锁定开启，从面板移除
-          t('ui.setSkipPenalty').concat([skipPenalty, setSkipPenaltyPref])
+          t('ui.setSkipPenalty').concat([skipPenalty, setSkipPenaltyPref]),
+          t('ui.setBgTilt').concat([bgTilt, setBgTiltPref])
         ].map(function (item, i) {
           var title = item[0],
             desc = item[1],

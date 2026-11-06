@@ -1184,24 +1184,46 @@ function Game() {
       delay: -Math.random() * 16,
     }));
   }, [themeName]);
+  // v105 超近景大飘絮（×4）：比尘埃大、飘得快——倾斜时晃动最猛，纵深第一载体
+  const ambientFloats = useMemo(() => Array.from({ length: 4 }, () => ({
+    left: 5 + Math.random() * 90,
+    top: 20 + Math.random() * 75,
+    size: 5 + Math.random() * 2,
+    dur: 5 + Math.random() * 3.5,
+    delay: -Math.random() * 9,
+  })), []);
 
   return h('div', { style: { position: 'relative', minHeight: '100vh', overflow: 'hidden', zIndex: 2 } },
-    h('div', { style: { position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 } },
-      h('div', { style: { position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 900, height: 600, background: 'radial-gradient(ellipse at 50% 0%,var(--c-glow-top) 0%,var(--c-glow-side) 30%,transparent 70%)' } }),
-      h('div', { style: { position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 600, height: 350, background: 'radial-gradient(ellipse at 50% 0%,var(--c-glow-top2) 0%,transparent 60%)', animation: 'pulse 4s ease-in-out infinite' } }),
-      h('div', { style: { position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: 1000, height: 500, background: 'radial-gradient(ellipse at 50% 100%,var(--c-glow-bottom) 0%,transparent 40%,transparent 75%)' } }),
-      h('div', { style: { position: 'absolute', left: 0, top: '33%', width: 400, height: 300, background: 'radial-gradient(ellipse at 0% 50%,var(--c-glow-side) 0%,transparent 70%)' } }),
-      h('div', { style: { position: 'absolute', right: 0, top: '33%', width: 400, height: 300, background: 'radial-gradient(ellipse at 100% 50%,var(--c-glow-side) 0%,transparent 70%)' } }),
-      h('div', { style: { position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center,transparent 40%,var(--c-vignette) 100%)' } }),
-      h('div', { style: { position: 'absolute', inset: 0, opacity: 0.03, background: 'radial-gradient(ellipse at 30% 60%,var(--c-smoke1) 0%,transparent 50%),radial-gradient(ellipse at 70% 40%,var(--c-smoke2) 0%,transparent 50%)', animation: 'smoke-drift 12s ease-in-out infinite' } }),
-      // 氛围层：烛光摇曳（左右两团，错相）+ 悬浮尘埃
-      h('div', { className: 'ambient-candle', style: { left: '-6%', bottom: '-12%', width: '46vw', height: '46vw', background: 'radial-gradient(circle, var(--c-candle1), transparent 65%)' } }),
-      h('div', { className: 'ambient-candle', style: { right: '-8%', top: '-14%', width: '40vw', height: '40vw', background: 'radial-gradient(circle, var(--c-candle2), transparent 65%)', animationDelay: '-3.4s', animationDuration: '9.5s' } }),
-      ...(themeName === 'snow'
-        ? ambientDusts.map((d, i) => h('div', { key: 'snow' + i, className: 'ambient-snow', style: { left: d.left + '%', top: d.top + '%', width: d.size, height: d.size, animationDuration: d.dur + 's', animationDelay: d.delay + 's' } }))
-        : themeName === 'desert'
-          ? ambientDusts.map((d, i) => h('div', { key: 'ember' + i, className: 'ambient-ember', style: { left: d.left + '%', top: d.top + '%', width: d.size, height: d.size, animationDuration: d.dur + 's', animationDelay: d.delay + 's' } }))
-          : ambientDusts.map((d, i) => h('div', { key: 'dust' + i, className: 'ambient-dust', style: { left: d.left + '%', top: d.top + '%', width: d.size, height: d.size, animationDuration: d.dur + 's', animationDelay: d.delay + 's' } }))),
+    h('div', { className: 'bg-ambient', style: { position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 } },
+      // v103 深度分层容器（BgTilt 五档挂点，见 12-bg-tilt.js）：
+      // far=远景大光斑(-180) / mid=烟烛暗角(-60) / near=悬浮粒子(+140，晃动最明显)
+      h('div', { className: 'bg-far', style: { position: 'absolute', inset: 0 } },
+        // v105b 大气透视：远墙整体蒙薄雾（远处朦胧、近景粒子锐利——静态深度线索，零运行时成本）
+        h('div', { style: { position: 'absolute', inset: 0, background: 'rgba(32,20,10,0.24)' } }),
+        h('div', { style: { position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 900, height: 600, background: 'radial-gradient(ellipse at 50% 0%,var(--c-glow-top) 0%,var(--c-glow-side) 30%,transparent 70%)' } }),
+        h('div', { style: { position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 600, height: 350, background: 'radial-gradient(ellipse at 50% 0%,var(--c-glow-top2) 0%,transparent 60%)', animation: 'pulse 4s ease-in-out infinite' } }),
+        h('div', { style: { position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: 1000, height: 500, background: 'radial-gradient(ellipse at 50% 100%,var(--c-glow-bottom) 0%,transparent 40%,transparent 75%)' } }),
+        h('div', { style: { position: 'absolute', left: 0, top: '33%', width: 400, height: 300, background: 'radial-gradient(ellipse at 0% 50%,var(--c-glow-side) 0%,transparent 70%)' } }),
+        h('div', { style: { position: 'absolute', right: 0, top: '33%', width: 400, height: 300, background: 'radial-gradient(ellipse at 100% 50%,var(--c-glow-side) 0%,transparent 70%)' } }),
+      ),
+      h('div', { className: 'bg-mid', style: { position: 'absolute', inset: 0 } },
+        h('div', { style: { position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center,transparent 40%,var(--c-vignette) 100%)' } }),
+        h('div', { style: { position: 'absolute', inset: 0, opacity: 0.03, background: 'radial-gradient(ellipse at 30% 60%,var(--c-smoke1) 0%,transparent 50%),radial-gradient(ellipse at 70% 40%,var(--c-smoke2) 0%,transparent 50%)', animation: 'smoke-drift 12s ease-in-out infinite' } }),
+        // 氛围层：烛光摇曳（左右两团，错相）
+        h('div', { className: 'ambient-candle', style: { left: '-6%', bottom: '-12%', width: '46vw', height: '46vw', background: 'radial-gradient(circle, var(--c-candle1), transparent 65%)' } }),
+        h('div', { className: 'ambient-candle', style: { right: '-8%', top: '-14%', width: '40vw', height: '40vw', background: 'radial-gradient(circle, var(--c-candle2), transparent 65%)', animationDelay: '-3.4s', animationDuration: '9.5s' } }),
+      ),
+      h('div', { className: 'bg-near', style: { position: 'absolute', inset: 0 } },
+        ...(themeName === 'snow'
+          ? ambientDusts.map((d, i) => h('div', { key: 'snow' + i, className: 'ambient-snow', style: { left: d.left + '%', top: d.top + '%', width: d.size, height: d.size, animationDuration: d.dur + 's', animationDelay: d.delay + 's' } }))
+          : themeName === 'desert'
+            ? ambientDusts.map((d, i) => h('div', { key: 'ember' + i, className: 'ambient-ember', style: { left: d.left + '%', top: d.top + '%', width: d.size, height: d.size, animationDuration: d.dur + 's', animationDelay: d.delay + 's' } }))
+            : ambientDusts.map((d, i) => h('div', { key: 'dust' + i, className: 'ambient-dust', style: { left: d.left + '%', top: d.top + '%', width: d.size, height: d.size, animationDuration: d.dur + 's', animationDelay: d.delay + 's' } }))),
+      ),
+      // v105 超近景飘絮层（z=+330，六层深度档最近端）：倾斜时晃动最猛
+      h('div', { className: 'bg-float', style: { position: 'absolute', inset: 0 } },
+        ...ambientFloats.map((d, i) => h('div', { key: 'float' + i, className: 'ambient-float', style: { left: d.left + '%', top: d.top + '%', width: d.size, height: d.size, animationDuration: d.dur + 's', animationDelay: d.delay + 's' } })),
+      ),
     ),
     screen === 'idle' && h(MainMenu, {
       onStart: startSingle,
@@ -1622,7 +1644,7 @@ function Game() {
         h('p', { style: { fontSize: 14, color: 'var(--c-text-dim)', marginTop: 8 } },
           st.phase === 'draw' ? '5次目标牌变化后无人出局，本局平局' :
           st.winReason === 'survive3' ? (st.phase === 'won' ? '你在轮盘中3次存活，赢得胜利！' : `${st.winner?.name || ''} 在轮盘中3次存活，赢得胜利`) :
-          st.winReason === WIN_REASON_BLUFF ? (st.phase === 'won' ? '你连续撒谎成功次数达标，赢得胜利！' : `${st.winner?.name || ''} 连续撒谎成功次数达标，赢得胜利`) :
+          st.winReason === WIN_REASON_BLUFF ? (st.phase === 'won' ? '你累计撒谎成功次数达标，赢得胜利！' : `${st.winner?.name || ''} 累计撒谎成功次数达标，赢得胜利`) :
           st.phase === 'won' ? '你是最后的幸存者！' : (st.winner ? `${st.winner.name} 成为了最后的赢家` : '游戏结束')),
         // 胜者定格卡（纹章+轮盘存活+诈牌战绩）
         st.winner && h('div', { className: 'finale-card', style: { flexDirection: 'column', gap: 3 } },
