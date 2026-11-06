@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 
 const code = ['js/00-constants.js', 'js/05-i18n.js', 'js/25-roles.js', 'js/10-utils.js', 'js/20-engine.js', 'js/30-ai.js']
-  .map(f => fs.readFileSync(path.join(__dirname, f), 'utf8')).join('\n;\n');
+  .map(f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8')).join('\n;\n');
 const SB = new Function(code + '\nreturn { ROLES, ONCE_ROLE_IDS, assignRoles, roleOf, chargeOf, consumeCharge, skillAvailable, applySkill, aiWantsSkill, effMaxPlay, makeRoleInit, makePlayers, INIT, wrappedReducer, AI_NAMES, randAlive, shuffle, EVENTS, aiPlay, aiPickChoice, activeFrozen };')();
 const { ROLES, ONCE_ROLE_IDS, assignRoles, roleOf, chargeOf, consumeCharge, skillAvailable, applySkill, aiWantsSkill, effMaxPlay, makeRoleInit, makePlayers, INIT, wrappedReducer: reducer, randAlive, shuffle, activeFrozen, aiPlay } = SB;
 

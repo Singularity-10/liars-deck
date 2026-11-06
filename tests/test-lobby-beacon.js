@@ -4,7 +4,7 @@
  */
 'use strict';
 const path = require('path');
-const { LOBBY_SLOTS, lobbySlotId, claimLobbySlot, probeLobbyRooms } = require(path.join(__dirname, 'js', '08-lobby-beacon.js'));
+const { LOBBY_SLOTS, lobbySlotId, claimLobbySlot, probeLobbyRooms } = require(path.join(__dirname, '..', 'js', '08-lobby-beacon.js'));
 
 let pass = 0, fail = 0;
 const assert = (cond, name) => {

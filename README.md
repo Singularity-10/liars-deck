@@ -56,7 +56,7 @@ js/
   vendor/           第三方（React 18 + ReactDOM + PeerJS 1.5.4，已内置无需安装）
 types/game.d.ts     TypeScript 类型基座（渐进点亮中）
 assets/fonts/       本地字体
-test-*.js           白盒测试套件（node 直接跑，零依赖）
+tests/              白盒测试套件（16 个 test-*.js，零依赖）
 sim-*.js            蒙特卡洛模拟器（平衡性验证）
 build-single.py     单文件版构建脚本
 tsconfig.json
@@ -65,10 +65,10 @@ tsconfig.json
 ## 测试
 
 ```bash
-node test-roles.js     # 角色系统
-node test-events.js    # 事件系统
-node test-replay.js    # 回放
-# ...共 15 件套，node test-<模块名>.js 逐个运行
+node tests/test-roles.js     # 角色系统
+node tests/test-events.js    # 事件系统
+node tests/test-replay.js    # 回放
+# ...共 16 件套，node tests/test-<模块名>.js 逐个运行（在仓库根目录执行）
 node sim-roles.js      # 角色平衡性蒙特卡洛（SIM_STRICT 3600 局零卡死）
 ```
 

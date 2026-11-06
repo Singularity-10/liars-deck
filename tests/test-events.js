@@ -17,7 +17,7 @@ globalThis.localStorage = {
   setItem: (k, v) => { store[k] = String(v); },
 };
 
-const DIR = path.join(__dirname, 'js');
+const DIR = path.join(__dirname, '..', 'js');
 const modules = ['00-constants.js', '25-roles.js', '10-utils.js', '20-engine.js', '30-ai.js'];
 const code = modules.map(m => fs.readFileSync(path.join(DIR, m), 'utf8')).join('\n;\n');
 const sandbox = new Function(`${code}\nreturn { INIT, wrappedReducer, applyEvent, EVENTS, isBlackout, activeFrozen };`)();

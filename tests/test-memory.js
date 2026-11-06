@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 
 const code = ['js/00-constants.js', 'js/05-i18n.js', 'js/25-roles.js', 'js/10-utils.js', 'js/20-engine.js', 'js/30-ai.js']
-  .map(f => fs.readFileSync(path.join(__dirname, f), 'utf8')).join('\n;\n');
+  .map(f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8')).join('\n;\n');
 const SB2 = new Function(code + '\nreturn { INIT, wrappedReducer, aiChallenge, AI_PRESETS, makePlayers, dealAll, randAlive, shuffle, aiPlay, aiPickChoice, aiWantsSkill, effMaxPlay, activeFrozen, roleOf };')();
 const { INIT, wrappedReducer: r, aiChallenge, AI_PRESETS, aiPlay, aiPickChoice, aiWantsSkill, effMaxPlay, activeFrozen, roleOf } = SB2;
 
