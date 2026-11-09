@@ -80,7 +80,7 @@ node sim-roles.js      # 角色平衡性蒙特卡洛（SIM_STRICT 3600 局零卡
 
 ## 版本
 
-当前 **v105**。版本号由 `GAME_VERSION`（`js/00-constants.js`）与发版脚本统一维护，单调递增。
+当前 **v109**。版本号由 `GAME_VERSION`（`js/00-constants.js`）与发版脚本统一维护，单调递增。
 
 ## 许可
 

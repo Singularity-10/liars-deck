@@ -1886,7 +1886,52 @@ function reducer(st, act) {
  * @returns {GameState}
  */
 function wrappedReducer(st, act) {
-  if (act.type === 'SYNC_STATE') return act.state;
+  if (act.type === 'SYNC_STATE') {
+    // v106：联机状态基础结构校验（竞品防御思路）——坏包直接丢弃保留当前状态，
+    // 防伪造/异常 state 让渲染层崩盘；深字段仍信任房主（威胁模型=传输损坏而非恶意房主）。
+    const s = act.state;
+    if (!s || typeof s !== 'object') return st;
+    if (typeof s.phase !== 'string' || !Array.isArray(s.players) || !s.players.length) return st;
+    if (!s.players.every(p => p && typeof p === 'object' && Array.isArray(p.hand))) return st;
+    return s;
+  }
+  if (act.type === 'PLAYER_LEFT') {
+    // v106：断线超时自动离席（竞品 forfeit 思路）。被动出局：不走轮盘/免疫/血渍路径，
+    // 余牌（手牌+牌库）扫入弃牌堆保牌守恒；活人≤1 直接收官；不清理 tableCards（他人的待质疑牌仍有效）。
+    const pid = act.pid;
+    const victim = st.players[pid];
+    if (!victim || !victim.alive || !victim.isHuman || victim.isLocal) return st;
+    const swept = [...(victim.hand || []), ...(victim.library || [])];
+    const ps = st.players.map(p => p.id === pid ? { ...p, alive: false, hand: [], library: [] } : p);
+    const alive = ps.filter(p => p.alive);
+    const discardSweep = { discardPile: [...(st.discardPile || []), ...swept] };
+    if (alive.length <= 1) {
+      const won = alive.some(p => p.isHuman);
+      return endGame(st, won, alive[0] ?? null, 'lastStand', {
+        players: ps,
+        rouletteResult: 'safe',
+        playerStats: { ...st.playerStats },
+        immuneId: null,
+        challengeShield: false,
+        skipId: null,
+        rouletteShots: 0,
+        tableCards: [],
+        lastClaim: null,
+        challengeResult: null,
+        challengerId: null,
+        stains: st.stains,
+        ...discardSweep,
+      });
+    }
+    const ns2 = { ...st, players: ps, ...discardSweep };
+    // 若离席者正处于回合阻塞点，转给下一活人（phase 保持由调用方后续动作驱动）
+    if ((st.phase === 'player_turn' || st.phase === 'ai_turn') && st.curPlayer === pid) {
+      let nxt = nextAlive(pid, ps, st.reversed);
+      if (st.spectateId !== null && nxt === st.spectateId) nxt = nextAlive(nxt, ps, st.reversed);
+      ns2.curPlayer = nxt;
+    }
+    return ns2;
+  }
   const ns = reducer(st, act);
   if (ns.phase === 'player_turn' || ns.phase === 'ai_turn') {
     let changed = false;

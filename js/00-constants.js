@@ -8,7 +8,7 @@
  */
 
 // 游戏版本号：发版.py 自动注入（与 index.html title 同步替换；唯一事实源 = VERSION.txt）
-const GAME_VERSION = 'v105';
+const GAME_VERSION = 'v109';
 
 // ── AI 配置 ───────────────────────────────────────────────────────────
 // AI 元信息绑定：以 AI_META 为单一事实源——名字/人格/纹章在此一次性绑死

@@ -790,3 +790,21 @@ function RussianRoulette({ playerName, isHit, shotNumber, difficulty, shift = 0,
 // ── 主游戏组件 ──────────────────────────────────────────────────────
 
 // ── Game 组件已拆出至 50-game.js（~1100 行，依赖本文件上述所有声明） ────
+
+// ── v109：无障碍基建（竞品 a11y 三件套移植）─────────────────────────
+// 1) overlay 焦点循环：模态打开时 Tab/Shift+Tab 圈定在浮层内，防焦点跑进被遮的牌局。
+//    移植竞品 game.js 1406-1424 逻辑——查询 .overlay 浮层内可聚焦元素，到边界绕回。
+(() => {
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const overlays = Array.from(document.querySelectorAll('.overlay')).filter(o => o.offsetParent !== null);
+    const modal = overlays[overlays.length - 1];
+    if (!modal) return;
+    const focusable = Array.from(modal.querySelectorAll('button, input, select, a[href], [tabindex]'))
+      .filter(el => !el.disabled && el.tabIndex >= 0 && el.offsetParent !== null);
+    if (!focusable.length) { e.preventDefault(); return; }
+    const first = focusable[0], last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (document.activeElement === last || !modal.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+  });
+})();

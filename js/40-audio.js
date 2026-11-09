@@ -24,9 +24,16 @@ const TavernAudio = (() => {
   function ensureCtx() {
     if (!ctx) {
       ctx = new(window.AudioContext || window.webkitAudioContext)();
+      // v106：主总线加 DynamicsCompressor（阈值 -18/knee 12/ratio 5）——多层氛围声叠加时防削波爆音
+      let comp = null;
+      try {
+        comp = ctx.createDynamicsCompressor();
+        comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 5;
+        comp.connect(ctx.destination);
+      } catch (e) { comp = null; }
       masterGain = ctx.createGain();
       masterGain.gain.value = 0.12;
-      masterGain.connect(ctx.destination);
+      masterGain.connect(comp || ctx.destination);
     }
     return ctx;
   }
@@ -258,7 +265,7 @@ const TavernAudio = (() => {
 
   function isPlaying() { return _playing; }
 
-  return { start, stop, toggle, isPlaying, addListener, _dbgState: () => ctx ? ctx.state : 'no ctx' };
+  return { start, stop, toggle, isPlaying, addListener, _ctx: () => ctx, _dbgState: () => ctx ? ctx.state : 'no ctx' };
 })();
 
 // ── Sfx 牌局反馈音效（ 批次二）：WebAudio 纯合成零资源，与氛围音乐独立开关 ──
@@ -279,7 +286,14 @@ const Sfx = (() => {
       try { ctx = new(window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
       master = ctx.createGain();
       master.gain.value = 0.4;
-      master.connect(ctx.destination);
+      // v106：Sfx 总线同样挂压缩器，重音效（shot/win 琶音）叠加时防削波
+      let comp = null;
+      try {
+        comp = ctx.createDynamicsCompressor();
+        comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 5;
+        comp.connect(ctx.destination);
+      } catch (e) { comp = null; }
+      master.connect(comp || ctx.destination);
     }
     if (ctx.state === 'suspended') ctx.resume();
     return ctx;
@@ -327,5 +341,24 @@ const Sfx = (() => {
     if (!ensure() || ctx.state !== 'running') return;
     try { fn(); } catch (e) {}
   }
-  return { play, getEnabled, setEnabled };
+  return { play, getEnabled, setEnabled, _ctx: () => ctx };
+})();
+
+// ── v106：后台自动静音（竞品优点移植）──────────────────────────────
+// 页面切后台/锁屏时：氛围声 suspend + 人声暂停；回前台自动恢复（仅当此前在播放中）。
+// 两条 ctx 独立（TavernAudio / Sfx），各自挂监听互不干扰；try 全包（无 AudioContext 环境零影响）。
+(() => {
+  try {
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        try { if (TavernAudio._ctx() && TavernAudio.isPlaying()) { TavernAudio._ctx().suspend(); TavernAudio._pausedByHide = true; } } catch (e) {}
+        try { if (window.speechSynthesis && !speechSynthesis.paused) speechSynthesis.pause(); } catch (e) {}
+        try { if (Sfx._ctx()) Sfx._ctx().suspend(); } catch (e) {}
+      } else {
+        try { if (TavernAudio._pausedByHide && TavernAudio._ctx()) { TavernAudio._ctx().resume(); TavernAudio._pausedByHide = false; } } catch (e) {}
+        try { if (window.speechSynthesis && speechSynthesis.paused) speechSynthesis.resume(); } catch (e) {}
+        try { if (Sfx._ctx() && Sfx._ctx().state === 'suspended') Sfx._ctx().resume(); } catch (e) {}
+      }
+    });
+  } catch (e) {}
 })();

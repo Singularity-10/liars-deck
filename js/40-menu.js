@@ -185,6 +185,9 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
   const [themeExt, setThemeExt] = useState(function () { try { return localStorage.getItem('ld_theme_ext') === '1'; } catch (e) { return false; } }); //：额外主题解锁开关（默认关，仅酒馆）
   const [showAIConfig, setShowAIConfig] = useState(false);
   const [showStats, setShowStats] = useState(false); // P1-2：战绩面板
+  const [showHistory, setShowHistory] = useState(false); // v106：版本编年史
+  const [aiSpeedTick, setAiSpeedTick] = useState(0); // v108：AI 节奏按钮文案刷新
+  const [historyR, historyClosing] = useExitAnim(showHistory, 250);
   const [aiCfgR, aiCfgClosing] = useExitAnim(showAIConfig, 250);
   const [aiCfgs, setAiCfgs] = useState(AI_PRESETS.map(p => ({ ...p })));
   const [selectedAIs, setSelectedAIs] = useState([0, 1, 2]);
@@ -291,12 +294,20 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
         h('span', { style: { fontSize: 11, color: user.reputation >= 80 ? 'var(--c-success)' : user.reputation >= 50 ? 'var(--c-accent)' : 'hsl(0 70% 55%)', fontWeight: 600 } }, t('ui.reputation') + ' ' + user.reputation),
         h('button', { className: 'btn btn-ghost', style: { padding: '2px 8px', fontSize: 11, color: 'hsl(0 8% 55%)' }, onClick: onLogout }, t('ui.logout')),
       ),
-      h('button', { className: 'btn btn-ghost', style: { width: 40, height: 40, borderRadius: '50%', padding: 0 }, onClick: function () { setSettings(function (v) { return !v; }); } }, h(Icon.Settings, { size: 18 })),
+      h('button', { 'aria-label': '打开设置', className: 'btn btn-ghost', style: { width: 40, height: 40, borderRadius: '50%', padding: 0 }, onClick: function () { setSettings(function (v) { return !v; }); } }, h(Icon.Settings, { size: 18 })),
     ),
     h('div', { style: { textAlign: 'center', marginBottom: 40 } },
       h('p', { style: { color: 'var(--c-accent)', fontSize: 14, letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: 12, fontWeight: 600, opacity: 0, animation: 'enter-subtitle 0.8s ease 0.2s forwards' } }, t('ui.subtitle')),
       h('h1', { style: { fontFamily: 'var(--font-title)', fontSize: 'clamp(2.5rem,8vw,4.5rem)', fontWeight: 'bold', letterSpacing: '-0.02em', opacity: 0, animation: 'enter-title 1s cubic-bezier(0.16,1,0.3,1) 0.7s forwards, enter-glow-pulse 2s ease 1.6s 1' } }, t('ui.title')),
-      h('p', { style: { fontSize: 18, color: 'var(--c-text-dim)', marginTop: 8, letterSpacing: '0.2em', textTransform: 'uppercase', opacity: 0, animation: 'enter-en-title 0.8s ease 1.2s forwards' } }, t('ui.titleEn') + '  ·  ' + GAME_VERSION),
+      h('p', { style: { fontSize: 18, color: 'var(--c-text-dim)', marginTop: 8, letterSpacing: '0.2em', textTransform: 'uppercase', opacity: 0, animation: 'enter-en-title 0.8s ease 1.2s forwards' } },
+        t('ui.titleEn') + '  ·  ',
+        // v106：版本号即编年史入口——点击查看重大改动历史对照
+        h('span', {
+          onClick: function () { setShowHistory(true); },
+          style: { cursor: 'pointer', borderBottom: '1px dashed var(--c-text-dim)', padding: '0 2px' },
+          title: '查看版本编年史',
+        }, GAME_VERSION),
+      ),
       h('div', {
         className: 'menu-divider',
         style: { marginTop: 16, height: 2, background: 'var(--c-danger)', borderRadius: 4, opacity: 0, width: 0, margin: '16px auto 0', animation: 'enter-divider 0.6s ease 1.5s forwards' }
@@ -563,6 +574,34 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
         ),
       );
     })(),
+    // ── v106：版本编年史（主菜单版本号点击进入）——重大改动内置对照 ──
+    historyR && h('div', { className: 'overlay' + (historyClosing ? ' overlay-exit' : ''), onClick: function (e) { if (e.target === e.currentTarget) setShowHistory(false); } },
+      h('div', { className: 'panel animate-slide-up' + (historyClosing ? ' panel-exit' : ''), style: { width: '90%', maxWidth: 460, maxHeight: '82vh', overflow: 'auto', padding: 24 } },
+        h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 } },
+          h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 20, fontWeight: 'bold' } }, '版本编年史'),
+          h('button', { className: 'btn btn-ghost', style: { padding: '4px 10px', fontSize: 12 }, onClick: function () { setShowHistory(false); } }, '关闭'),
+        ),
+        h('p', { style: { fontSize: 11, color: 'var(--c-text-faint)', marginBottom: 14 } }, '重大改动历史对照 · 当前版本 ' + GAME_VERSION),
+        VERSION_HISTORY_PHASES.map(function (ph, i) {
+          const isCurrent = i === VERSION_HISTORY_PHASES.length - 1;
+          return h('div', { key: i, style: { borderLeft: '2px solid ' + (isCurrent ? 'var(--c-accent)' : 'var(--c-border)'), paddingLeft: 14, marginBottom: 18 } },
+            h('div', { style: { display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' } },
+              h('span', { style: { fontFamily: 'var(--font-title)', fontSize: 14, fontWeight: 600 } }, ph.no + ' · ' + ph.title),
+              isCurrent && h('span', { style: { fontSize: 10, color: 'var(--c-accent)', border: '1px solid var(--c-accent)', borderRadius: 8, padding: '0 6px' } }, '当前'),
+              h('span', { style: { fontSize: 10, color: 'var(--c-text-faint)' } }, ph.date + ' · ' + ph.span),
+            ),
+            h('p', { style: { fontSize: 12, color: 'var(--c-text-dim)', lineHeight: 1.6, margin: '6px 0 8px' } }, ph.summary),
+            ...ph.items.map(function (it, j) {
+              return h('div', { key: j, style: { display: 'flex', gap: 8, marginBottom: 4 } },
+                h('span', { style: { fontFamily: 'monospace', fontSize: 11, color: 'var(--c-accent)', flexShrink: 0 } }, it[0]),
+                h('span', { style: { fontSize: 12, color: 'var(--c-text)', lineHeight: 1.5 } }, it[1]),
+              );
+            }),
+          );
+        }),
+        h('p', { style: { fontSize: 10, color: 'var(--c-text-faint)', textAlign: 'center', marginTop: 6 } }, '随时点击主菜单的版本号回到这里'),
+      ),
+    ),
     settingsR && h('div', { className: 'overlay' + (settingsClosing ? ' overlay-exit' : ''), onClick: function (e) { if (e.target === e.currentTarget) setSettings(false); } },
       h('div', { className: 'panel animate-slide-up' + (settingsClosing ? ' panel-exit' : ''), style: { width: '90%', maxWidth: 380, maxHeight: '80vh', overflow: 'auto', padding: 24 } },
         h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 18, fontWeight: 'bold', marginBottom: 20 } }, t('ui.settingsTitle')),
@@ -625,6 +664,35 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
                 if (next) Sfx.play('safe'); // 开启时给一声轻响反馈
               }
             }),
+          ),
+        ),
+        // ── v108：对局设置（AI 节奏 + 教程重看）──
+        h('div', { style: { padding: '14px 0', borderTop: '1px solid var(--c-border)' } },
+          h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+            h('div', { style: { fontSize: 13, color: 'var(--c-text-dim)' } }, 'AI 节奏'),
+            h('button', {
+              key: aiSpeedTick, // v108：tick 变化强制重建按钮，文案即时刷新
+              className: 'btn btn-outline',
+              style: { padding: '4px 12px', fontSize: 12, borderRadius: 8, minWidth: 96 },
+              onClick: function () {
+                var cur = aiSpeedFactor();
+                var next = AI_SPEEDS[(AI_SPEEDS.indexOf(cur) + 1) % AI_SPEEDS.length];
+                try { localStorage.setItem('ld_ai_speed', String(next)); } catch (e) {}
+                setAiSpeedTick(function (v) { return v + 1; }); // 触发重渲染刷新按钮文案
+                Sfx.play('safe');
+              }
+            }, (function () { var f = aiSpeedFactor(); return (f < 1 ? '0.5x 慢速' : f === 1 ? '1x 标准' : f === 2 ? '2x 快速' : '3x 极速'); })()),
+          ),
+          h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 } },
+            h('div', { style: { fontSize: 13, color: 'var(--c-text-dim)' } }, '新手引导'),
+            h('button', {
+              className: 'btn btn-outline',
+              style: { padding: '4px 12px', fontSize: 12, borderRadius: 8 },
+              onClick: function () {
+                try { __ftueReset(); } catch (e) {}
+                toast.info('已重置引导，下次开局将重新触发新手气泡');
+              }
+            }, '重看引导'),
           ),
         ),
         //：F3 出牌上限设置已移除（锁定 5 张）

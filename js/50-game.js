@@ -34,6 +34,79 @@ const FINALE_CONFETTI = Array.from({ length: 16 }, (_, i) => {
   };
 });
 
+// ── v106：联机聊天清洗（竞品 cleanName 思路）────────────────────────
+// 控制字符剥离 → 折叠空白 → 截断。React 渲染已默认转义（无 XSS 面），
+// 此处防的是超长刷屏与不可见字符污染。发送/接收/转发三条链路统一走此函数。
+const CHAT_TEXT_MAX = 120, CHAT_NAME_MAX = 12;
+function sanitizeChatText(s) {
+  return String(s == null ? '' : s)
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, CHAT_TEXT_MAX);
+}
+function sanitizeChatName(s) {
+  return String(s == null ? '' : s)
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, CHAT_NAME_MAX) || '匿名酒客';
+}
+
+// ── v106：断线超时自动离席（竞品 forfeit 思路，host 侧调度）──────────
+// 纯函数：给定断线时状态，返回需要依次 dispatch 的合成动作序列
+//（先推进阻塞点再清人），空数组=当前状态无需动作（延迟到超时重算）。
+function playerLeftActions(s, pid) {
+  if (!s || !s.players || !s.players[pid]) return [];
+  const p = s.players[pid];
+  if (!p.alive || !p.isHuman) return []; // 已死/非人 -> 无需离席
+  const acts = [];
+  const ph = s.phase;
+  if (ph === 'player_turn' && s.curPlayer === pid) {
+    if (p.hand.length) acts.push({ type: 'PLAY', ids: [p.hand[0].id] });
+    else acts.push({ type: 'CONTINUE' });
+  } else if (ph === 'challenge_phase' && s.curPlayer === pid) {
+    acts.push({ type: 'CONTINUE' });
+  } else if (ph === 'peek_phase' && s.lastClaim && s.lastClaim.playerId === pid) {
+    acts.push({ type: 'PEEK_REVEAL', ids: [] });
+  } else if (ph === 'reconsider_phase' && s.challengerId === pid) {
+    acts.push({ type: 'RECONSIDER', decision: 'continue' });
+  } else if (ph === 'event' && s.eventChoice && s.eventChoice.chooserId === pid) {
+    const first = (s.eventChoice.choices || [])[0];
+    if (first) acts.push({ type: 'EVENT_CHOICE', choiceId: first.id });
+  }
+  acts.push({ type: 'PLAYER_LEFT', pid });
+  return acts;
+}
+
+// ── v108：AI 节奏可调（竞品 aiSpeed 思路）────────────────────────────
+// 合法区间 [0.5, 3]，非法值静默回落 1x；六处 AI 延时统一除以倍率。
+const AI_SPEEDS = [0.5, 1, 2, 3];
+function aiSpeedFactor() {
+  try {
+    const v = parseFloat(localStorage.getItem('ld_ai_speed'));
+    return AI_SPEEDS.includes(v) ? v : 1;
+  } catch (e) { return 1; }
+}
+function aiDelay(ms) { return Math.round(ms / aiSpeedFactor()); }
+
+// ── v108：酒客档案（竞品 guest-profile 思路，我方口径）────────────────
+// 本场行为 → 动态称号+引语，终局呈现；纯函数便于白盒。优先级从上到下。
+// ps = st.playerStats[pid]（出牌/质疑/中弹计数），p = player（吹牌成功/轮盘存活在 player 上）
+function guestTitle(ps, p) {
+  const s = ps || {};
+  const play = s.playCount || 0, chal = s.challengeCount || 0,
+    shot = s.shotCount || 0, bluff = (p && p.bluffSuccessCount) || 0,
+    survived = (p && p.survivedCount) || 0;
+  if (chal >= 3 && shot === 0) return { title: '猎谎人', quote: '一句迟疑，已经足够让你闻到谎言。' };
+  if (bluff >= 2) return { title: '千面赌徒', quote: '没人能从你的眼神里分清真牌与假话。' };
+  if (play >= 3 && bluff === 0 && shot === 0) return { title: '守誓酒客', quote: '在满桌谎话里，诚实反而成了最锋利的伪装。' };
+  if (survived >= 2) return { title: '空膛余生', quote: '左轮记得你的手温，却始终没能留下你。' };
+  if (shot >= 2) return { title: '铁头赌客', quote: '子弹认得你的头，可你偏偏不肯认输。' };
+  if (play >= 12) return { title: '深桌常客', quote: '你已经懂得让每一次落牌都留有余味。' };
+  return { title: '雾中新客', quote: '酒保还在等你露出第一张底牌。' };
+}
+
 // ── 玩家详情浮层（v98）：点击 HUD 头像/名字查看参与者详细状态 ──
 // 数据全部来自 state 可见面：联机客户端看到的是 toPublicState 剥离后的切片，
 // 画像/冻结等本机不可见字段自动降级隐藏，不扩大信息面。AI 具体参数（honestChance 等）不展示。
@@ -129,6 +202,8 @@ function Game() {
   const [resultTab, setResultTab] = useState(0); // D2：终局面板 tab（0单局 1累计 2趋势）
   const [endHistory, setEndHistory] = useState(null); // D2：本机对局历史快照
   const [quitConfirm, setQuitConfirm] = useState(false); // P1-1：退出二次确认
+  const [srMsg, setSrMsg] = useState(''); // v109：读屏播报（aria-live，视觉隐藏）
+  const srPrevRef = useRef({ phase: '', rid: '' });
   const [mpPlayers, setMpPlayers] = useState([]);
   const [isHost, setIsHost] = useState(false);
   const [chatMsgs, setChatMsgs] = useState([]);
@@ -271,6 +346,28 @@ function Game() {
   }, [mode, isHost]);
   const timer = useTimer({ active, paused, isHuman: human && (st.phase === 'player_turn' || st.phase === 'challenge_phase') || isPeekHuman || isReconHuman, duration: dur, onTimeout });
 
+  // ── v109：读屏播报（竞品 aria-live 播报区思路）——关键状态变化生成客话短句 ──
+  useEffect(() => {
+    const prev = srPrevRef.current;
+    const cur = st.players.find(p => p.id === st.curPlayer);
+    const isMe = cur && cur.isLocal;
+    let msg = '';
+    if (st.phase !== prev.phase) {
+      if (st.phase === 'player_turn' && isMe) msg = '轮到你出牌';
+      else if (st.phase === 'challenge_phase' && isMe) msg = '是否质疑？';
+      else if (st.phase === 'roulette') msg = '左轮转动';
+      else if (st.phase === 'event') msg = '事件发生';
+    }
+    if (st.challengeResult && st.challengeResult !== prev.rid) {
+      msg = st.challengeResult === 'honest' ? '质疑失败，对方是诚实的' : '质疑成功，对方在撒谎';
+    }
+    if (st.rouletteResult && st.rouletteResult !== prev.rid) {
+      msg = st.rouletteResult === 'dead' ? '枪响，有玩家出局' : '空膛，安然无恙';
+    }
+    if (msg) setSrMsg(msg + '。');
+    srPrevRef.current = { phase: st.phase, rid: st.challengeResult || st.rouletteResult || '' };
+  }, [st.phase, st.challengeResult, st.rouletteResult, st.curPlayer, st.players]);
+
   // ── C2：AI 抉择自动处理（单机或联机 host 的 AI；人类 chooser 由其客户端 dispatch）──
   useEffect(() => {
     if (st.phase !== 'event' || !st.event || !st.event.choices || !st.eventChoice || st.eventResult) return;
@@ -318,6 +415,16 @@ function Game() {
         if (pid == null) return;
         if (mpRef.current) mpRef.current.conns = mpRef.current.conns.filter(x => x !== c);
         toast.info('玩家断开连接，等待重连...');
+        // v106：90s 未重连 → 自动离席（先推进阻塞点再清人，动作序列见 playerLeftActions）
+        if (leftTimersRef.current[pid]) clearTimeout(leftTimersRef.current[pid]);
+        leftTimersRef.current[pid] = setTimeout(() => {
+          delete leftTimersRef.current[pid];
+          const s = stRef.current;
+          const p = s && s.players && s.players[pid];
+          if (!p || !p.alive || !p.isHuman) return; // 已重连后复活判定在此（重连会清 timer，这里是兜底）
+          playerLeftActions(s, pid).forEach(a => dispatch(a));
+          toast.info((p.name || '玩家') + ' 长时间未重连，已自动离席');
+        }, 90000);
       });
       c.on('data', data => {
         if (data?.type === 'game_action') {
@@ -377,7 +484,8 @@ function Game() {
           if (data.subType === 'PAUSE') setPaused(true);
           else if (data.subType === 'RESUME') setPaused(false);
         } else if (data?.type === 'chat') {
-          const msg = { name: data.name, text: data.text, time: Date.now() };
+          // v106：host 接收侧清洗后再入列/转发（防超长刷屏与不可见字符）
+          const msg = { name: sanitizeChatName(data.name), text: sanitizeChatText(data.text), time: Date.now() };
           setChatMsgs(prev => [...prev.slice(-50), msg]);
           mpRef.current.conns.forEach(ec => {
             if (ec.open) try { ec.send({ type: 'chat', ...msg }); } catch (e) {}
@@ -396,6 +504,8 @@ function Game() {
             const targetP = s.players.find(p => p.name === data.name && !p.isLocal && !p.isAI);
             if (targetP) {
               conn.playerId = targetP.id;
+              // v106：重连成功 → 清除该玩家的断线离席计时器
+              if (leftTimersRef.current[targetP.id]) { clearTimeout(leftTimersRef.current[targetP.id]); delete leftTimersRef.current[targetP.id]; }
               const oldConns = mp.conns.filter(c => c.playerId === targetP.id);
               oldConns.forEach(oc => { try { oc.close(); } catch (e) {} });
               mp.conns = mp.conns.filter(c => c.playerId !== targetP.id);
@@ -471,7 +581,8 @@ function Game() {
         if (data.subType === 'PAUSE') setPaused(true);
         else if (data.subType === 'RESUME') setPaused(false);
       } else if (data?.type === 'chat') {
-        setChatMsgs(prev => [...prev.slice(-50), { name: data.name, text: data.text, time: data.time }]);
+        // v106：client 接收侧同样清洗（host 已洗过，双保险防转发链外旁路）
+        setChatMsgs(prev => [...prev.slice(-50), { name: sanitizeChatName(data.name), text: sanitizeChatText(data.text), time: data.time }]);
       }
     };
     conn.on('data', handler);
@@ -479,9 +590,9 @@ function Game() {
   }, [isHost, mode, connVersion]);
 
   const sendChat = useCallback(() => {
-    const text = chatInput.trim();
+    const text = sanitizeChatText(chatInput); // v106：发送侧统一清洗
     if (!text) return;
-    const myName = st.players.find(p => p.isLocal)?.name || '我';
+    const myName = sanitizeChatName(st.players.find(p => p.isLocal)?.name || '我');
     if (isHost) {
       const msg = { name: myName, text, time: Date.now() };
       setChatMsgs(prev => [...prev.slice(-50), msg]);
@@ -498,10 +609,14 @@ function Game() {
   const reconPeerRef = useRef(null);
   const reconTimersRef = useRef([]);
   const reconTimer = function (fn, ms) { const t = setTimeout(fn, ms); reconTimersRef.current.push(t); return t; };
+  // v106：联机玩家断线离席计时器（host 侧，pid -> timer）
+  const leftTimersRef = useRef({});
   // 对局卸载时清理重连残留
   const reconCleanup = function () {
     reconTimersRef.current.forEach(function (t) { clearTimeout(t); });
     reconTimersRef.current = [];
+    Object.keys(leftTimersRef.current).forEach(function (k) { clearTimeout(leftTimersRef.current[k]); });
+    leftTimersRef.current = {};
     try { reconPeerRef.current?.destroy?.(); } catch (e) {}
     reconPeerRef.current = null;
   };
@@ -734,7 +849,7 @@ function Game() {
     // AI 主动技能策略——先发动技能，本拍不派 AI_PLAY（effect 重跑后再出牌，防陈旧手牌）
     const skillPending = aiWantsSkill(st, ai.id);
     if (skillPending) {
-      aiRef.current = setTimeout(() => sendAction({ type: 'SKILL_USE', pid: ai.id, skillId: roleOf(st, ai.id) }), 300);
+      aiRef.current = setTimeout(() => sendAction({ type: 'SKILL_USE', pid: ai.id, skillId: roleOf(st, ai.id) }), aiDelay(300));
       return () => { if (aiRef.current) clearTimeout(aiRef.current); };
     }
     const aiOpts = {
@@ -753,7 +868,7 @@ function Game() {
       const d = aiPlay(ai.hand, st.targetSuit, ai.personality, ai.customConfig, aiOpts);
       aiRef.current = setTimeout(() => {
         d.cards.length ? sendAction({ type: 'AI_PLAY', pid: ai.id, cards: d.cards }) : sendAction({ type: 'CONTINUE' });
-      }, 400 + Math.random() * 400);
+      }, aiDelay(400 + Math.random() * 400));
       return () => { if (aiRef.current) clearTimeout(aiRef.current); };
     };
     // LLM 大脑：单机 + 已配置 Key 时走 GLM 决策（10s 超时/坏输出自动回落本地 AI）
@@ -769,7 +884,7 @@ function Game() {
         // 演出让位：LLM 等待本身即演出，结果就绪后 400ms 固定节奏即出
         aiRef.current = setTimeout(() => {
           r.cards.length ? sendAction({ type: 'AI_PLAY', pid: ai.id, cards: r.cards }) : sendAction({ type: 'CONTINUE' });
-        }, 400);
+        }, aiDelay(400));
       });
       return () => { cancelled = true; if (aiRef.current) clearTimeout(aiRef.current); };
     }
@@ -825,7 +940,7 @@ function Game() {
         } else {
           sendAction({ type: 'CONTINUE' });
         }
-      }, 400 + Math.random() * 400);
+      }, aiDelay(400 + Math.random() * 400));
       return () => { if (aiRef.current) clearTimeout(aiRef.current); };
     };
     // LLM 大脑：质疑决策（10s 超时回落本地启发式）
@@ -839,7 +954,7 @@ function Game() {
             sendAction({ type: 'CHALLENGE', cid: ai.id });           } else {
             sendAction({ type: 'CONTINUE' });
           }
-        }, 400); // 演出让位
+        }, aiDelay(400)); // 演出让位
       });
       return () => { cancelled = true; if (aiRef.current) clearTimeout(aiRef.current); };
     }
@@ -865,7 +980,7 @@ function Game() {
         }
       }
       sendAction({ type: 'PEEK_REVEAL', ids });
-    }, 600 + Math.random() * 600);
+    }, aiDelay(600 + Math.random() * 600));
     return () => { if (aiRef.current) clearTimeout(aiRef.current); };
   }, [st.phase, st.lastClaim, st.tableCards, st.targetSuit, paused, mode, isHost, isMpClient]);
 
@@ -885,7 +1000,7 @@ function Game() {
       if (challenger.personality === 'conservative') challengeProb -= 0.15;
       const decision = Math.random() < challengeProb ? 'challenge' : 'continue';
       sendAction({ type: 'RECONSIDER', decision });
-    }, 600 + Math.random() * 600);
+    }, aiDelay(600 + Math.random() * 600));
     return () => { if (aiRef.current) clearTimeout(aiRef.current); };
   }, [st.phase, st.challengerId, st.peekedCards, st.targetSuit, paused, mode, isHost, isMpClient]);
 
@@ -1098,6 +1213,7 @@ function Game() {
   }, [mode, isHost]);
 
   const quitGame = useCallback(() => {
+    reconCleanup(); // v106：退出同时清断线离席计时器与重连残留
     const s = stRef.current;
     if (mode === 'multiplayer' && currentUser) {
       const penalty = calcQuitPenalty(s);
@@ -1134,6 +1250,7 @@ function Game() {
   }, [mode, isHost, currentUser]);
 
   const onBack = useCallback(() => {
+    reconCleanup(); // v106：返回大厅同时清断线离席计时器与重连残留
     if (mode === 'multiplayer') {
       if (isHost) {
         if (mpRef.current?.conns) {
@@ -1194,6 +1311,8 @@ function Game() {
   })), []);
 
   return h('div', { style: { position: 'relative', minHeight: '100vh', overflow: 'hidden', zIndex: 2 } },
+    // v109：读屏播报区（视觉隐藏，aria-live 对状态变化自动念出）
+    h('div', { className: 'sr-only', 'aria-live': 'polite', role: 'status' }, srMsg),
     h('div', { className: 'bg-ambient', style: { position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 } },
       // v103 深度分层容器（BgTilt 五档挂点，见 12-bg-tilt.js）：
       // far=远景大光斑(-180) / mid=烟烛暗角(-60) / near=悬浮粒子(+140，晃动最明显)
@@ -1732,6 +1851,19 @@ function Game() {
               h('div', { style: { color: 'hsl(280 60% 65%)', display: 'flex', alignItems: 'center', gap: 2 } }, h(Icon.Masks, { size: 10 }), '' + (p.bluffSuccessCount || 0)),
             )),
           ),
+          // ── v108：酒客档案——本场行为 → 动态称号+引语（竞品 guest-profile 思路）──
+          (() => {
+            const me = st.players.find(p => p.isLocal);
+            if (!me) return null; // 观战视角无档案
+            const g = guestTitle(st.playerStats[me.id], me);
+            return h('div', { style: { marginTop: 14, padding: '10px 12px', background: 'var(--c-panel-strong)', borderRadius: 8, border: '1px solid var(--c-border)', textAlign: 'center' } },
+              h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } },
+                h('span', { style: { fontSize: 10, color: 'var(--c-text-faint)', letterSpacing: 2 } }, '本场档案'),
+                h('span', { style: { fontFamily: 'var(--font-title)', fontSize: 15, fontWeight: 600, color: 'var(--c-accent)' } }, g.title),
+              ),
+              h('p', { style: { fontSize: 11, color: 'var(--c-text-dim)', fontStyle: 'italic', marginTop: 4 } }, '“' + g.quote + '”'),
+            );
+          })(),
         ),
         resultTab === 2 && (() => {
           // D2：历史趋势——最近 20 局五维雷达（出牌/质疑/中枪/撒谎/复活）
