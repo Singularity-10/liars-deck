@@ -21,6 +21,8 @@ const api = new Function('__testHit', hitStub + '\n' + codeDice + '\n' + codeAI 
 const { newDiceState, diceReducer, diceLegalBid, diceCanCall, diceCountFace, diceNextAlive, aiDiceBid, aiDiceCallOpen, DICE_PER_HAND, DICE_FACES } = api;
 
 // ── 基础状态工厂：2 人（id0 玩家 / id1 AI），骰面可控 ──
+// v112 盲区修复：React 真实入口是 diceReducer(null, {DICE_START})，必须单独断言
+assert(api.diceReducer(null, { type: 'DICE_START', difficulty: 'normal', players: [{ name: '你', isAI: false }, { name: '酒客甲', isAI: true, personality: 'aggressive' }] }).phase === 'bid', 'DICE_START 从 null 起局（React 真实入口，非 newDiceState 直构）');
 function mkState(dice0, dice1, over = {}) {
   const st = newDiceState({ difficulty: 'normal', players: [{ name: '你', isAI: false }, { name: '狗哥', isAI: true, personality: 'aggressive' }] });
   st.players[0].dice = dice0;

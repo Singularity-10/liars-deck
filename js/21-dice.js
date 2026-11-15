@@ -90,7 +90,13 @@ function diceNextAlive(st, from) {
  *       DICE_ROULETTE_DONE | DICE_RESTART
  */
 function diceReducer(st, act) {
-  if (!st) return st;
+  // v111 修复：null 起始态只接受 DICE_START（原 `if (!st) return st` 把开局动作挡死，dst 永远 null）
+  if (!st) {
+    if (act && act.type === 'DICE_START') {
+      return newDiceState({ difficulty: act.difficulty, players: act.players || [], shots: act.shots || 0, round: 1 });
+    }
+    return st;
+  }
   switch (act.type) {
     case 'DICE_BID': {
       if (st.phase !== 'bid') return st;

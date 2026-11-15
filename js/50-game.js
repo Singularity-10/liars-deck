@@ -783,42 +783,6 @@ function Game() {
     }
   }, []);
 
-  useEffect(() => {
-    if (isHost || mode !== 'multiplayer') return;
-    const conn = connRef.current;
-    if (!conn) return;
-    const handler = (data) => {
-      if (data?.type === 'meta') {
-        if (data.subType === 'PAUSE') setPaused(true);
-        else if (data.subType === 'RESUME') setPaused(false);
-      } else if (data?.type === 'chat') {
-        // v106：client 接收侧同样清洗（host 已洗过，双保险防转发链外旁路）
-        setChatMsgs(prev => [...prev.slice(-50), { name: sanitizeChatName(data.name), text: sanitizeChatText(data.text), time: data.time }]);
-      } else if (data?.type === 'emote') {
-        // v110：host 广播的表情气泡（pid 已由 host 校验）
-        if (EMOTE_VALID.has(data.emote) && data.pid != null) pushEmote(data.pid, data.emote);
-      }
-    };
-    conn.on('data', handler);
-    return () => { try { conn.off?.('data', handler); } catch (e) {} };
-  }, [isHost, mode, connVersion, pushEmote]);
-
-  const sendChat = useCallback(() => {
-    const text = sanitizeChatText(chatInput); // v106：发送侧统一清洗
-    if (!text) return;
-    const myName = sanitizeChatName(st.players.find(p => p.isLocal)?.name || '我');
-    if (isHost) {
-      const msg = { name: myName, text, time: Date.now() };
-      setChatMsgs(prev => [...prev.slice(-50), msg]);
-      mpRef.current?.conns?.forEach(c => {
-        if (c.open) try { c.send({ type: 'chat', ...msg }); } catch (e) {}
-      });
-    } else if (connRef.current?.open) {
-      try { connRef.current.send({ type: 'chat', name: myName, text }); } catch (e) {}
-    }
-    setChatInput('');
-  }, [chatInput, isHost, st.players]);
-
   // ── v110：表情快捷互动 ──────────────────────────────────────────────
   // 入列本机气泡（2.5s 后自动移除；联机 client 的气泡统一由 host 广播驱动）
   const pushEmote = useCallback((pid, emoteId) => {
@@ -871,6 +835,43 @@ function Game() {
       });
     }
   }, [mode, isHost, pushEmote, scheduleAiEmoteReaction]);
+
+  useEffect(() => {
+    if (isHost || mode !== 'multiplayer') return;
+    const conn = connRef.current;
+    if (!conn) return;
+    const handler = (data) => {
+      if (data?.type === 'meta') {
+        if (data.subType === 'PAUSE') setPaused(true);
+        else if (data.subType === 'RESUME') setPaused(false);
+      } else if (data?.type === 'chat') {
+        // v106：client 接收侧同样清洗（host 已洗过，双保险防转发链外旁路）
+        setChatMsgs(prev => [...prev.slice(-50), { name: sanitizeChatName(data.name), text: sanitizeChatText(data.text), time: data.time }]);
+      } else if (data?.type === 'emote') {
+        // v110：host 广播的表情气泡（pid 已由 host 校验）
+        if (EMOTE_VALID.has(data.emote) && data.pid != null) pushEmote(data.pid, data.emote);
+      }
+    };
+    conn.on('data', handler);
+    return () => { try { conn.off?.('data', handler); } catch (e) {} };
+  }, [isHost, mode, connVersion, pushEmote]);
+
+  const sendChat = useCallback(() => {
+    const text = sanitizeChatText(chatInput); // v106：发送侧统一清洗
+    if (!text) return;
+    const myName = sanitizeChatName(st.players.find(p => p.isLocal)?.name || '我');
+    if (isHost) {
+      const msg = { name: myName, text, time: Date.now() };
+      setChatMsgs(prev => [...prev.slice(-50), msg]);
+      mpRef.current?.conns?.forEach(c => {
+        if (c.open) try { c.send({ type: 'chat', ...msg }); } catch (e) {}
+      });
+    } else if (connRef.current?.open) {
+      try { connRef.current.send({ type: 'chat', name: myName, text }); } catch (e) {}
+    }
+    setChatInput('');
+  }, [chatInput, isHost, st.players]);
+
 
   // 批二：重连临时 peer 与 timer 引用（防僵尸 peer / 不可取消定时器累积）
   const reconPeerRef = useRef(null);
@@ -1798,6 +1799,23 @@ function Game() {
           );
         }),
       ),
+      // v110：自己的表情气泡（主屏层 fixed 底部居中，任意 phase 可见；2.5s 消散）
+      (() => {
+        const meP = st.players.find(p => p.isLocal);
+        if (!meP) return null;
+        for (let i = emotes.length - 1; i >= 0; i--) {
+          if (emotes[i].pid === meP.id) {
+            const def = EMOTE_LIST.find(e => e.id === emotes[i].emote);
+            if (def) return h('div', { key: 'myemote' + emotes[i].ts, className: 'emote-bubble', style: { position: 'fixed', bottom: 150, left: '50%', transform: 'translateX(-50%)', zIndex: 45, pointerEvents: 'none' } },
+              h('div', { style: { display: 'flex', alignItems: 'center', gap: 6, background: 'var(--c-input-bg)', border: '1px solid var(--c-accent-dim, hsl(40 60% 40%))', borderRadius: 999, padding: '3px 12px', color: 'var(--c-text-bright)', boxShadow: '0 4px 12px rgba(0,0,0,0.45)', animation: 'emote-pop 0.3s ease' } },
+                h('span', { style: { fontSize: 11, color: 'var(--c-text-dim)' } }, '你'),
+                h(Icon[def.icon] || Icon.EmoteAsk, { size: 18 }),
+              ),
+            );
+          }
+        }
+        return null;
+      })(),
       h('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 0', gap: 12, minHeight: 160 } },
         h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--c-border)', borderRadius: 999, padding: '6px 18px', background: 'var(--c-input-bg)' } },
           h('span', { style: { fontSize: 12, color: 'var(--c-text-dim)' } }, '目标牌面'),
@@ -1990,23 +2008,6 @@ function Game() {
             h('span', null, (rI18n.name || def.id) + '·' + (chk.ok ? (rI18n.action || '发动') : reasonText)),
           ),
         );
-      })(),
-      // v110：自己的表情气泡（手牌区上方居中浮现，2.5s 消散）
-      (function () {
-        const meP = st.players.find(p => p.isLocal);
-        if (!meP) return null;
-        for (let i = emotes.length - 1; i >= 0; i--) {
-          if (emotes[i].pid === meP.id) {
-            const def = EMOTE_LIST.find(e => e.id === emotes[i].emote);
-            if (def) return h('div', { key: 'myemote' + emotes[i].ts, className: 'emote-bubble', style: { display: 'flex', justifyContent: 'center', width: '100%', padding: '0 0 4px', pointerEvents: 'none' } },
-              h('div', { style: { display: 'flex', alignItems: 'center', gap: 6, background: 'var(--c-input-bg)', border: '1px solid var(--c-accent-dim, hsl(40 60% 40%))', borderRadius: 999, padding: '3px 12px', color: 'var(--c-text-bright)', boxShadow: '0 4px 12px rgba(0,0,0,0.45)', animation: 'emote-pop 0.3s ease' } },
-                h('span', { style: { fontSize: 11, color: 'var(--c-text-dim)' } }, '你'),
-                h(Icon[def.icon] || Icon.EmoteAsk, { size: 18 }),
-              ),
-            );
-          }
-        }
-        return null;
       })(),
       h(PlayerHand, {
         hand: curP?.hand ?? [],
