@@ -53,6 +53,23 @@ function sanitizeChatName(s) {
     .slice(0, CHAT_NAME_MAX) || '匿名酒客';
 }
 
+// ── v110：表情快捷互动 ──────────────────────────────────────────────
+// 8 个快捷表情（单机/联机通用）：气泡浮现在玩家头像上方 2.5s 自动消散。
+// AI 反应决策在 30-ai.js 的 aiReactToEmote（按局势+人格回应，最多 1 名 AI 回应）。
+const EMOTE_LIST = [
+  { id: 'smirk',  icon: 'EmoteSmirk',  label: '坏笑' },
+  { id: 'laugh',  icon: 'EmoteLaugh',  label: '大笑' },
+  { id: 'sweat',  icon: 'EmoteSweat',  label: '流汗' },
+  { id: 'gasp',   icon: 'EmoteGasp',   label: '惊恐' },
+  { id: 'hmph',   icon: 'EmoteHmph',   label: '挑衅' },
+  { id: 'cheers', icon: 'EmoteCheers', label: '干杯' },
+  { id: 'thumb',  icon: 'EmoteThumb',  label: '点赞' },
+  { id: 'ask',    icon: 'EmoteAsk',    label: '问号' },
+];
+const EMOTE_VALID = new Set(EMOTE_LIST.map(e => e.id));
+const EMOTE_LIVE_MS = 2500;   // 气泡存活时长
+const EMOTE_CD_MS = 3000;     // 发送冷却（防刷屏）
+
 // ── v106：断线超时自动离席（竞品 forfeit 思路，host 侧调度）──────────
 // 纯函数：给定断线时状态，返回需要依次 dispatch 的合成动作序列
 //（先推进阻塞点再清人），空数组=当前状态无需动作（延迟到超时重算）。
@@ -185,8 +202,170 @@ function PlayerDetailPanel({ st, pid, onClose }) {
   );
 }
 
+// ═══ v111：大话骰（骰子模式）桌面 ═════════════════════════════════════
+// 独立平行状态机（21-dice.js）驱动，单机限定；转盘演出复用 RussianRoulette。
+
+// 骰面 pip 点阵（3×3 网格格位 0-8）
+const DICE_PIP_MAP = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
+
+function DiceFace({ v, size = 40, dim = false }) {
+  return h('div', { style: { width: size, height: size, borderRadius: size * 0.2, background: dim ? 'hsl(0 12% 16%)' : 'hsl(40 25% 90%)', border: '2px solid ' + (dim ? 'hsl(0 12% 24%)' : 'hsl(40 20% 65%)'), display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gridTemplateRows: 'repeat(3,1fr)', padding: size * 0.13, boxSizing: 'border-box', flexShrink: 0 } },
+    DICE_PIP_MAP[v].map(i => h('div', { key: i, style: { display: 'flex', alignItems: 'center', justifyContent: 'center' } },
+      h('div', { style: { width: size * 0.15, height: size * 0.15, borderRadius: '50%', background: dim ? 'hsl(0 8% 30%)' : 'hsl(0 5% 14%)' } }))),
+  );
+}
+
+function DiceTable({ dst, dispatch, onQuit, onRouletteDone }) {
+  const [bidCount, setBidCount] = useState(1);
+  const [bidFace, setBidFace] = useState(2);
+  const me = dst.players[0];
+  const cur = dst.players[dst.curPlayer];
+  const myTurn = dst.phase === 'bid' && dst.curPlayer === 0 && me && me.alive;
+  const aliveCount = dst.players.filter(p => p.alive).length;
+  const totalDice = aliveCount * DICE_PER_HAND;
+  const lb = dst.lastBid;
+
+  // 跟随当前叫点把选择器吸附到最小合法加码附近
+  useEffect(() => {
+    if (!lb) return;
+    setBidCount(Math.min(lb.count, totalDice));
+    setBidFace(Math.min(6, lb.face + 1));
+  }, [lb && lb.count, lb && lb.face]);
+
+  const legal = diceLegalBid(dst, bidCount, bidFace);
+
+  const doBid = () => {
+    if (!legal) return;
+    try { Sfx.play('card'); } catch (e) {}
+    dispatch({ type: 'DICE_BID', pid: 0, count: bidCount, face: bidFace });
+  };
+  const doCall = () => {
+    try { Sfx.play('challenge'); } catch (e) {}
+    dispatch({ type: 'DICE_CALL', pid: 0 });
+  };
+
+  // ── 转盘演出 ──
+  if (dst.phase === 'roulette' && dst.roulettePending) {
+    const pend = dst.roulettePending;
+    return h(RussianRoulette, {
+      playerName: dst.players[pend.pid] ? dst.players[pend.pid].name : '?',
+      isHit: pend.isHit,
+      shotNumber: pend.shot,
+      difficulty: dst.difficulty,
+      shift: 0,
+      skipPenalty: false,
+      onComplete: onRouletteDone,
+    });
+  }
+
+  // ── 结算 ──
+  if (dst.phase === 'won') {
+    const win = dst.winner && dst.winner.id === 0;
+    return h('div', { className: 'overlay' },
+      h('div', { className: 'panel animate-slide-up', style: { textAlign: 'center', padding: 28, maxWidth: 340 } },
+        h('div', { style: { display: 'flex', justifyContent: 'center', marginBottom: 10 } }, h(Icon[win ? 'Crown' : 'Skull'] || Icon.Crown, { size: 44 })),
+        h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 22, fontWeight: 'bold', color: win ? 'var(--c-accent)' : 'var(--c-text-dim)' } },
+          win ? '骰桌赢家！' : '骰桌失意'),
+        h('p', { style: { fontSize: 13, color: 'var(--c-text-dim)', marginTop: 6 } },
+          win ? '全场只剩你一人还坐得稳——今晚的酒钱省下了' : ('胜者：' + (dst.winner ? dst.winner.name : '?'))),
+        h('button', { className: 'btn btn-primary', style: { marginTop: 18, width: '100%' }, onClick: onQuit }, '回到主菜单'),
+      ),
+    );
+  }
+
+  // ── 开盅演出 ──
+  if (dst.phase === 'reveal' && dst.callResult) {
+    const cr = dst.callResult;
+    const loser = dst.players[cr.loserPid];
+    return h('div', { className: 'overlay', style: { zIndex: 42 }, onClick: e => { if (e.target === e.currentTarget) dispatch({ type: 'DICE_REVEAL_DONE' }); } },
+      h('div', { className: 'panel animate-slide-up', style: { textAlign: 'center', padding: '24px 28px', maxWidth: 420 } },
+        h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 18, marginBottom: 4 } }, '开盅验点'),
+        h('p', { style: { fontSize: 13, color: 'var(--c-text-dim)', marginBottom: 14 } },
+          '叫点「' + cr.needed + ' 个 ' + cr.face + '」 · 全场实际 ' + cr.total + ' 个'),
+        h('div', { style: { display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 } },
+          dst.players.map(p => p.alive && h('div', { key: p.id, style: { display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', flexWrap: 'wrap' } },
+            h('span', { style: { fontSize: 12, color: p.id === cr.loserPid ? 'var(--c-danger)' : 'var(--c-text-dim)', width: 64, textAlign: 'right' } }, p.name),
+            (p.id === 0 ? me.dice : p.dice || []).map((v, i) => h(DiceFace, { key: i, v: v, size: 30 })),
+            p.id !== 0 && h('span', { style: { fontSize: 11, color: 'var(--c-text-faint)', width: 70, textAlign: 'left' } }, '（' + (p.dice || []).filter(d => d === cr.face).length + ' 个 ' + cr.face + '）'),
+          )),
+        ),
+        h('div', { style: { fontSize: 15, fontWeight: 'bold', color: 'var(--c-danger)', marginBottom: 14 } },
+          loser ? (loser.name + (loser.isAI ? '' : '（你）') + ' 判定失败，上桌受罚') : '判定失败'),
+        h('button', { className: 'btn btn-primary', style: { width: '100%' }, onClick: () => dispatch({ type: 'DICE_REVEAL_DONE' }) }, '认命 · 转轮盘'),
+      ),
+    );
+  }
+
+  // ── 主牌桌 ──
+  return h('div', { key: 'screen-dice', style: { animation: 'fade-in 0.35s ease', padding: '8px 10px 120px', maxWidth: 560, margin: '0 auto' } },
+    // 顶部状态
+    h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, color: 'var(--c-text-dim)', padding: '4px 4px 8px' } },
+      h('span', null, '第 ' + dst.round + ' 局 · 存活 ' + aliveCount + ' · 全场骰 ' + totalDice),
+      h('span', null, dst.shots > 0 ? '命运转盘已开 ' + dst.shots + ' 次' : '骰桌首局'),
+      h('button', { className: 'btn btn-ghost', style: { padding: '2px 10px', fontSize: 11 }, onClick: onQuit }, '退出'),
+    ),
+    // 对手骰盅区
+    h('div', { style: { display: 'flex', justifyContent: 'center', gap: 'clamp(10px,3vw,28px)', flexWrap: 'wrap', padding: '6px 0' } },
+      dst.players.filter(p => p.id !== 0).map(p => {
+        const isCur = p.id === dst.curPlayer && dst.phase === 'bid';
+        const isBidder = lb && lb.pid === p.id;
+        return h('div', { key: p.id, style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: p.alive ? 1 : 0.35, border: `1px solid ${isCur && p.alive ? 'hsl(0 45% 32%)' : 'var(--c-border-soft)'}`, borderRadius: 10, padding: '8px 10px', background: isCur && p.alive ? 'rgba(180,30,30,0.08)' : 'transparent' } },
+          p.alive
+            ? h('div', { style: { display: 'flex', gap: 3 } }, [0, 1, 2, 3, 4].map(i => h('div', { key: i, style: { width: 22, height: 22, borderRadius: 5, background: 'hsl(0 12% 16%)', border: '1px solid hsl(0 12% 26%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'hsl(0 8% 32%)' } }, '?')))
+            : h('div', { style: { color: 'var(--c-text-faint)' } }, h(Icon.Skull, { size: 20 })),
+          h('span', { style: { fontSize: 12, fontWeight: isCur ? 600 : 400, color: p.alive ? 'var(--c-text)' : 'var(--c-text-faint)', textDecoration: p.alive ? 'none' : 'line-through' } }, p.name),
+          isBidder && h('div', { style: { fontSize: 10, color: 'var(--c-accent)', background: 'rgba(200,160,50,0.15)', border: '1px solid rgba(180,30,30,0.3)', padding: '1px 8px', borderRadius: 12 } }, lb.count + ' 个 ' + lb.face),
+        );
+      }),
+    ),
+    // 中央：当前叫点 + 我方骰
+    h('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '18px 0' } },
+      h('div', { style: { border: '1px solid var(--c-border)', borderRadius: 999, padding: '8px 26px', background: 'var(--c-input-bg)' } },
+        h('span', { style: { fontSize: 12, color: 'var(--c-text-dim)', marginRight: 8 } }, '当前叫点'),
+        h('span', { style: { fontSize: 20, fontWeight: 'bold', fontFamily: 'var(--font-title)', color: lb ? 'var(--c-text-bright)' : 'var(--c-text-dim)' } },
+          lb ? (lb.count + ' 个 ' + lb.face) : '任意起叫'),
+      ),
+      h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' } },
+        me.alive ? me.dice.map((v, i) => h(DiceFace, { key: i, v: v, size: 46 })) : h('span', { style: { fontSize: 12, color: 'var(--c-text-faint)' } }, '你已出局（观局中）')),
+      h('span', { style: { fontSize: 11, color: 'var(--c-text-dim)' } }, me.alive ? ('你的「' + (lb ? lb.face : bidFace) + '」：' + me.dice.filter(d => d === (lb ? lb.face : bidFace)).length + ' 个') : ''),
+    ),
+    // 操作区 / 等待提示
+    dst.phase === 'bid' && h('div', { style: { position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, background: 'linear-gradient(transparent, hsl(0 20% 5%) 45%)', padding: '14px 12px 16px' } },
+      myTurn ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 460, margin: '0 auto' } },
+        // 点数选择行
+        h('div', { style: { display: 'flex', gap: 6, justifyContent: 'center' } },
+          DICE_FACES.map(f => h('button', {
+            key: f,
+            className: 'btn ' + (bidFace === f ? 'btn-primary' : 'btn-outline'),
+            onClick: () => setBidFace(f),
+            style: { flex: 1, maxWidth: 56, height: 40, padding: 0, fontSize: 15, fontWeight: 'bold' },
+          }, String(f))),
+        ),
+        // 数量步进行
+        h('div', { style: { display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' } },
+          h('button', { className: 'btn btn-outline', style: { width: 52, height: 42, padding: 0, fontSize: 18 }, onClick: () => setBidCount(c => Math.max(1, c - 1)) }, '−'),
+          h('span', { style: { fontSize: 22, fontWeight: 'bold', fontFamily: 'var(--font-title)', minWidth: 90, textAlign: 'center', color: legal ? 'var(--c-text-bright)' : 'var(--c-text-faint)' } }, bidCount + ' 个 ' + bidFace),
+          h('button', { className: 'btn btn-outline', style: { width: 52, height: 42, padding: 0, fontSize: 18 }, onClick: () => setBidCount(c => Math.min(totalDice, c + 1)) }, '+'),
+        ),
+        // 叫点 / 叫开按钮
+        h('div', { style: { display: 'flex', gap: 10 } },
+          h('button', { className: 'btn btn-primary', style: { flex: 2, height: 46 }, disabled: !legal, onClick: doBid },
+            h(Icon.Play, { size: 14 }), '叫 ' + bidCount + ' 个 ' + bidFace),
+          lb && h('button', { className: 'btn btn-outline', style: { flex: 1, height: 46, color: 'hsl(0 60% 62%)', borderColor: 'hsl(0 40% 32%)' }, onClick: doCall },
+            h(Icon.Eye, { size: 14 }), '叫开'),
+        ),
+      ) : h('div', { style: { textAlign: 'center', fontSize: 13, color: 'var(--c-text-dim)', padding: 8 } },
+        cur ? ('等待 ' + cur.name + ' 叫点...') : ''),
+    ),
+  );
+}
+
 function Game() {
   const [st, rawDispatch] = useReducer(wrappedReducer, INIT);
+  // v111：大话骰（骰子模式）平行状态机——单机限定，联机协议扩展留 backlog
+  const [gameKind, setGameKind] = useState('cards'); // 'cards' | 'dice'
+  const [dst, diceDispatch] = useReducer(diceReducer, null);
+  const dstRef = useRef(dst); dstRef.current = dst;
   // 批二：Replay 开关移到 dispatch 包装层同步判定（原 effect 同步存在渲染-提交窗口：
   // isMpClient 已变而 effect 未跑时，一次 reducer 可能该录没录/不该录却录）
   const isMpClientRef = useRef(false);
@@ -209,6 +388,12 @@ function Game() {
   const [chatMsgs, setChatMsgs] = useState([]);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState('');
+  // v110：表情互动——气泡列表 [{pid, emote, ts}]；aiHonest 记录 AI 最近一次出牌诚实度（host 权威，反应决策用）
+  const [emotes, setEmotes] = useState([]);
+  const [emoteOpen, setEmoteOpen] = useState(false);
+  const emoteCdRef = useRef(0);
+  const aiHonestRef = useRef({});   // pid -> true(诚实) | false(撒谎) | undefined(未知)
+  const emoteTimersRef = useRef([]);
   const [replayOpen, setReplayOpen] = useState(null); // D1：null 关闭 | { data } 回放查看器（data=null 表示用本局日志）
   const mpRef = useRef(null),
     aiRef = useRef(null),
@@ -380,13 +565,27 @@ function Game() {
     return () => clearTimeout(t);
   }, [st.phase, st.eventChoice, st.eventResult, st.event]);
 
-  const startSingle = useCallback((diff, cfgs, selectedAIs, inc, sort, maxPlay = 5) => {
+  const startSingle = useCallback((diff, cfgs, selectedAIs, inc, sort, maxPlay = 5, playMode = 'cards') => {
     setMode('single');
     setScreen('playing');
     setIsHost(false);
     connRef.current = null;
     localPlayerIdRef.current = null;
-    dispatch({ type: 'START', difficulty: diff, aiConfigs: cfgs, selectedAIs: selectedAIs, incrementalRoulette: inc, autoSortHand: sort, maxPlay: maxPlay });
+    if (playMode === 'dice') {
+      // v111：大话骰——1 玩家 + 所选 AI，平行状态机接管对局
+      setGameKind('dice');
+      diceDispatch({
+        type: 'DICE_START',
+        difficulty: diff,
+        players: [
+          { name: (currentUser && currentUser.name) || '你', isAI: false },
+          ...selectedAIs.map(i => ({ name: AI_NAMES[i] || ('酒客' + (i + 1)), isAI: true, personality: ['conservative', 'aggressive', 'impatient'][i % 3] })),
+        ],
+      });
+    } else {
+      setGameKind('cards');
+      dispatch({ type: 'START', difficulty: diff, aiConfigs: cfgs, selectedAIs: selectedAIs, incrementalRoulette: inc, autoSortHand: sort, maxPlay: maxPlay });
+    }
     startMusic();
   }, [startMusic]);
 
@@ -490,6 +689,18 @@ function Game() {
           mpRef.current.conns.forEach(ec => {
             if (ec.open) try { ec.send({ type: 'chat', ...msg }); } catch (e) {}
           });
+        } else if (data?.type === 'emote') {
+          // v110：表情互动——host 校验合法性与发送者存活后入列、调度 AI 反应并广播
+          if (!EMOTE_VALID.has(data.emote)) return;
+          const pid = c.playerId;
+          const s = stRef.current;
+          const sender = s && s.players && s.players[pid];
+          if (!sender || !sender.alive) return;
+          pushEmote(pid, data.emote);
+          scheduleAiEmoteReaction(data.emote, s);
+          mpRef.current.conns.forEach(ec => {
+            if (ec.open) try { ec.send({ type: 'emote', pid, emote: data.emote }); } catch (e) {}
+          });
         } else if (data?.type === 'client_left') {
           try { c.close(); } catch (e) {}
         }
@@ -583,11 +794,14 @@ function Game() {
       } else if (data?.type === 'chat') {
         // v106：client 接收侧同样清洗（host 已洗过，双保险防转发链外旁路）
         setChatMsgs(prev => [...prev.slice(-50), { name: sanitizeChatName(data.name), text: sanitizeChatText(data.text), time: data.time }]);
+      } else if (data?.type === 'emote') {
+        // v110：host 广播的表情气泡（pid 已由 host 校验）
+        if (EMOTE_VALID.has(data.emote) && data.pid != null) pushEmote(data.pid, data.emote);
       }
     };
     conn.on('data', handler);
     return () => { try { conn.off?.('data', handler); } catch (e) {} };
-  }, [isHost, mode, connVersion]);
+  }, [isHost, mode, connVersion, pushEmote]);
 
   const sendChat = useCallback(() => {
     const text = sanitizeChatText(chatInput); // v106：发送侧统一清洗
@@ -604,6 +818,59 @@ function Game() {
     }
     setChatInput('');
   }, [chatInput, isHost, st.players]);
+
+  // ── v110：表情快捷互动 ──────────────────────────────────────────────
+  // 入列本机气泡（2.5s 后自动移除；联机 client 的气泡统一由 host 广播驱动）
+  const pushEmote = useCallback((pid, emoteId) => {
+    const item = { pid, emote: emoteId, ts: Date.now() };
+    setEmotes(prev => [...prev.slice(-12), item]);
+    const t = setTimeout(() => {
+      setEmotes(prev => prev.filter(e => e.ts !== item.ts));
+    }, EMOTE_LIVE_MS + 200);
+    emoteTimersRef.current.push(t);
+  }, []);
+
+  // AI 表情反应调度（单机/host 权威侧）：每名存活 AI 独立判定，至多 1 名回应（防刷屏）
+  const scheduleAiEmoteReaction = useCallback((emoteId, stateOverride) => {
+    const s = stateOverride || stRef.current;
+    if (!s || !s.players) return;
+    const ais = s.players.filter(p => p.isAI && p.alive);
+    for (const ai of ais) {
+      const react = aiReactToEmote(emoteId, {
+        persona: ai.persona || null,
+        wasLastBluff: aiHonestRef.current[ai.id] === false,
+        wasCaught: s.lastCaughtPid != null && s.lastCaughtPid === ai.id,
+      });
+      if (react) {
+        const t = setTimeout(() => pushEmote(ai.id, react), 600 + Math.random() * 1200);
+        emoteTimersRef.current.push(t);
+        return;
+      }
+    }
+  }, [pushEmote]);
+
+  // 玩家发送表情（单机/联机通用；3s 冷却防刷屏；联机 client 发后等 host 广播）
+  const sendEmote = useCallback((emoteId) => {
+    if (!EMOTE_VALID.has(emoteId)) return;
+    const now = Date.now();
+    if (now - emoteCdRef.current < EMOTE_CD_MS) return;
+    emoteCdRef.current = now;
+    setEmoteOpen(false);
+    if (mode === 'multiplayer' && !isHost) {
+      const conn = connRef.current;
+      if (conn && conn.open) { try { conn.send({ type: 'emote', emote: emoteId }); } catch (e) {} }
+      return;
+    }
+    const me = stRef.current && stRef.current.players.find(p => p.isLocal);
+    if (!me) return;
+    pushEmote(me.id, emoteId);
+    scheduleAiEmoteReaction(emoteId, null);
+    if (mode === 'multiplayer' && isHost) {
+      mpRef.current && mpRef.current.conns && mpRef.current.conns.forEach(ec => {
+        if (ec.open) try { ec.send({ type: 'emote', pid: me.id, emote: emoteId }); } catch (e) {}
+      });
+    }
+  }, [mode, isHost, pushEmote, scheduleAiEmoteReaction]);
 
   // 批二：重连临时 peer 与 timer 引用（防僵尸 peer / 不可取消定时器累积）
   const reconPeerRef = useRef(null);
@@ -866,6 +1133,7 @@ function Game() {
     };
     const localPlay = () => {
       const d = aiPlay(ai.hand, st.targetSuit, ai.personality, ai.customConfig, aiOpts);
+      aiHonestRef.current[ai.id] = d.honest; // v110：表情反应决策用（undefined=盲打未知）
       aiRef.current = setTimeout(() => {
         d.cards.length ? sendAction({ type: 'AI_PLAY', pid: ai.id, cards: d.cards }) : sendAction({ type: 'CONTINUE' });
       }, aiDelay(400 + Math.random() * 400));
@@ -880,6 +1148,7 @@ function Game() {
         return { cards: d.cards };
       }).then(r => {
         if (cancelled || !r) return;
+        if (r.honest !== undefined) aiHonestRef.current[ai.id] = r.honest; // v110：LLM 局同样记录诚实度
         LlmAI.announce(ai.name, r, '出牌', r.cards.map(c => c.suit === 'J' ? 'J' : c.suit).join('+') + ' → 声明 ' + st.targetSuit);
         // 演出让位：LLM 等待本身即演出，结果就绪后 400ms 固定节奏即出
         aiRef.current = setTimeout(() => {
@@ -1212,7 +1481,34 @@ function Game() {
     }
   }, [mode, isHost]);
 
+  // ── v111：大话骰 AI 回合驱动（单机限定）──────────────────────────────
+  useEffect(() => {
+    if (gameKind !== 'dice' || !dst || dst.phase !== 'bid' || paused) return undefined;
+    const ai = dst.players[dst.curPlayer];
+    if (!ai || !ai.isAI || !ai.alive) return undefined;
+    const aliveCount = dst.players.filter(p => p.alive).length;
+    const noise = (AI_NOISE[dst.difficulty] || {}).play || 0;
+    const t = setTimeout(() => {
+      const s = dstRef.current;
+      if (!s || s.phase !== 'bid') return;
+      // 叫开判断：当前叫点可疑时按人格/难度概率掀桌
+      if (s.lastBid && aiDiceCallOpen(ai.dice, s.lastBid, aliveCount, ai.personality, ai.customConfig, noise)) {
+        diceDispatch({ type: 'DICE_CALL', pid: s.curPlayer });
+        return;
+      }
+      const bid = aiDiceBid(ai.dice, s.lastBid, aliveCount, ai.personality, ai.customConfig);
+      diceDispatch({ type: 'DICE_BID', pid: ai.id, count: bid.count, face: bid.face });
+    }, aiDelay(600 + Math.random() * 600));
+    return () => clearTimeout(t);
+  }, [gameKind, dst, paused]);
+
+  // v111：骰子局轮盘演出完成后推进状态机
+  const onDiceRouletteDone = useCallback(() => {
+    diceDispatch({ type: 'DICE_ROULETTE_DONE' });
+  }, []);
+
   const quitGame = useCallback(() => {
+    setGameKind('cards'); diceDispatch({ type: 'DICE_RESET' }); // v111：骰子局一并清理
     reconCleanup(); // v106：退出同时清断线离席计时器与重连残留
     const s = stRef.current;
     if (mode === 'multiplayer' && currentUser) {
@@ -1360,6 +1656,8 @@ function Game() {
         setScreen('lobby'); }, onClose: () => setAuthMode(false) }),
     screen === 'lobby' && h(Lobby, { onStart: startSingle, onMultiStart: startMulti, onBack, user: currentUser, onLogout: () => { clearSession();
         setCurrentUser(null); } }),
+    // ── v111：骰子模式对局屏（平行状态机 dst 驱动，单机限定）──
+    screen === 'playing' && gameKind === 'dice' && dst && h(DiceTable, { dst, dispatch: diceDispatch, onQuit: quitGame, onRouletteDone: onDiceRouletteDone }),
     screen === 'playing' && active && h('div', { key: 'screen-playing', style: { animation: 'fade-in 0.35s ease' } }, //：对局屏切入淡入（Fragment→div 包裹；纯 opacity 不影响 fixed 子元素与布局）
       st.frenzy && h('div', { className: 'frenzy-overlay' }),
       detailPid != null && h(PlayerDetailPanel, { st, pid: detailPid, onClose: () => setDetailPid(null) }),
@@ -1456,7 +1754,16 @@ function Game() {
             isClaimer = st.lastClaim?.playerId === opp.id;
           const handLen = opp.hand?.length || opp.handCount || 0,
             libLen = opp.library?.length || opp.libraryCount || 0;
-          return h('div', { key: opp.id, onClick: () => setDetailPid(opp.id), title: '查看' + opp.name + '的状态', style: { cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: dead ? 0.4 : 1, transition: 'opacity 0.3s', border: `1px solid ${isCur && !dead ? 'hsl(0 45% 32%)' : 'var(--c-border-soft)'}`, borderRadius: 10, padding: '8px 12px', background: isCur && !dead ? 'rgba(180,30,30,0.08)' : 'transparent' } },
+          // v110：该对手最近的表情气泡（2.5s 内）
+          const oppEmote = (() => {
+            for (let i = emotes.length - 1; i >= 0; i--) if (emotes[i].pid === opp.id) return emotes[i];
+            return null;
+          })();
+          const oppEmoteDef = oppEmote && EMOTE_LIST.find(e => e.id === oppEmote.emote);
+          return h('div', { key: opp.id, onClick: () => setDetailPid(opp.id), title: '查看' + opp.name + '的状态', style: { cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: dead ? 0.4 : 1, transition: 'opacity 0.3s', border: `1px solid ${isCur && !dead ? 'hsl(0 45% 32%)' : 'var(--c-border-soft)'}`, borderRadius: 10, padding: '8px 12px', background: isCur && !dead ? 'rgba(180,30,30,0.08)' : 'transparent', position: 'relative' } },
+            oppEmoteDef && h('div', { key: 'emote' + oppEmote.ts, className: 'emote-bubble', title: oppEmoteDef.label, style: { position: 'absolute', top: -30, left: '50%', transform: 'translateX(-50%)', zIndex: 30, background: 'var(--c-input-bg)', border: '1px solid var(--c-border)', borderRadius: 999, padding: '3px 10px', display: 'flex', alignItems: 'center', color: 'var(--c-text-bright)', boxShadow: '0 4px 12px rgba(0,0,0,0.45)', pointerEvents: 'none' } },
+              h(Icon[oppEmoteDef.icon] || Icon.EmoteAsk, { size: 18 }),
+            ),
             h('div', {
               style: {
                 width: isCur ? 64 : 52,
@@ -1683,6 +1990,23 @@ function Game() {
             h('span', null, (rI18n.name || def.id) + '·' + (chk.ok ? (rI18n.action || '发动') : reasonText)),
           ),
         );
+      })(),
+      // v110：自己的表情气泡（手牌区上方居中浮现，2.5s 消散）
+      (function () {
+        const meP = st.players.find(p => p.isLocal);
+        if (!meP) return null;
+        for (let i = emotes.length - 1; i >= 0; i--) {
+          if (emotes[i].pid === meP.id) {
+            const def = EMOTE_LIST.find(e => e.id === emotes[i].emote);
+            if (def) return h('div', { key: 'myemote' + emotes[i].ts, className: 'emote-bubble', style: { display: 'flex', justifyContent: 'center', width: '100%', padding: '0 0 4px', pointerEvents: 'none' } },
+              h('div', { style: { display: 'flex', alignItems: 'center', gap: 6, background: 'var(--c-input-bg)', border: '1px solid var(--c-accent-dim, hsl(40 60% 40%))', borderRadius: 999, padding: '3px 12px', color: 'var(--c-text-bright)', boxShadow: '0 4px 12px rgba(0,0,0,0.45)', animation: 'emote-pop 0.3s ease' } },
+                h('span', { style: { fontSize: 11, color: 'var(--c-text-dim)' } }, '你'),
+                h(Icon[def.icon] || Icon.EmoteAsk, { size: 18 }),
+              ),
+            );
+          }
+        }
+        return null;
       })(),
       h(PlayerHand, {
         hand: curP?.hand ?? [],
@@ -1941,6 +2265,25 @@ function Game() {
           h('button', { className: 'btn btn-outline', style: { color: 'hsl(0 60% 60%)', borderColor: 'hsl(0 40% 30%)' }, onClick: () => { setQuitConfirm(false); quitGame(); } }, '确定退出'),
         ),
       ),
+    ),
+    // ── v110：表情快捷栏（单机/联机通用，右下角固定；联机时为聊天按钮让位）──
+    screen === 'playing' && active && h('div', { style: { position: 'fixed', right: 16, bottom: mode === 'multiplayer' ? 76 : 16, zIndex: 60, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 } },
+      emoteOpen && h('div', { className: 'panel animate-slide-up', style: { display: 'flex', gap: 6, padding: '8px 10px', borderRadius: 999, alignItems: 'center' } },
+        EMOTE_LIST.map(e => h('button', {
+          key: e.id,
+          onClick: () => sendEmote(e.id),
+          title: e.label,
+          'aria-label': '表情：' + e.label,
+          style: { width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--c-border-soft)', border: '1px solid var(--c-border)', color: 'var(--c-text-bright)', cursor: 'pointer', padding: 0 }
+        }, h(Icon[e.icon], { size: 20 }))),
+      ),
+      h('button', {
+        className: 'btn btn-outline',
+        onClick: () => setEmoteOpen(o => !o),
+        'aria-label': '表情快捷栏',
+        title: '表情',
+        style: { width: 44, height: 44, borderRadius: '50%', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }
+      }, h(Icon.EmoteSmirk, { size: 20 })),
     ),
     mode === 'multiplayer' && h('div', { style: { position: 'fixed', right: 16, bottom: 16, zIndex: 60 } },
       chatOpen && h('div', { className: 'panel', style: { width: 280, maxHeight: 320, display: 'flex', flexDirection: 'column', marginBottom: 8, padding: 0, overflow: 'hidden' } },

@@ -175,6 +175,7 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
   const [settings, setSettings] = useState(false);
   const [settingsR, settingsClosing] = useExitAnim(settings, 250);
   const [diff, setDiff] = useState('normal');
+  const [playMode, setPlayMode] = useState('cards'); // v111：单机玩法——cards 经典牌局 | dice 大话骰
   const [menuMode, setMenuMode] = useState('single'); //：开始游戏=单机/联机合并入口，下方选择模式
   const [showAch, setShowAch] = useState(false);
   const [achR, achClosing] = useExitAnim(showAch, 250);
@@ -276,7 +277,7 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
 
   const handleStart = () => {
     var cfgs = selectedAIs.map(function (i) { return aiCfgs[i]; });
-    onStart(diff, cfgs, selectedAIs, incRoulette, autoSort, 5); //：上限锁定 5，设置开关已移除
+    onStart(diff, cfgs, selectedAIs, incRoulette, autoSort, 5, playMode); //：上限锁定 5（设置开关已移除）；v111 传玩法（cards|dice）
   };
 
   return h('div', {
@@ -495,6 +496,26 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
           },
             h('span', { style: { display: 'inline-flex' } }, h(Icon.Wifi, { size: 13 })), t('ui.modeMulti')),
         ),
+      ),
+      // v111：单机玩法选择——经典牌局 / 大话骰（联机模式不显示）
+      menuMode === 'single' && h('div', { style: { display: 'flex', gap: 8 } },
+        [
+          { id: 'cards', label: '经典牌局', icon: 'Cards', desc: '唬牌 + 命运转盘' },
+          { id: 'dice', label: '大话骰', icon: 'Sparkles', desc: '骰盅叫点 · 新玩法' },
+        ].map(m => h('button', {
+          key: m.id,
+          onClick: function () { setPlayMode(m.id); },
+          style: {
+            flex: 1, padding: '9px 0', borderRadius: '0.6rem', cursor: 'pointer', transition: 'all 0.2s',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+            background: playMode === m.id ? 'rgba(200,160,50,0.14)' : 'rgba(0,0,0,0.35)',
+            border: '1px solid ' + (playMode === m.id ? 'hsl(42 80% 45%)' : 'rgba(255,255,255,0.10)'),
+            color: playMode === m.id ? 'hsl(42 85% 70%)' : 'hsl(0 8% 55%)',
+          },
+        },
+          h('span', { style: { fontSize: 13, fontWeight: playMode === m.id ? 700 : 500 } }, m.label),
+          h('span', { style: { fontSize: 10, opacity: 0.75 } }, m.desc),
+        )),
       ),
       h('button', { className: 'btn btn-outline btn-lg', style: { width: '100%' }, onClick: function () { setAchData(loadAch()); setShowAch(true); } }, h(Icon.Trophy, { size: 16 }), t('ui.ach')),
       h('button', { className: 'btn btn-outline btn-lg', style: { width: '100%' }, onClick: function () { setShowStats(true); } }, h(Icon.Swords, { size: 16 }), t('ui.stats')), // P1-2

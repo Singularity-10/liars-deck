@@ -249,3 +249,113 @@ function aiPickChoice(ev, aiPlayer) {
   }
   return (safe.length ? safe : options)[Math.floor(Math.random() * (safe.length ? safe.length : options.length))].id;
 }
+
+// ── v110 表情互动：AI 反应决策 ───────────────────────────────────────
+
+/**
+ * v110 AI 表情反应：玩家发表情后，AI 按局势+人格决定是否回应、回什么。
+ * ctx: { persona, wasLastBluff(该AI最近一次出牌撒谎), wasCaught(该AI最近被抓包), bluffRate }
+ * @param {string} emoteId 玩家发出的表情 id（EMOTE_LIST 中的 id）
+ * @param {{ persona?: string|null, wasLastBluff?: boolean, wasCaught?: boolean }} [ctx]
+ * @returns {string|null} AI 回应的表情 id，null = 不回应
+ */
+function aiReactToEmote(emoteId, ctx = {}) {
+  const P = ctx.persona || null;
+  // 人格倾向修正：berserker 更容易上头回应，observer 冷眼旁观
+  let base = 0.35;
+  if (P === 'berserker') base += 0.15;
+  else if (P === 'observer') base -= 0.12;
+  else if (P === 'impatient') base += 0.08;
+  const rate = Math.min(0.85, Math.max(0.1, base));
+
+  // 反应矩阵：[表情来源] → [候选回应及权重]
+  const MATRIX = {
+    smirk:   ctx.wasCaught ? [['sweat', 0.65], ['gasp', 0.2]] : ctx.wasLastBluff ? [['smirk', 0.45], ['laugh', 0.25]] : [['hmph', 0.3]],
+    laugh:   ctx.wasCaught ? [['sweat', 0.6]] : [['laugh', 0.3], ['hmph', 0.3]],
+    gasp:    [['laugh', 0.35], ['smirk', 0.2]],
+    hmph:    ctx.wasLastBluff ? [['gasp', 0.3], ['smirk', 0.3]] : [['smirk', 0.25]],
+    thumb:   [['cheers', 0.4]],
+    cheers:  [['cheers', 0.45]],
+    ask:     [['sweat', 0.25], ['smirk', 0.2]],
+    sweat:   [['laugh', 0.3], ['hmph', 0.2]],
+  };
+  const cands = MATRIX[emoteId] || [];
+  if (!cands.length || Math.random() > rate) return null;
+  // 按权重挑候选
+  const total = cands.reduce((s, c) => s + c[1], 0);
+  let r = Math.random() * total;
+  for (const [id, w] of cands) {
+    r -= w;
+    if (r <= 0) return id;
+  }
+  return cands[cands.length - 1][0];
+}
+
+// ── v111 大话骰：AI 叫点与叫开决策 ───────────────────────────────────
+
+/**
+ * AI 骰子叫点：基于自家骰点统计 + 全场期望，人格加成虚叫倾向。
+ * @param {number[]} dice 自家骰点数组
+ * @param {{count:number,face:number,pid:number}|null} lastBid 当前叫点（null=任意起叫）
+ * @param {number} aliveCount 存活人数（全场骰总数 = aliveCount*5）
+ * @param {string} personality
+ * @param {Object|null} cfg 自定义配置
+ * @returns {{count:number, face:number}} 合法叫点
+ */
+function aiDiceBid(dice, lastBid, aliveCount, personality, cfg) {
+  const totalDice = aliveCount * 5;
+  const cnt = {}; DICE_FACES.forEach(f => cnt[f] = 0);
+  dice.forEach(d => cnt[d]++);
+  // 自家最多的点数（并列随机取一），作为首选叫点
+  let best = 1, bestN = -1;
+  const shuffled = DICE_FACES.slice().sort(() => Math.random() - 0.5);
+  shuffled.forEach(f => { if (cnt[f] > bestN) { bestN = cnt[f]; best = f; } });
+  // 期望：其余骰子中出现该点数的期望 ≈ (totalDice - 自家) / 6
+  const expect = (totalDice - dice.length) / 6;
+  // 起叫：贴着期望选一个有依据的量（自家数 + 期望，四舍五入且至少 1）
+  if (!lastBid) {
+    let count = Math.max(1, Math.round(bestN + expect * 0.9));
+    if (count > totalDice) count = totalDice;
+    return { count, face: best };
+  }
+  // 跟叫：最小合法加码 = (lastBid.count, lastBid.face+1) 或 (lastBid.count+1, 任意)
+  // 候选 A：同量升点（自家该点有存货时优先）
+  const cands = [];
+  for (let f = lastBid.face + 1; f <= 6; f++) cands.push({ count: lastBid.count, face: f, stock: cnt[f] });
+  if (lastBid.count < totalDice) cands.push({ count: lastBid.count + 1, face: best, stock: cnt[best] });
+  if (!cands.length) return { count: lastBid.count + 1, face: best }; // 兜底（理论不可达）
+  // aggressive/impatient 偶尔虚加一档吹一把（人格 bluff 倾向）
+  const bluffRate = personality === 'impatient' ? 0.18 : personality === 'aggressive' ? 0.12 : personality === 'berserker' ? 0.22 : 0.05;
+  const stock0 = cands[0].stock;
+  const base = stock0 > 0 ? cands[0] : cands[cands.length - 1];
+  let pick = base;
+  if (Math.random() < bluffRate && lastBid.count + 2 <= totalDice) {
+    pick = { count: lastBid.count + 2, face: best }; // 虚吹两档
+  } else {
+    // 带存货的候选优先（本轮次序上 cands[0] 是最小加码）
+    const withStock = cands.filter(c => c.stock > 0);
+    if (withStock.length) pick = withStock[Math.floor(Math.random() * Math.min(withStock.length, 2))];
+  }
+  return { count: pick.count, face: pick.face };
+}
+
+/**
+ * AI 骰子叫开判断：lastBid.count vs 自家存货 + 剩余期望，带难度噪声与人格偏好。
+ * @returns {boolean} true = 叫开
+ */
+function aiDiceCallOpen(dice, lastBid, aliveCount, personality, cfg, noise = 0) {
+  if (!lastBid) return false;
+  const totalDice = aliveCount * 5;
+  const have = dice.filter(d => d === lastBid.face).length;
+  const expect = (totalDice - dice.length) / 6;
+  // 保守估计：达成概率 ≈ 存货 + 剩余期望（均值近似）
+  const est = have + expect;
+  let threshold = lastBid.count - 0.5; // est 低于叫点 -0.5 视为怀疑
+  // 人格：berserker 爱叫开（阈值抬高），conservative 忍（阈值压低）
+  if (personality === 'berserker') threshold += 1.0;
+  else if (personality === 'conservative') threshold -= 0.7;
+  else if (personality === 'impatient') threshold += 0.3;
+  // 高难度 AI 判断更准（噪声越小）
+  const jitter = (Math.random() - 0.5) * (2 * (1 - noise));
+  return (est + jitter) < threshold;
+}
