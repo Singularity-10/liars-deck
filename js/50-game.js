@@ -218,6 +218,9 @@ function DiceFace({ v, size = 40, dim = false }) {
 function DiceTable({ dst, dispatch, onQuit, onRouletteDone }) {
   const [bidCount, setBidCount] = useState(1);
   const [bidFace, setBidFace] = useState(2);
+  // v113：骰局首遇提示（一次即记，localStorage 去重）
+  const [diceFtue, setDiceFtue] = useState(() => { try { return !localStorage.getItem('ld_dice_ftue'); } catch (e) { return false; } });
+  const dismissDiceFtue = () => { setDiceFtue(false); try { localStorage.setItem('ld_dice_ftue', '1'); } catch (e) {} };
   const me = dst.players[0];
   const cur = dst.players[dst.curPlayer];
   const myTurn = dst.phase === 'bid' && dst.curPlayer === 0 && me && me.alive;
@@ -298,6 +301,13 @@ function DiceTable({ dst, dispatch, onQuit, onRouletteDone }) {
 
   // ── 主牌桌 ──
   return h('div', { key: 'screen-dice', style: { animation: 'fade-in 0.35s ease', padding: '8px 10px 120px', maxWidth: 560, margin: '0 auto' } },
+    // v113：首遇提示条（bid 阶段显示）
+    diceFtue && dst.phase === 'bid' && h('div', { className: 'panel animate-slide-up', style: { margin: '0 0 10px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 } },
+      h('span', { style: { display: 'inline-flex', color: 'var(--c-accent)', flexShrink: 0 } }, h(Icon.Dices, { size: 20 })),
+      h('div', { style: { flex: 1, fontSize: 12, color: 'var(--c-text-dim)', lineHeight: 1.5 } },
+        h('b', { style: { color: 'var(--c-text-bright)' } }, '大话骰'), '：每人 5 骰偷看，轮番叫「N 个 X」，只能加码或叫开。开盅验点，输家上命运转盘——敢吹就吹到底。'),
+      h('button', { className: 'btn btn-ghost', style: { padding: '4px 10px', flexShrink: 0 }, onClick: dismissDiceFtue }, '知道了'),
+    ),
     // 顶部状态
     h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, color: 'var(--c-text-dim)', padding: '4px 4px 8px' } },
       h('span', null, '第 ' + dst.round + ' 局 · 存活 ' + aliveCount + ' · 全场骰 ' + totalDice),
