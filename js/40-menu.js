@@ -440,6 +440,8 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
         })
       ),
     ),
+    // ── v116：配置屏左上角固定返回酒馆 ──
+    setupView && h('button', { className: 'btn btn-ghost', style: { position: 'absolute', top: 18, left: 16, zIndex: 20, fontSize: 13, color: 'hsl(35 25% 72%)', display: 'flex', alignItems: 'center', gap: 4 }, onClick: function () { setSetupView(null); } }, '◀ 返回酒馆'),
     // ═══ v115：酒馆门户 / 玩法配置屏 双态渲染 ═══
     setupView === null ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 300, opacity: 0, animation: 'enter-rise 0.5s ease 2s forwards' } },
       // 玩法选择两大卡（选后进入对应配置屏）
@@ -454,10 +456,10 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
         },
           h('span', { style: { display: 'inline-flex', color: m.accent ? 'var(--c-danger)' : 'var(--c-accent)', flexShrink: 0 } }, h(Icon[m.icon], { size: 34 })),
           h('span', { style: { flex: 1 } },
-            h('span', { style: { display: 'block', fontSize: 18, fontWeight: 800, fontFamily: 'var(--font-title)' } }, m.label),
-            h('span', { style: { display: 'block', fontSize: 11.5, color: 'var(--c-text-dim)', marginTop: 3 } }, m.desc),
+            h('span', { style: { display: 'block', fontSize: 18, fontWeight: 800, fontFamily: 'var(--font-title)', color: 'hsl(42 85% 72%)' } }, m.label), // v116：亮色（默认继承 button 黑字看不清）
+            h('span', { style: { display: 'block', fontSize: 11.5, color: 'hsl(35 15% 68%)', marginTop: 3 } }, m.desc),
           ),
-          h('span', { style: { color: 'var(--c-text-faint)', fontSize: 18 } }, '▶'),
+          h('span', { style: { color: 'hsl(42 70% 55%)', fontSize: 18 } }, '▶'), // v116 提亮
         );
       }),
       // 联机对战（牌局规则，走大厅）
@@ -466,8 +468,7 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
       h('button', { className: 'btn btn-outline btn-lg', style: { width: '100%' }, onClick: function () { setAchData(loadAch()); setShowAch(true); } }, h(Icon.Trophy, { size: 16 }), t('ui.ach')),
       h('button', { className: 'btn btn-outline btn-lg', style: { width: '100%' }, onClick: function () { setShowStats(true); } }, h(Icon.Swords, { size: 16 }), t('ui.stats')), // P1-2
     ) : h('div', { style: { display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 300, opacity: 0, animation: 'enter-rise 0.5s ease 1.9s forwards' } },
-      // ── 玩法配置屏：返回 + 难度（语境徽章）+ 开始 ──
-      h('button', { className: 'btn btn-ghost', style: { width: '100%', justifyContent: 'center', fontSize: 13 }, onClick: function () { setSetupView(null); } }, '◀ 返回酒馆'),
+      // ── 玩法配置屏：难度（语境徽章）+ 开始（返回钮已固定左上角）──
       h('div', { style: { display: 'flex', gap: 10, marginBottom: (diff === 'hard' || diff === 'easy') ? 12 : 0 } },
         h('button', {
           className: 'btn ' + (diff === 'easy' ? 'btn-primary' : 'btn-outline'),
