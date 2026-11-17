@@ -11,7 +11,7 @@ const I18N = {
   zh: {
     ui: {
       subtitle: '酒馆深处 · 谎言与子弹',
-      title: '骗子牌',
+      title: '酒馆',
       titleEn: "Liar's Deck",
       rules: '游戏规则',
       aiParams: '{name} 的参数',
