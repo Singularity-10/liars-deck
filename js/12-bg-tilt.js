@@ -32,11 +32,6 @@ function btMapOrientation(db, dg, gain, maxRx, maxRy, sign) {
   return { rx: btClamp(db * gain * s, maxRx), ry: btClamp(dg * gain * s, maxRy) };
 }
 
-/** 桌面鼠标视差（nx/ny ∈ [-1,1]，触屏 pointerType 已在引擎层过滤） */
-function btMapPointer(nx, ny, maxRx, maxRy) {
-  return { rx: btClamp(-ny * 1.8, maxRx), ry: btClamp(nx * 2.2, maxRy) };
-}
-
 /** 基准缓慢回中：dt 毫秒内向 raw 收敛 dt/tau 比例 */
 function btRecenter(base, raw, dtMs, tauMs) {
   if (!(dtMs > 0)) return base;
@@ -90,7 +85,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   (function () {
     var enabled = false, active = false, raf = 0, prevTs = 0;
     var cur = { rx: 0, ry: 0 };
-    var base = null, last = null, lastPointer = null, lastChange = 0, lastEventT = 0;
+    var base = null, last = null, lastChange = 0, lastEventT = 0; // v118：唯一驱动=deviceorientation
     var hasOrient = false, nodes = [];
 
     function reducedMotion() {
@@ -108,7 +103,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 
     function onOrient(e) {
       if (!enabled || e.beta == null || e.gamma == null) return;
-      hasOrient = true; // 一旦有传感器读数，指针输入让位（防触屏 pointermove 双驱）
+      hasOrient = true; // 一旦有传感器读数，指针输入让位（历史：防触屏指针双驱；v118 后指针输入已不存在）
       var m = btRemap(e.beta, e.gamma, screenAngle());
       var now = performance.now();
       if (!base) { base = { b: m.b, g: m.g }; lastChange = now; }
@@ -124,16 +119,8 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       wake();
     }
 
-    function onPointer(e) {
-      if (!enabled || hasOrient || e.pointerType === 'touch') return;
-      lastPointer = {
-        nx: (e.clientX / window.innerWidth) * 2 - 1,
-        ny: (e.clientY / window.innerHeight) * 2 - 1,
-        t: performance.now(),
-      };
-      lastChange = lastPointer.t;
-      wake();
-    }
+    // v118：指针视差输入整体移除——背景唯一驱动=deviceorientation（手机移动），
+    // 点击/触摸/桌面鼠标不再引起任何背景反应（部分安卓 WebView 触屏指针类型误报 mouse，此前导致点击背景晃动）
 
     function onVis() {
       if (document.hidden && active) { cancelAnimationFrame(raf); active = false; prevTs = 0; }
@@ -174,9 +161,6 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       if (last) {
         var m = btMapOrientation(last.b - base.b, last.g - base.g, BG_TILT_GAIN, BG_TILT_MAX_RX, BG_TILT_MAX_RY, BG_TILT_SIGN);
         target.rx = m.rx; target.ry = m.ry;
-      } else if (lastPointer) {
-        var p = btMapPointer(lastPointer.nx, lastPointer.ny, BG_TILT_MAX_RX, BG_TILT_MAX_RY);
-        target.rx = p.rx; target.ry = p.ry;
       }
       var fdt = prevTs ? Math.max(0, ts - prevTs) : 16.7;
       prevTs = ts;
@@ -200,18 +184,16 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 
     function attach() {
       window.addEventListener('deviceorientation', onOrient, { passive: true });
-      window.addEventListener('pointermove', onPointer, { passive: true });
       document.addEventListener('visibilitychange', onVis);
       collect();
     }
 
     function detach() {
       window.removeEventListener('deviceorientation', onOrient);
-      window.removeEventListener('pointermove', onPointer);
       document.removeEventListener('visibilitychange', onVis);
       park();
       clearTransforms();
-      nodes = []; base = null; last = null; lastPointer = null; lastEventT = 0; hasOrient = false;
+      nodes = []; base = null; last = null; lastEventT = 0; hasOrient = false;
     }
 
     BgTilt = {

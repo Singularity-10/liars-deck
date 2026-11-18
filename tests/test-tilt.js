@@ -12,8 +12,8 @@ const path = require('path');
 
 const code = fs.readFileSync(path.join('js', '12-bg-tilt.js'), 'utf8');
 // node 环境：无 window/document → 模块底部的浏览器分支自动跳过，纯函数直接可取
-const api = new Function(code + '\nreturn { btClamp, btRemap, btMapOrientation, btMapPointer, btRecenter, btLerp, btLayerTransform, BG_TILT_GAIN, BG_TILT_MAX_RX, BG_TILT_MAX_RY, BG_TILT_LAYERS, BG_TILT_LEGACY };')();
-const { btClamp, btRemap, btMapOrientation, btMapPointer, btRecenter, btLerp, btLayerTransform, BG_TILT_GAIN, BG_TILT_MAX_RX, BG_TILT_MAX_RY, BG_TILT_LAYERS, BG_TILT_LEGACY } = api;
+const api = new Function(code + '\nreturn { btClamp, btRemap, btMapOrientation, btRecenter, btLerp, btLayerTransform, BG_TILT_GAIN, BG_TILT_MAX_RX, BG_TILT_MAX_RY, BG_TILT_LAYERS, BG_TILT_LEGACY };')();
+const { btClamp, btRemap, btMapOrientation, btRecenter, btLerp, btLayerTransform, BG_TILT_GAIN, BG_TILT_MAX_RX, BG_TILT_MAX_RY, BG_TILT_LAYERS, BG_TILT_LEGACY } = api;
 
 let fails = 0, checks = 0;
 function assert(c, m) { checks++; if (!c) { console.log('  ✗ ' + m); fails++; } else console.log('  ✓ ' + m); }
@@ -48,15 +48,9 @@ assert(m5.rx === 0 && m5.ry === 0, 'orientation：零增量 → 恒等');
 var mS = btMapOrientation(10, 0, 0.18, 4, 5, 1);
 assert(Math.abs(mS.rx - 1.8) < 1e-9, 'orientation：符号参数可翻（真机手感校准用）');
 
-// ── btMapPointer ──
-var p0 = btMapPointer(0, 0, 4, 5);
-assert(p0.rx === 0 && p0.ry === 0, 'pointer：屏幕中心 → 恒等');
-var p1 = btMapPointer(1, 1, 4, 5);
-assert(Math.abs(p1.rx + 1.8) < 1e-9 && Math.abs(p1.ry - 2.2) < 1e-9, 'pointer：右下角 → (rx-1.8°, ry+2.2°)');
-var p2 = btMapPointer(-1, -1, 4, 5);
-assert(Math.abs(p2.rx - 1.8) < 1e-9 && Math.abs(p2.ry + 2.2) < 1e-9, 'pointer：左上角对称');
-var p3 = btMapPointer(1, 1, 0.5, 0.6);
-assert(p3.rx === -0.5 && p3.ry === 0.6, 'pointer：幅度受上限约束时截断');
+// ── v118：btMapPointer 与 pointermove 输入已整体移除（背景唯一驱动=deviceorientation）──
+assert(!/pointermove/.test(code), 'pointermove 输入已移除（点击/触摸不再驱动背景）');
+assert(!/btMapPointer|lastPointer/.test(code), '指针视差残留引用已清零');
 
 // ── btRecenter ──
 assert(btRecenter(50, 50, 800, 4000) === 50, 'recenter：已对齐不动');
