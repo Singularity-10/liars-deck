@@ -177,6 +177,7 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
   const [diff, setDiff] = useState('normal');
   const [playMode, setPlayMode] = useState('cards'); // v111：单机玩法——cards 经典牌局 | dice 大话骰
   const [setupView, setSetupView] = useState(null); // v115：玩法拆分——null=酒馆门户 | 'cards'/'dice'=对应玩法配置屏
+  const [selMode, setSelMode] = useState(null); // v117：门户卡两步交互——首次点选中高亮，再点进入
   const [menuMode, setMenuMode] = useState('single'); //：开始游戏=单机/联机合并入口，下方选择模式
   const [showAch, setShowAch] = useState(false);
   const [achR, achClosing] = useExitAnim(showAch, 250);
@@ -449,19 +450,21 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
         { id: 'cards', label: '经典牌局', icon: 'Cylinder', desc: '唬牌声称 · 命运转盘 · 角色与随机事件', accent: true },
         { id: 'dice', label: '大话骰', icon: 'Dices', desc: '骰盅叫点 · 加码或叫开 · 输家上转盘', accent: false },
       ].map(function (m) {
+        const sel = selMode === m.id; // v117：选中态
         return h('button', {
           key: m.id,
-          onClick: function () { setPlayMode(m.id); setSetupView(m.id); },
-          style: { display: 'flex', alignItems: 'center', gap: 14, padding: '18px 18px', borderRadius: 14, cursor: 'pointer', textAlign: 'left', background: m.accent ? 'linear-gradient(135deg, rgba(180,30,30,0.22), rgba(120,20,20,0.12))' : 'rgba(0,0,0,0.45)', border: '1px solid ' + (m.accent ? 'hsl(0 45% 38%)' : 'hsl(0 12% 20%)'), transition: 'all 0.2s' },
+          onClick: function () { if (sel) { setPlayMode(m.id); setSetupView(m.id); } else setSelMode(m.id); }, // 两步：选中 → 进入
+          style: { display: 'flex', alignItems: 'center', gap: 14, padding: '18px 18px', borderRadius: 14, cursor: 'pointer', textAlign: 'left', background: 'transparent', border: '1.5px solid ' + (sel ? 'hsl(42 85% 60%)' : 'hsl(0 12% 20%)'), boxShadow: sel ? '0 0 16px rgba(220,170,60,0.25)' : 'none', transition: 'all 0.2s' },
         },
           h('span', { style: { display: 'inline-flex', color: m.accent ? 'var(--c-danger)' : 'var(--c-accent)', flexShrink: 0 } }, h(Icon[m.icon], { size: 34 })),
           h('span', { style: { flex: 1 } },
             h('span', { style: { display: 'block', fontSize: 18, fontWeight: 800, fontFamily: 'var(--font-title)', color: 'hsl(42 85% 72%)' } }, m.label), // v116：亮色（默认继承 button 黑字看不清）
             h('span', { style: { display: 'block', fontSize: 11.5, color: 'hsl(35 15% 68%)', marginTop: 3 } }, m.desc),
           ),
-          h('span', { style: { color: 'hsl(42 70% 55%)', fontSize: 18 } }, '▶'), // v116 提亮
+          h('span', { style: { color: sel ? 'hsl(42 85% 72%)' : 'hsl(42 70% 55%)', fontSize: 18, animation: sel ? 'hint-breath 1.6s ease-in-out infinite' : 'none' } }, '▶'),
         );
       }),
+      selMode && h('p', { style: { fontSize: 11, color: 'hsl(42 85% 72%)', textAlign: 'center', letterSpacing: '0.1em', margin: 0 } }, '再次点击「' + (selMode === 'cards' ? '经典牌局' : '大话骰') + '」进入'),
       // 联机对战（牌局规则，走大厅）
       h('button', { className: 'btn btn-outline', style: { width: '100%', padding: '13px 0', fontSize: 16, justifyContent: 'center', borderRadius: '0.75rem' }, onClick: onMultiplayer },
         h(Icon.Wifi, { size: 16 }), t('ui.modeMulti')),
