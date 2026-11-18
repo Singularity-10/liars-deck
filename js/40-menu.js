@@ -530,6 +530,7 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
             h('span', { style: { fontSize: 12, color: 'hsl(42 60% 60%)' } }, '已解锁 ' + Object.keys((achData || {}).unlocked || {}).length + ' / ' + ACHIEVEMENTS.length),
             h('button', { className: 'btn btn-ghost', style: { padding: '2px 8px', fontSize: 12, color: 'hsl(0 60% 60%)' }, onClick: function () { setShowAch(false); } }, '关闭'),
           ),
+          h('p', { style: { fontSize: 11, color: 'var(--c-text-faint)', textAlign: 'center', margin: '-6px 0 10px' } }, '成就与战绩仅统计经典牌局；大话骰不参与计分'), // v118：双玩法口径明示
         ),
         h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } },
           ACHIEVEMENTS.map(function (a) {

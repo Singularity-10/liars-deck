@@ -1886,6 +1886,10 @@ function reducer(st, act) {
  * @returns {GameState}
  */
 function wrappedReducer(st, act) {
+  // v118：骰局开局/退出时彻底清空牌局状态（防止残留旧局触发 FTUE 气泡、快捷键 toast、事件决策 effect）
+  if (act.type === 'RESET') {
+    return Object.assign({}, INIT);
+  }
   if (act.type === 'SYNC_STATE') {
     // v106：联机状态基础结构校验（竞品防御思路）——坏包直接丢弃保留当前状态，
     // 防伪造/异常 state 让渲染层崩盘；深字段仍信任房主（威胁模型=传输损坏而非恶意房主）。

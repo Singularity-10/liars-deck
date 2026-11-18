@@ -75,6 +75,7 @@ function ftueMark(id) {
 let _lastTick = null;
 function ftueCheck(st) {
   if (!st || !st.players || st.spectateId != null) return; // 观战/回放视角不弹
+  if (st.phase === 'idle') return; // v118：空局（骰局开局时牌局被 RESET）不弹牌局教学
   if (_lastTick === st) return; // 引用锁：同一切片（其他 UI state 变化引起的重渲染）不重复检测
   _lastTick = st;
   const me = st.players.find(p => p.isHuman && p.isLocal);

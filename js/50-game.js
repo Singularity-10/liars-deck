@@ -256,7 +256,7 @@ function DiceTable({ dst, dispatch, onQuit, onRouletteDone }) {
       shotNumber: pend.shot,
       difficulty: dst.difficulty,
       shift: 0,
-      skipPenalty: false,
+      skipPenalty: skipPenaltyRef.current, // v118：骰局转盘同样遵循"跳过惩罚动画"设置（原硬编码 false 与设置文案不同步）
       onComplete: onRouletteDone,
     });
   }
@@ -584,6 +584,7 @@ function Game() {
     if (playMode === 'dice') {
       // v111：大话骰——1 玩家 + 所选 AI，平行状态机接管对局
       setGameKind('dice');
+      dispatch({ type: 'RESET' }); // v118：清牌局残留（FTUE/快捷键/事件 effect 不再误触发）
       diceDispatch({
         type: 'DICE_START',
         difficulty: diff,
@@ -594,6 +595,7 @@ function Game() {
       });
     } else {
       setGameKind('cards');
+      diceDispatch({ type: 'DICE_RESET' }); // v118：清骰局残留
       dispatch({ type: 'START', difficulty: diff, aiConfigs: cfgs, selectedAIs: selectedAIs, incrementalRoulette: inc, autoSortHand: sort, maxPlay: maxPlay });
     }
     startMusic();
