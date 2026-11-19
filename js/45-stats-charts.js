@@ -70,7 +70,7 @@ function LineChart({ matches, width = 320, height = 150 }) {
   const W = width, H = height;
   const iw = W - padL - padR, ih = H - padT - padB;
   if (list.length === 0) {
-    return h('div', { style: { fontSize: 11, color: 'hsl(0 8% 40%)', textAlign: 'center', padding: '30px 0' } }, '暂无对局记录');
+    return h('div', { style: { fontSize: 11, color: 'var(--c-text-faint)', textAlign: 'center', padding: '30px 0' } }, '暂无对局记录');
   }
   const lo = Math.min(ELO_BASE - 40, Math.min(...list) - 24);
   const hi = Math.max(ELO_BASE + 40, Math.max(...list) + 24);
@@ -93,18 +93,18 @@ function LineChart({ matches, width = 320, height = 150 }) {
       // 数据点：胜金/负红/平灰
       ...list.map((v, i) => {
         const m = matches.slice(0, 20).reverse()[i];
-        const c = m.result === 'win' ? 'hsl(142 72% 50%)' : m.result === 'draw' ? 'hsl(0 8% 55%)' : 'hsl(0 72% 55%)';
+        const c = m.result === 'win' ? 'var(--c-success)' : m.result === 'draw' ? 'var(--c-text-dim)' : 'var(--c-danger-bright)';
         return h('circle', { key: i, cx: x(i), cy: y(v), r: 3, fill: c, stroke: 'hsl(0 10% 8%)', strokeWidth: 1 });
       }),
       // 两端标签
-      h('text', { x: padL, y: H - 6, fontSize: 9, fill: 'hsl(0 8% 40%)' }, '20局前'),
-      h('text', { x: W - padR, y: H - 6, fontSize: 9, fill: 'hsl(0 8% 40%)', textAnchor: 'end' }, '最新'),
-      h('text', { x: 4, y: padT + 4, fontSize: 8, fill: 'hsl(0 8% 40%)' }, Math.round(hi)),
+      h('text', { x: padL, y: H - 6, fontSize: 9, fill: 'var(--c-text-faint)' }, '20局前'),
+      h('text', { x: W - padR, y: H - 6, fontSize: 9, fill: 'var(--c-text-faint)', textAnchor: 'end' }, '最新'),
+      h('text', { x: 4, y: padT + 4, fontSize: 8, fill: 'var(--c-text-faint)' }, Math.round(hi)),
     ),
     h('div', { style: { display: 'flex', justifyContent: 'center', gap: 14, fontSize: 10, marginTop: 4 } },
-      h('span', { style: { color: 'hsl(142 72% 50%)' } }, '● 胜'),
-      h('span', { style: { color: 'hsl(0 72% 55%)' } }, '● 负'),
-      h('span', { style: { color: 'hsl(0 8% 55%)' } }, '● 平'),
+      h('span', { style: { color: 'var(--c-success)' } }, '● 胜'),
+      h('span', { style: { color: 'var(--c-danger-bright)' } }, '● 负'),
+      h('span', { style: { color: 'var(--c-text-dim)' } }, '● 平'),
     ),
   );
 }
@@ -129,7 +129,7 @@ function RadarChart({ agg, raw, width = 240, height = 210 }) {
   );
   const labelsEl = labels.map((lb, i) => {
     const lx = cx + Math.cos(angle(i)) * (R + 14), ly = cy + Math.sin(angle(i)) * (R + 14);
-    return h('text', { key: 'l' + i, x: lx, y: ly + 3, fontSize: 10, fill: 'hsl(0 8% 68%)', textAnchor: 'middle' }, lb);
+    return h('text', { key: 'l' + i, x: lx, y: ly + 3, fontSize: 10, fill: 'var(--c-text-dim)', textAnchor: 'middle' }, lb);
   });
   const hasData = dims.some(d => (agg[d] || 0) > 0);
   const poly = hasData ? [h('polygon', {
@@ -137,12 +137,12 @@ function RadarChart({ agg, raw, width = 240, height = 210 }) {
     fill: 'hsla(42 85% 55% / 0.25)', stroke: 'var(--c-accent)', strokeWidth: 2, strokeLinejoin: 'round',
   })] : [];
   const dots = hasData ? dims.map((d, i) =>
-    h('circle', { key: 'd' + i, cx: cx + Math.cos(angle(i)) * R * Math.max(0.04, agg[d] || 0), cy: cy + Math.sin(angle(i)) * R * Math.max(0.04, agg[d] || 0), r: 2.5, fill: 'hsl(42 85% 65%)' })
+    h('circle', { key: 'd' + i, cx: cx + Math.cos(angle(i)) * R * Math.max(0.04, agg[d] || 0), cy: cy + Math.sin(angle(i)) * R * Math.max(0.04, agg[d] || 0), r: 2.5, fill: 'var(--c-accent)' })
   ) : [];
   return h('div', null,
     h('svg', { width: '100%', viewBox: '0 0 ' + width + ' ' + height }, ...rings, ...axes, ...poly, ...dots, ...labelsEl),
     h('div', { style: { display: 'flex', justifyContent: 'center', gap: 10, fontSize: 10, flexWrap: 'wrap' } },
-      labels.map((lb, i) => h('span', { key: i, style: { color: 'hsl(0 8% 55%)' } }, lb + ' ' + (raw ? raw[dims[i]] : '—'))),
+      labels.map((lb, i) => h('span', { key: i, style: { color: 'var(--c-text-dim)' } }, lb + ' ' + (raw ? raw[dims[i]] : '—'))),
     ),
   );
 }

@@ -221,14 +221,14 @@ const ReplayView = function ({ data, onClose }) {
   if (err) {
     return h('div', { className: 'overlay', style: { zIndex: 120 } },
       h('div', { className: 'panel', style: { textAlign: 'center', padding: 28 } },
-        h('p', { style: { fontSize: 14, color: 'hsl(0 72% 60%)' } }, '回放重建失败：' + err),
+        h('p', { style: { fontSize: 14, color: 'var(--c-danger-bright)' } }, '回放重建失败：' + err),
         h('button', { className: 'btn btn-outline', style: { marginTop: 12 }, onClick: onClose }, '关闭'),
       ));
   }
   if (!snaps) {
     return h('div', { className: 'overlay', style: { zIndex: 120 } },
       h('div', { className: 'panel', style: { textAlign: 'center', padding: 28 } },
-        h('p', { style: { fontSize: 14, color: 'hsl(0 8% 55%)' } }, '正在重建对局……'),
+        h('p', { style: { fontSize: 14, color: 'var(--c-text-dim)' } }, '正在重建对局……'),
       ));
   }
 
@@ -277,10 +277,10 @@ const ReplayView = function ({ data, onClose }) {
         h('button', { className: 'btn btn-sm btn-outline', onClick: onClose, style: { padding: '4px 10px' } }, h(Icon.XCircle, { size: 13 }), '退出回放'),
       ),
       // 步骤说明
-      h('div', { style: { fontSize: 13, color: 'hsl(42 85% 60%)', fontWeight: 600, marginBottom: 8, minHeight: 18 } },
+      h('div', { style: { fontSize: 13, color: 'var(--c-accent)', fontWeight: 600, marginBottom: 8, minHeight: 18 } },
         `第 ${idx} / ${snaps.length - 1} 步 · ${label}`),
       // 对局信息
-      h('div', { style: { display: 'flex', gap: 10, flexWrap: 'wrap', fontSize: 12, color: 'hsl(0 8% 60%)', marginBottom: 10 } },
+      h('div', { style: { display: 'flex', gap: 10, flexWrap: 'wrap', fontSize: 12, color: 'var(--c-text-dim)', marginBottom: 10 } },
         h('span', null, `第 ${st.round} 轮`),
         h('span', null, `目标 ${fmtTarget(st.targetSuit)}`),
         h('span', null, _REPLAY_PHASE_NAMES[st.phase] || st.phase),
@@ -311,17 +311,17 @@ const ReplayView = function ({ data, onClose }) {
             h('span', { style: { fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } },
               p.name, me && p.id === me.id ? '（你）' : '', p.alive ? '' : ' ☠'),
             role && h('span', { style: { fontSize: 10, color: 'hsl(42 60% 55%)' } }, role.name || role.id),
-            h('span', { style: { color: 'hsl(0 8% 55%)' } }, `手牌 ${p.hand ? p.hand.length : 0}`),
+            h('span', { style: { color: 'var(--c-text-dim)' } }, `手牌 ${p.hand ? p.hand.length : 0}`),
           );
         }),
       ),
       // 桌面牌
-      h('div', { style: { minHeight: 84, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexWrap: 'wrap', gap: 2, padding: '8px 6px', background: 'hsl(0 0% 100% / 0.03)', borderRadius: 10, marginBottom: 6 } },
+      h('div', { style: { minHeight: 84, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexWrap: 'wrap', gap: 2, padding: '8px 6px', background: 'hsl(0 0% 100% / 0.03)', borderRadius: 8, marginBottom: 6 } },
         (st.tableCards || []).length
           ? st.tableCards.map((c, i) => h(Card, { key: c.id, card: c, small: true, style: { marginLeft: i > 0 ? -18 : 0, zIndex: i + 1 } }))
-          : h('span', { style: { fontSize: 12, color: 'hsl(0 8% 45%)', margin: '0 auto' } }, '桌面为空'),
+          : h('span', { style: { fontSize: 12, color: 'var(--c-text-dim)', margin: '0 auto' } }, '桌面为空'),
       ),
-      st.lastClaim && h('div', { style: { fontSize: 12, color: 'hsl(0 8% 55%)', marginBottom: 10, textAlign: 'center' } },
+      st.lastClaim && h('div', { style: { fontSize: 12, color: 'var(--c-text-dim)', marginBottom: 10, textAlign: 'center' } },
         `声称 ${st.lastClaim.count} 张全部是 ${fmtTarget(st.lastClaim.suit)}`),
       // 进度条
       h('input', {
@@ -342,7 +342,7 @@ const ReplayView = function ({ data, onClose }) {
       h('div', { style: { display: 'flex', gap: 8, justifyContent: 'center' } },
         h('button', { className: 'btn btn-sm btn-outline', onClick: doExport }, h(Icon.Copy, { size: 12 }), copied ? '已复制到剪贴板' : '导出回放码'),
       ),
-      h('p', { style: { fontSize: 11, color: 'hsl(0 8% 40%)', textAlign: 'center', marginTop: 8 } },
+      h('p', { style: { fontSize: 11, color: 'var(--c-text-faint)', textAlign: 'center', marginTop: 8 } },
         '回放码包含本局完整动作与随机数序列，发给朋友即可在「终局 → 导入回放码」中复盘'),
     ));
 };

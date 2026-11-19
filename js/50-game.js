@@ -24,7 +24,7 @@ function finaleTitle(phase) {
 // 纸屑/灰雨规格：确定性伪随机（每次渲染样式稳定，不受 RNG 磁带影响——纯视觉层）
 const FINALE_CONFETTI = Array.from({ length: 16 }, (_, i) => {
   const r = n => { const x = Math.sin(i * 97.13 + n * 41.7) * 10000; return x - Math.floor(x); };
-  const colors = ['var(--c-accent)', 'hsl(0 72% 55%)', 'hsl(142 72% 50%)', 'hsl(190 70% 58%)'];
+  const colors = ['var(--c-accent)', 'var(--c-danger-bright)', 'var(--c-success)', 'hsl(190 70% 58%)'];
   return {
     left: Math.round(r(1) * 100) + '%',
     '--d': (r(2) * 2.2).toFixed(2) + 's',
@@ -145,42 +145,42 @@ function PlayerDetailPanel({ st, pid, onClose }) {
   const row = (k, v, accent) => h('div', { key: k, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' } },
     h('span', { style: { fontSize: 12, color: 'var(--c-text-dim)' } }, k),
     h('span', { style: { fontSize: 13, fontWeight: 600, color: accent || 'var(--c-text)' } }, v));
-  const tag = (text, color, bg) => h('span', { key: text, style: { fontSize: 10, color, background: bg, padding: '2px 8px', borderRadius: 10, border: '1px solid ' + color.replace(')', ',0.3)').replace('hsl', 'hsla') } }, text);
+  const tag = (text, color, bg) => h('span', { key: text, style: { fontSize: 10, color, background: bg, padding: '2px 8px', borderRadius: 8, border: '1px solid ' + color.replace(')', ',0.3)').replace('hsl', 'hsla') } }, text);
   return h('div', { style: { position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }, onClick: onClose },
     h('div', { style: { width: 'min(86vw, 340px)', maxHeight: '80vh', overflowY: 'auto', background: 'var(--c-panel, hsl(0 30% 8%))', border: '1px solid rgba(180,30,30,0.35)', borderRadius: 12, padding: '18px 20px' }, onClick: e => e.stopPropagation() },
       // 头部：纹章 + 名字 + 角色徽标
       h('div', { style: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 } },
         h('div', { style: { color: 'var(--c-accent)', display: 'flex' } }, aiCrest(p, 40) || h(Icon.User, { size: 40 })),
         h('div', { style: { flex: 1 } },
-          h('div', { style: { fontSize: 17, fontWeight: 700 } }, p.name, isMe && h('span', { style: { fontSize: 11, color: 'hsl(0 70% 60%)', marginLeft: 6 } }, '（你）')),
+          h('div', { style: { fontSize: 17, fontWeight: 700 } }, p.name, isMe && h('span', { style: { fontSize: 11, color: 'var(--c-danger-bright)', marginLeft: 6 } }, '（你）')),
           h('div', { style: { display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' } },
             rd && tag(rn.name || rd.id, 'hsl(280 60% 72%)', 'rgba(147,51,234,0.12)'),
-            p.persona && tag(String(p.persona), 'hsl(190 70% 60%)', 'rgba(34,211,238,0.1)'),
-            !p.isHuman && tag('AI', 'hsl(0 8% 60%)', 'rgba(255,255,255,0.05)'),
+            p.persona && tag(String(p.persona), 'var(--c-ice)', 'rgba(34,211,238,0.1)'),
+            !p.isHuman && tag('AI', 'var(--c-text-dim)', 'rgba(255,255,255,0.05)'),
           ),
         ),
         h('button', { className: 'btn btn-ghost', style: { padding: '4px 8px' }, onClick: onClose }, h(Icon.ArrowLeft, { size: 16 })),
       ),
       // 状态标签行
       h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 } },
-        !p.alive && tag('已出局', 'hsl(0 8% 55%)', 'rgba(255,255,255,0.04)'),
-        p.alive && st.curPlayer === pid && tag('回合中', 'hsl(0 72% 55%)', 'rgba(200,30,30,0.12)'),
+        !p.alive && tag('已出局', 'var(--c-text-dim)', 'rgba(255,255,255,0.04)'),
+        p.alive && st.curPlayer === pid && tag('回合中', 'var(--c-danger-bright)', 'rgba(200,30,30,0.12)'),
         st.challengerId === pid && tag('质疑中', 'hsl(38 92% 50%)', 'rgba(245,158,11,0.12)'),
-        st.immuneId === pid && tag('轮盘免疫', 'hsl(142 70% 45%)', 'rgba(34,197,94,0.1)'),
+        st.immuneId === pid && tag('轮盘免疫', 'var(--c-success)', 'rgba(34,197,94,0.1)'),
         st.spectateId === pid && tag('观战中', 'hsl(250 60% 70%)', 'rgba(139,92,246,0.1)'),
-        st.lastCaughtPid === pid && tag('上局被抓', 'hsl(0 60% 55%)', 'rgba(200,30,30,0.08)'),
+        st.lastCaughtPid === pid && tag('上局被抓', 'var(--c-danger)', 'rgba(200,30,30,0.08)'),
       ),
       // 牌况
       h('div', { style: { fontSize: 11, color: 'var(--c-accent)', letterSpacing: 2, margin: '10px 0 2px' } }, '牌况'),
       row('手牌', String(handN)),
-      row('个人牌库', String(libN), libN === 0 ? 'hsl(0 72% 51%)' : null),
+      row('个人牌库', String(libN), libN === 0 ? 'var(--c-danger-bright)' : null),
       frozen.length > 0 && row('被冻结牌', String(frozen.length) + ' 张', 'hsl(250 60% 70%)'),
       // 计数
       h('div', { style: { fontSize: 11, color: 'var(--c-accent)', letterSpacing: 2, margin: '10px 0 2px' } }, '本局计数'),
       row('出牌次数', String(ps.playCount || 0)),
       row('质疑次数', String(ps.challengeCount || 0)),
       row('中弹次数', String(ps.shotCount || 0)),
-      (ps.revived || 0) > 0 && row('复活次数', String(ps.revived), 'hsl(142 70% 45%)'),
+      (ps.revived || 0) > 0 && row('复活次数', String(ps.revived), 'var(--c-success)'),
       row('吹牌成功', (p.bluffSuccessCount || 0) + ' / ' + bluffTarget + '（达标即胜）'),
       row('轮盘存活', String(p.survivedCount || 0) + ' / 3'),
       // 技能
@@ -209,9 +209,9 @@ function PlayerDetailPanel({ st, pid, onClose }) {
 const DICE_PIP_MAP = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
 
 function DiceFace({ v, size = 40, dim = false }) {
-  return h('div', { style: { width: size, height: size, borderRadius: size * 0.2, background: dim ? 'hsl(0 12% 16%)' : 'hsl(40 25% 90%)', border: '2px solid ' + (dim ? 'hsl(0 12% 24%)' : 'hsl(40 20% 65%)'), display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gridTemplateRows: 'repeat(3,1fr)', padding: size * 0.13, boxSizing: 'border-box', flexShrink: 0 } },
+  return h('div', { style: { width: size, height: size, borderRadius: size * 0.2, background: dim ? 'var(--c-border)' : 'hsl(40 25% 90%)', border: '2px solid ' + (dim ? 'hsl(0 12% 24%)' : 'hsl(40 20% 65%)'), display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gridTemplateRows: 'repeat(3,1fr)', padding: size * 0.13, boxSizing: 'border-box', flexShrink: 0 } },
     DICE_PIP_MAP[v].map(i => h('div', { key: i, style: { display: 'flex', alignItems: 'center', justifyContent: 'center' } },
-      h('div', { style: { width: size * 0.15, height: size * 0.15, borderRadius: '50%', background: dim ? 'hsl(0 8% 30%)' : 'hsl(0 5% 14%)' } }))),
+      h('div', { style: { width: size * 0.15, height: size * 0.15, borderRadius: '50%', background: dim ? 'var(--c-text-faint)' : 'hsl(0 5% 14%)' } }))),
   );
 }
 
@@ -319,9 +319,9 @@ function DiceTable({ dst, dispatch, onQuit, onRouletteDone }) {
       dst.players.filter(p => p.id !== 0).map(p => {
         const isCur = p.id === dst.curPlayer && dst.phase === 'bid';
         const isBidder = lb && lb.pid === p.id;
-        return h('div', { key: p.id, style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: p.alive ? 1 : 0.35, border: `1px solid ${isCur && p.alive ? 'hsl(0 45% 32%)' : 'var(--c-border-soft)'}`, borderRadius: 10, padding: '8px 10px', background: isCur && p.alive ? 'rgba(180,30,30,0.08)' : 'transparent' } },
+        return h('div', { key: p.id, style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: p.alive ? 1 : 0.35, border: `1px solid ${isCur && p.alive ? 'hsl(0 45% 32%)' : 'var(--c-border-soft)'}`, borderRadius: 8, padding: '8px 10px', background: isCur && p.alive ? 'rgba(180,30,30,0.08)' : 'transparent' } },
           p.alive
-            ? h('div', { style: { display: 'flex', gap: 3 } }, [0, 1, 2, 3, 4].map(i => h('div', { key: i, style: { width: 22, height: 22, borderRadius: 5, background: 'hsl(0 12% 16%)', border: '1px solid hsl(0 12% 26%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'hsl(0 8% 32%)' } }, '?')))
+            ? h('div', { style: { display: 'flex', gap: 3 } }, [0, 1, 2, 3, 4].map(i => h('div', { key: i, style: { width: 22, height: 22, borderRadius: 4, background: 'var(--c-border)', border: '1px solid hsl(0 12% 26%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'hsl(0 8% 32%)' } }, '?')))
             : h('div', { style: { color: 'var(--c-text-faint)' } }, h(Icon.Skull, { size: 20 })),
           h('span', { style: { fontSize: 12, fontWeight: isCur ? 600 : 400, color: p.alive ? 'var(--c-text)' : 'var(--c-text-faint)', textDecoration: p.alive ? 'none' : 'line-through' } }, p.name),
           isBidder && h('div', { style: { fontSize: 10, color: 'var(--c-accent)', background: 'rgba(200,160,50,0.15)', border: '1px solid rgba(180,30,30,0.3)', padding: '1px 8px', borderRadius: 12 } }, lb.count + ' 个 ' + lb.face),
@@ -1700,11 +1700,11 @@ function Game() {
       },
         h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' } },
           // P3-8：顶栏小按钮热区扩容（padding 撑触控面 + 负 margin 保持视觉密度）
-          h('button', { className: 'btn btn-ghost', style: { padding: '8px 10px', margin: '-7px -2px', fontSize: 11, color: 'hsl(0 60% 60%)', flexShrink: 0 }, onClick: () => setQuitConfirm(true) }, '退出'),
+          h('button', { className: 'btn btn-ghost', style: { padding: '8px 10px', margin: '-7px -2px', fontSize: 11, color: 'var(--c-danger)', flexShrink: 0 }, onClick: () => setQuitConfirm(true) }, '退出'),
           isHost && h('button', { className: 'btn btn-ghost', style: { padding: '8px 10px', margin: '-7px -2px', fontSize: 11, color: paused ? 'var(--c-success)' : 'var(--c-accent)', flexShrink: 0 }, onClick: togglePause }, paused ? '继续' : '暂停'),
-          h('button', { className: 'btn btn-ghost', title: '快捷键说明', style: { padding: '8px 10px', margin: '-7px -2px', display: 'inline-flex', alignItems: 'center', color: 'hsl(200 60% 65%)', flexShrink: 0 }, onClick: () => setHkHint(v => !v) }, h(Icon.Keyboard, { size: 13 })),
-          hkHint && h('div', { style: { position: 'fixed', top: 44, right: 10, zIndex: 80, background: 'var(--c-border-soft)', border: '1px solid hsl(0 15% 25%)', borderRadius: 10, padding: '10px 14px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)', fontSize: 11, color: 'hsl(0 10% 65%)', lineHeight: 2, pointerEvents: 'none' } },
-            h('div', { style: { fontWeight: 600, color: 'hsl(42 80% 60%)', marginBottom: 2 } }, '快捷键'),
+          h('button', { className: 'btn btn-ghost', title: '快捷键说明', style: { padding: '8px 10px', margin: '-7px -2px', display: 'inline-flex', alignItems: 'center', color: 'var(--c-ice)', flexShrink: 0 }, onClick: () => setHkHint(v => !v) }, h(Icon.Keyboard, { size: 13 })),
+          hkHint && h('div', { style: { position: 'fixed', top: 44, right: 10, zIndex: 80, background: 'var(--c-border-soft)', border: '1px solid hsl(0 15% 25%)', borderRadius: 8, padding: '10px 14px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)', fontSize: 11, color: 'hsl(0 10% 65%)', lineHeight: 2, pointerEvents: 'none' } },
+            h('div', { style: { fontWeight: 600, color: 'var(--c-accent)', marginBottom: 2 } }, '快捷键'),
             h('div', null, h('b', { style: { color: 'var(--c-ice)' } }, '1~9'), ' 选牌 / 取消选牌'),
             h('div', null, h('b', { style: { color: 'var(--c-ice)' } }, 'Space'), ' 确认出牌　', h('b', { style: { color: 'var(--c-ice)' } }, 'Z'), ' 清空选择'),
             h('div', null, h('b', { style: { color: 'var(--c-ice)' } }, 'F / W'), ' 跟牌　', h('b', { style: { color: 'var(--c-ice)' } }, 'D / Q'), ' 质疑'),
@@ -1716,14 +1716,14 @@ function Game() {
             h(Icon.Eye, { size: 10 }), ((st.players.find(function (q) { return q.id === st.spectateId; }) || {}).name || '玩家') + ' 观战'),
           isBlackout(st) && h('span', { style: { fontSize: 10, color: 'hsl(250 60% 70%)', display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 } }, '长夜·手牌不可见'),
           (st.rouletteShift || 0) > 0 && h('span', { style: { fontSize: 10, color: 'hsl(0 75% 60%)', display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 } }, '天崩·中弹+' + st.rouletteShift + '/6'),
-          st.fatigueActive && h('span', { style: { fontSize: 9, color: 'hsl(280 60% 65%)', background: 'rgba(147,51,234,0.1)', padding: '1px 5px', borderRadius: 3, border: '1px solid rgba(147,51,234,0.2)', flexShrink: 0 } }, '疲劳'),
+          st.fatigueActive && h('span', { style: { fontSize: 9, color: 'hsl(280 60% 65%)', background: 'rgba(147,51,234,0.1)', padding: '1px 5px', borderRadius: 4, border: '1px solid rgba(147,51,234,0.2)', flexShrink: 0 } }, '疲劳'),
           st.frenzy && h('span', { className: 'frenzy-badge', style: { flexShrink: 0 } }, h(Icon.Flame, { size: 11 }), '狂热化'),
-          h('span', { style: { fontSize: 9, color: 'hsl(190 70% 55%)', background: 'rgba(34,211,238,0.08)', padding: '1px 5px', borderRadius: 3, border: '1px solid rgba(34,211,238,0.15)', flexShrink: 0 } }, h('span', { style: { color: 'hsl(190 70% 60%)', display: 'inline-flex' } }, h(Icon.Angel, { size: 9 })), h('span', { style: { color: 'hsl(25 95% 60%)', display: 'inline-flex' } }, h(Icon.Demon, { size: 9 })), '×' + Math.max(1, 4 - Math.floor((st.round - 1) / 2))),
-          st.reversed && h('span', { style: { fontSize: 9, color: 'hsl(38 92% 50%)', background: 'rgba(245,158,11,0.1)', padding: '1px 5px', borderRadius: 3, flexShrink: 0 } }, '逆时针'),
+          h('span', { style: { fontSize: 9, color: 'hsl(190 70% 55%)', background: 'rgba(34,211,238,0.08)', padding: '1px 5px', borderRadius: 4, border: '1px solid rgba(34,211,238,0.15)', flexShrink: 0 } }, h('span', { style: { color: 'var(--c-ice)', display: 'inline-flex' } }, h(Icon.Angel, { size: 9 })), h('span', { style: { color: 'hsl(25 95% 60%)', display: 'inline-flex' } }, h(Icon.Demon, { size: 9 })), '×' + Math.max(1, 4 - Math.floor((st.round - 1) / 2))),
+          st.reversed && h('span', { style: { fontSize: 9, color: 'hsl(38 92% 50%)', background: 'rgba(245,158,11,0.1)', padding: '1px 5px', borderRadius: 4, flexShrink: 0 } }, '逆时针'),
           h('div', { style: { display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', flexShrink: 0 } },
             st.players.map(p => h('div', { key: p.id, style: { display: 'flex', alignItems: 'center', gap: 3 } },
-              h('span', { style: { width: 7, height: 7, borderRadius: '50%', background: p.alive ? (p.id === st.curPlayer ? 'var(--c-danger)' : 'hsl(142 70% 45%)') : 'hsl(0 8% 30%)', flexShrink: 0 } }),
-              h('span', { onClick: () => setDetailPid(p.id), title: '查看状态', style: { cursor: 'pointer', fontSize: 10, color: p.alive ? (p.isLocal ? 'hsl(0 70% 60%)' : 'hsl(0 8% 55%)') : 'hsl(0 8% 30%)', textDecoration: p.alive ? 'none' : 'line-through', maxWidth: 48, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, p.name),
+              h('span', { style: { width: 7, height: 7, borderRadius: '50%', background: p.alive ? (p.id === st.curPlayer ? 'var(--c-danger)' : 'var(--c-success)') : 'var(--c-text-faint)', flexShrink: 0 } }),
+              h('span', { onClick: () => setDetailPid(p.id), title: '查看状态', style: { cursor: 'pointer', fontSize: 10, color: p.alive ? (p.isLocal ? 'var(--c-danger-bright)' : 'var(--c-text-dim)') : 'var(--c-text-faint)', textDecoration: p.alive ? 'none' : 'line-through', maxWidth: 48, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, p.name),
               st.roles && st.roles[p.id] && (function () {
                 const rd = ROLES.find(r => r.id === st.roles[p.id]);
                 if (!rd) return null;
@@ -1739,7 +1739,7 @@ function Game() {
                 const rate2 = ks2.bluffs / n2;
                 const bucket2 = rate2 > 0.6 ? 2 : rate2 >= 0.3 ? 1 : 0;
                 const labels2 = I18N[getLang()].ui.liarBuckets;
-                const colors2 = ['hsl(142 60% 50%)', 'var(--c-accent)', 'hsl(0 72% 58%)'];
+                const colors2 = ['var(--c-success)', 'var(--c-accent)', 'var(--c-danger-bright)'];
                 return h('span', {
                   key: 'liar' + p.id,
                   title: labels2[bucket2] + ' · ' + Math.round(rate2 * 100) + '%',
@@ -1750,13 +1750,13 @@ function Game() {
           ),
         ),
         h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
-          h('span', { style: { fontSize: 11, color: 'hsl(0 8% 55%)', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 } }, h(Icon.Timer, { size: 11 }), '当前回合：'),
+          h('span', { style: { fontSize: 11, color: 'var(--c-text-dim)', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 } }, h(Icon.Timer, { size: 11 }), '当前回合：'),
           h('span', { style: { fontSize: 11, fontWeight: 600, color: 'var(--c-text-bright)', flexShrink: 0 } }, (st.players.find(p => p.id === st.curPlayer)?.name || '?') + ' ' + (st.phase === 'player_turn' ? '决策中' : st.phase === 'ai_turn' ? '思考中' : st.phase === 'challenge_phase' ? '质疑中' : st.phase === 'peek_phase' ? '展示中' : st.phase === 'reconsider_phase' ? '考虑中' : st.phase === 'reveal' ? '揭晓中' : st.phase === 'roulette' ? '轮盘中' : st.phase === 'dealing' ? '发牌中' : st.phase === 'event' ? '事件中' : '')),
           dur > 0 && h(Fragment, null,
-            h('div', { style: { flex: 1, height: 5, borderRadius: 3, background: 'var(--c-border-soft)', overflow: 'hidden', minWidth: 40 } },
-              h('div', { style: { height: '100%', borderRadius: 3, background: isUrgent ? 'hsl(0 72% 51%)' : 'var(--c-danger)', width: `${dur > 0 ? (timer / dur) * 100 : 0}%`, transition: 'width 0.3s linear' } }),
+            h('div', { style: { flex: 1, height: 5, borderRadius: 4, background: 'var(--c-border-soft)', overflow: 'hidden', minWidth: 40 } },
+              h('div', { style: { height: '100%', borderRadius: 4, background: isUrgent ? 'var(--c-danger-bright)' : 'var(--c-danger)', width: `${dur > 0 ? (timer / dur) * 100 : 0}%`, transition: 'width 0.3s linear' } }),
             ),
-            h('span', { style: { fontSize: 11, fontFamily: 'monospace', color: isUrgent ? 'hsl(0 72% 51%)' : 'var(--c-text-dim)', fontWeight: isUrgent ? 'bold' : 'normal', minWidth: 24, textAlign: 'right' } }, '' + timer + 's'),
+            h('span', { style: { fontSize: 11, fontFamily: 'monospace', color: isUrgent ? 'var(--c-danger-bright)' : 'var(--c-text-dim)', fontWeight: isUrgent ? 'bold' : 'normal', minWidth: 24, textAlign: 'right' } }, '' + timer + 's'),
           ),
         ),
       ),
@@ -1773,7 +1773,7 @@ function Game() {
             return null;
           })();
           const oppEmoteDef = oppEmote && EMOTE_LIST.find(e => e.id === oppEmote.emote);
-          return h('div', { key: opp.id, onClick: () => setDetailPid(opp.id), title: '查看' + opp.name + '的状态', style: { cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: dead ? 0.4 : 1, transition: 'opacity 0.3s', border: `1px solid ${isCur && !dead ? 'hsl(0 45% 32%)' : 'var(--c-border-soft)'}`, borderRadius: 10, padding: '8px 12px', background: isCur && !dead ? 'rgba(180,30,30,0.08)' : 'transparent', position: 'relative' } },
+          return h('div', { key: opp.id, onClick: () => setDetailPid(opp.id), title: '查看' + opp.name + '的状态', style: { cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: dead ? 0.4 : 1, transition: 'opacity 0.3s', border: `1px solid ${isCur && !dead ? 'hsl(0 45% 32%)' : 'var(--c-border-soft)'}`, borderRadius: 8, padding: '8px 12px', background: isCur && !dead ? 'rgba(180,30,30,0.08)' : 'transparent', position: 'relative' } },
             oppEmoteDef && h('div', { key: 'emote' + oppEmote.ts, className: 'emote-bubble', title: oppEmoteDef.label, style: { position: 'absolute', top: -30, left: '50%', transform: 'translateX(-50%)', zIndex: 30, background: 'var(--c-input-bg)', border: '1px solid var(--c-border)', borderRadius: 999, padding: '3px 10px', display: 'flex', alignItems: 'center', color: 'var(--c-text-bright)', boxShadow: '0 4px 12px rgba(0,0,0,0.45)', pointerEvents: 'none' } },
               h(Icon[oppEmoteDef.icon] || Icon.EmoteAsk, { size: 18 }),
             ),
@@ -1799,12 +1799,12 @@ function Game() {
             !dead && h('div', { key: 'hand' + handLen, className: 'num-pop', style: { display: 'flex', gap: 2, alignItems: 'center' } },
               handLen > 0 ?
                 h(Fragment, null,
-                  Array.from({ length: Math.min(handLen, 5) }).map((_, j) => h('div', { key: j, style: { width: 16, height: 22, borderRadius: 2, marginLeft: j > 0 ? -6 : 0, background: 'linear-gradient(135deg,rgba(180,30,30,0.5),rgba(180,30,30,0.8))', border: '1px solid rgba(180,30,30,0.4)' } })),
+                  Array.from({ length: Math.min(handLen, 5) }).map((_, j) => h('div', { key: j, style: { width: 16, height: 22, borderRadius: 4, marginLeft: j > 0 ? -6 : 0, background: 'linear-gradient(135deg,rgba(180,30,30,0.5),rgba(180,30,30,0.8))', border: '1px solid rgba(180,30,30,0.4)' } })),
                   handLen > 5 && h('span', { style: { fontSize: 10, color: 'var(--c-text-dim)', marginLeft: 2 } }, `+${handLen - 5}`),
                 ) :
                 h('span', { style: { fontSize: 11, color: 'var(--c-text-faint)', fontStyle: 'italic' } }, '无手牌'),
             ),
-            !dead && h('div', { style: { fontSize: 10, color: libLen === 0 ? 'hsl(0 72% 51%)' : 'hsl(0 8% 40%)', marginTop: 2 } },
+            !dead && h('div', { style: { fontSize: 10, color: libLen === 0 ? 'var(--c-danger-bright)' : 'var(--c-text-faint)', marginTop: 2 } },
               `牌库: ${libLen}`,
             ),
             st.phase === 'challenge_phase' && isClaimer && h('div', { style: { fontSize: 11, color: 'var(--c-accent)', background: 'rgba(200,160,50,0.15)', border: '1px solid rgba(180,30,30,0.3)', padding: '2px 8px', borderRadius: 12 } }, `出了 ${st.lastClaim?.count ?? 0} 张`),
@@ -1819,7 +1819,7 @@ function Game() {
           if (emotes[i].pid === meP.id) {
             const def = EMOTE_LIST.find(e => e.id === emotes[i].emote);
             if (def) return h('div', { key: 'myemote' + emotes[i].ts, className: 'emote-bubble', style: { position: 'fixed', bottom: 150, left: '50%', transform: 'translateX(-50%)', zIndex: 45, pointerEvents: 'none' } },
-              h('div', { style: { display: 'flex', alignItems: 'center', gap: 6, background: 'var(--c-input-bg)', border: '1px solid var(--c-accent-dim, hsl(40 60% 40%))', borderRadius: 999, padding: '3px 12px', color: 'var(--c-text-bright)', boxShadow: '0 4px 12px rgba(0,0,0,0.45)', animation: 'emote-pop 0.3s ease' } },
+              h('div', { style: { display: 'flex', alignItems: 'center', gap: 6, background: 'var(--c-input-bg)', border: '1px solid var(--c-accent-dim, var(--c-accent))', borderRadius: 999, padding: '3px 12px', color: 'var(--c-text-bright)', boxShadow: '0 4px 12px rgba(0,0,0,0.45)', animation: 'emote-pop 0.3s ease' } },
                 h('span', { style: { fontSize: 11, color: 'var(--c-text-dim)' } }, '你'),
                 h(Icon[def.icon] || Icon.EmoteAsk, { size: 18 }),
               ),
@@ -1921,10 +1921,10 @@ function Game() {
                 style: {
                   width: 50,
                   height: 70,
-                  borderRadius: 6,
+                  borderRadius: 4,
                   cursor: 'pointer',
                   background: sel ? 'rgba(16,185,129,0.2)' : 'hsl(0 15% 10%)',
-                  border: sel ? '2px solid hsl(142 72% 45%)' : '2px solid hsl(0 12% 20%)',
+                  border: sel ? '2px solid var(--c-success)' : '2px solid var(--c-border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -1933,7 +1933,7 @@ function Game() {
                   transition: 'all 0.2s',
                   transform: sel ? 'translateY(-4px)' : 'none',
                 }
-              }, c.suit, c.mod === 'angel' && h('span', { style: { color: 'hsl(190 70% 60%)' } }, h(Icon.Angel, { size: 11 })), c.mod === 'demon' && h('span', { style: { color: 'hsl(25 95% 60%)' } }, h(Icon.Demon, { size: 11 })));
+              }, c.suit, c.mod === 'angel' && h('span', { style: { color: 'var(--c-ice)' } }, h(Icon.Angel, { size: 11 })), c.mod === 'demon' && h('span', { style: { color: 'hsl(25 95% 60%)' } }, h(Icon.Demon, { size: 11 })));
             }),
           ),
           h('div', { style: { display: 'flex', gap: 12 } },
@@ -1958,17 +1958,17 @@ function Game() {
                 style: {
                   width: 50,
                   height: 70,
-                  borderRadius: 6,
+                  borderRadius: 4,
                   background: peeked ? 'hsl(0 15% 10%)' : 'hsl(0 20% 15%)',
-                  border: peeked ? '2px solid var(--c-accent)' : '2px solid hsl(0 12% 20%)',
+                  border: peeked ? '2px solid var(--c-accent)' : '2px solid var(--c-border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: 20,
-                  color: peeked ? (SUIT_COLOR[c.suit] || '#fff') : 'hsl(0 8% 30%)',
+                  color: peeked ? (SUIT_COLOR[c.suit] || '#fff') : 'var(--c-text-faint)',
                   position: 'relative',
                 }
-              }, peeked ? h('span', null, c.suit, c.mod === 'angel' && h('span', { style: { color: 'hsl(190 70% 60%)' } }, h(Icon.Angel, { size: 11 })), c.mod === 'demon' && h('span', { style: { color: 'hsl(25 95% 60%)' } }, h(Icon.Demon, { size: 11 }))) : '?');
+              }, peeked ? h('span', null, c.suit, c.mod === 'angel' && h('span', { style: { color: 'var(--c-ice)' } }, h(Icon.Angel, { size: 11 })), c.mod === 'demon' && h('span', { style: { color: 'hsl(25 95% 60%)' } }, h(Icon.Demon, { size: 11 }))) : '?');
             }),
           ),
           h('div', { style: { display: 'flex', gap: 12 } },
@@ -1978,7 +1978,7 @@ function Game() {
         );
       })(),
     ),
-    skillFx && h('div', { key: skillFxKeyRef.current, className: 'skill-banner', style: { position: 'fixed', top: 64, left: '50%', zIndex: 76, background: 'linear-gradient(135deg, rgba(20,14,10,0.92), rgba(30,20,14,0.88))', border: '1px solid var(--c-accent-dim, hsl(40 60% 40%))', borderRadius: 10, padding: '9px 20px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 6px 26px rgba(0,0,0,0.55), 0 0 14px rgba(200,160,50,0.12)', pointerEvents: 'none', animation: 'skill-banner 2.6s ease forwards' } },
+    skillFx && h('div', { key: skillFxKeyRef.current, className: 'skill-banner', style: { position: 'fixed', top: 64, left: '50%', zIndex: 76, background: 'linear-gradient(135deg, rgba(20,14,10,0.92), rgba(30,20,14,0.88))', border: '1px solid var(--c-accent-dim, var(--c-accent))', borderRadius: 8, padding: '9px 20px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 6px 26px rgba(0,0,0,0.55), 0 0 14px rgba(200,160,50,0.12)', pointerEvents: 'none', animation: 'skill-banner 2.6s ease forwards' } },
       h('span', { style: { color: 'var(--c-accent)', display: 'inline-flex', filter: 'drop-shadow(0 0 5px rgba(200,160,50,0.5))' } },
         skillFx.crest || h(Icon[skillFx.rIcon] || Icon.Sparkles, { size: 18 })),
       h('span', { style: { fontSize: 13, fontWeight: 600, color: 'var(--c-text)', letterSpacing: '0.02em' } }, skillFx.text),
@@ -1989,7 +1989,7 @@ function Game() {
       if (!me || peekBanner.readerId !== me.id) return null;
       const tn = (st.players.find(p => p.id === peekBanner.targetId) || {}).name || '?';
       const c = peekBanner.card || {};
-      return h('div', { style: { position: 'fixed', top: 120, left: '50%', transform: 'translateX(-50%)', zIndex: 76, background: 'var(--c-border-soft)', border: '1px solid hsl(200 60% 35%)', borderRadius: 10, padding: '10px 18px', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' } },
+      return h('div', { style: { position: 'fixed', top: 120, left: '50%', transform: 'translateX(-50%)', zIndex: 76, background: 'var(--c-border-soft)', border: '1px solid hsl(200 60% 35%)', borderRadius: 8, padding: '10px 18px', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' } },
         h(Icon.Eye, { size: 15 }),
         h('span', { style: { fontSize: 12, color: 'hsl(200 60% 70%)' } }, '读心者偷看到 ' + tn + ' 的一张牌：'),
         h('span', { style: { fontSize: 14, fontWeight: 700, color: SUIT_COLOR[c.suit] || '#fff' } },
@@ -2039,7 +2039,7 @@ function Game() {
         h('span', { style: { display: 'inline-flex', marginBottom: 10 } }, h(Icon.Joker, { size: 40 })),
         h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 20, fontWeight: 'bold', marginBottom: 8, color: 'var(--c-accent)' } }, '牌库已空'),
         h('p', { style: { fontSize: 13, color: 'var(--c-text-dim)', lineHeight: 1.6 } }, '所有玩家的牌已用尽，酒保正把弃牌区的牌收拢洗匀，即将重新发牌...'),
-        h('div', { style: { marginTop: 16, width: 40, height: 3, background: 'var(--c-danger)', borderRadius: 2, margin: '16px auto 0', animation: 'pulse 1s ease-in-out infinite' } }),
+        h('div', { style: { marginTop: 16, width: 40, height: 3, background: 'var(--c-danger)', borderRadius: 4, margin: '16px auto 0', animation: 'pulse 1s ease-in-out infinite' } }),
       ),
     ),
     active && st.phase === 'dealing' && h(DealingAnimation, { players: st.players, onComplete: isMpClient ? () => {} : handleDealingDone }),
@@ -2062,7 +2062,7 @@ function Game() {
           const isMyPick = chooser && chooser.isHuman && chooser.isLocal && !isMpClient || (isMpClient && chooser && chooser.isLocal && chooser.isHuman);
           const dictChoices = evT.choices || [];
           return h('div', { style: { marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 } },
-            h('p', { style: { fontSize: 13, color: 'hsl(42 85% 60%)', fontWeight: 600 } },
+            h('p', { style: { fontSize: 13, color: 'var(--c-accent)', fontWeight: 600 } },
               isMyPick ? '轮到你抉择' : (chooser ? chooser.name + ' 正在抉择……' : '')),
             st.event.choices.map(function (c, ci) {
               const t = dictChoices[ci] || c;
@@ -2075,7 +2075,7 @@ function Game() {
                 onClick: function () { if (isMyPick) sendAction({ type: 'EVENT_CHOICE', choiceId: c.id }); },
               },
                 h('div', { style: { fontSize: 14, fontWeight: 700, color: 'hsl(30 15% 90%)' } }, (c.risk >= 0.5 ? '⚠ ' : '') + t.label),
-                h('div', { style: { fontSize: 11, color: 'hsl(0 8% 55%)', marginTop: 3 } }, t.desc),
+                h('div', { style: { fontSize: 11, color: 'var(--c-text-dim)', marginTop: 3 } }, t.desc),
               );
             }),
           );
@@ -2125,14 +2125,14 @@ function Game() {
             ),
             endHistory.matches[0] && endHistory.matches[0].eloAfter !== endHistory.matches[0].eloBefore && (() => {
               const d = endHistory.matches[0].eloAfter - endHistory.matches[0].eloBefore;
-              return h('span', { style: { fontSize: 11, fontWeight: 600, color: d > 0 ? 'hsl(142 72% 50%)' : 'hsl(0 72% 55%)' } }, (d > 0 ? '+' : '') + d + ' 本局');
+              return h('span', { style: { fontSize: 11, fontWeight: 600, color: d > 0 ? 'var(--c-success)' : 'var(--c-danger-bright)' } }, (d > 0 ? '+' : '') + d + ' 本局');
             })(),
           ),
           h('h3', { style: { fontSize: 13, fontWeight: 600, marginBottom: 8 } }, '战绩统计'),
           h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 12 } },
             h('span', { style: { color: 'var(--c-text-dim)' } }, '总局数'), h('span', { style: { textAlign: 'right' } }, st.stats.totalGames),
-            h('span', { style: { color: 'var(--c-text-dim)' } }, '胜场'), h('span', { style: { textAlign: 'right', color: 'hsl(142 72% 45%)' } }, st.stats.wins),
-            h('span', { style: { color: 'var(--c-text-dim)' } }, '败场'), h('span', { style: { textAlign: 'right', color: 'hsl(0 72% 51%)' } }, st.stats.losses),
+            h('span', { style: { color: 'var(--c-text-dim)' } }, '胜场'), h('span', { style: { textAlign: 'right', color: 'var(--c-success)' } }, st.stats.wins),
+            h('span', { style: { color: 'var(--c-text-dim)' } }, '败场'), h('span', { style: { textAlign: 'right', color: 'var(--c-danger-bright)' } }, st.stats.losses),
             h('span', { style: { color: 'var(--c-text-dim)' } }, '最长连胜'), h('span', { style: { textAlign: 'right' } }, st.stats.maxWinStreak),
             st.stats.totalGames > 0 && h(Fragment, null, h('span', { style: { color: 'var(--c-text-dim)' } }, '胜率'), h('span', { style: { textAlign: 'right' } }, `${Math.round(st.stats.wins / st.stats.totalGames * 100)}%`)),
           ),
@@ -2155,31 +2155,31 @@ function Game() {
                 const s = st.playerStats[p.id] || { playCount: 0, challengeCount: 0, shotCount: 0 };
                 return h('div', { key: p.id, style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 1, minWidth: 0 } },
                   h('div', { style: { display: 'flex', gap: 3, alignItems: 'flex-end', height: barH } },
-                    h('div', { className: 'stat-bar-grow', style: { '--d': (0.55 + pi * 0.09).toFixed(2) + 's', width: 12, height: `${(s.playCount / maxVal) * barH}px`, background: 'hsl(0 72% 51%)', borderRadius: '3px 3px 0 0', minHeight: s.playCount > 0 ? 3 : 0, position: 'relative' } },
-                      s.playCount > 0 && h('span', { style: { position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', fontSize: 9, color: 'hsl(0 8% 68%)', whiteSpace: 'nowrap' } }, s.playCount)),
+                    h('div', { className: 'stat-bar-grow', style: { '--d': (0.55 + pi * 0.09).toFixed(2) + 's', width: 12, height: `${(s.playCount / maxVal) * barH}px`, background: 'var(--c-danger-bright)', borderRadius: '3px 3px 0 0', minHeight: s.playCount > 0 ? 3 : 0, position: 'relative' } },
+                      s.playCount > 0 && h('span', { style: { position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', fontSize: 9, color: 'var(--c-text-dim)', whiteSpace: 'nowrap' } }, s.playCount)),
                     h('div', { className: 'stat-bar-grow', style: { '--d': (0.55 + pi * 0.09 + 0.06).toFixed(2) + 's', width: 12, height: `${(s.challengeCount / maxVal) * barH}px`, background: 'var(--c-accent)', borderRadius: '3px 3px 0 0', minHeight: s.challengeCount > 0 ? 3 : 0, position: 'relative' } },
-                      s.challengeCount > 0 && h('span', { style: { position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', fontSize: 9, color: 'hsl(0 8% 68%)', whiteSpace: 'nowrap' } }, s.challengeCount)),
-                    h('div', { className: 'stat-bar-grow', style: { '--d': (0.55 + pi * 0.09 + 0.12).toFixed(2) + 's', width: 12, height: `${(s.shotCount / maxVal) * barH}px`, background: 'hsl(142 72% 45%)', borderRadius: '3px 3px 0 0', minHeight: s.shotCount > 0 ? 3 : 0, position: 'relative' } },
-                      s.shotCount > 0 && h('span', { style: { position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', fontSize: 9, color: 'hsl(0 8% 68%)', whiteSpace: 'nowrap' } }, s.shotCount)),
+                      s.challengeCount > 0 && h('span', { style: { position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', fontSize: 9, color: 'var(--c-text-dim)', whiteSpace: 'nowrap' } }, s.challengeCount)),
+                    h('div', { className: 'stat-bar-grow', style: { '--d': (0.55 + pi * 0.09 + 0.12).toFixed(2) + 's', width: 12, height: `${(s.shotCount / maxVal) * barH}px`, background: 'var(--c-success)', borderRadius: '3px 3px 0 0', minHeight: s.shotCount > 0 ? 3 : 0, position: 'relative' } },
+                      s.shotCount > 0 && h('span', { style: { position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', fontSize: 9, color: 'var(--c-text-dim)', whiteSpace: 'nowrap' } }, s.shotCount)),
                   ),
                   aiCrest(p, 14) && h('div', { style: { color: 'var(--c-accent)', opacity: p.alive ? 1 : 0.4, display: 'inline-flex' } }, aiCrest(p, 14)),
-                                    h('span', { style: { fontSize: 10, color: p.alive ? 'hsl(0 8% 78%)' : 'hsl(0 8% 40%)', textDecoration: p.alive ? 'none' : 'line-through', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' } }, p.name),
+                                    h('span', { style: { fontSize: 10, color: p.alive ? 'var(--c-text)' : 'var(--c-text-faint)', textDecoration: p.alive ? 'none' : 'line-through', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' } }, p.name),
                 );
               })
             );
           })(),
           h('div', { style: { display: 'flex', justifyContent: 'center', gap: 16, marginTop: 4, fontSize: 11 } },
             h('div', { style: { display: 'flex', alignItems: 'center', gap: 4 } },
-              h('div', { style: { width: 10, height: 10, background: 'hsl(0 72% 51%)', borderRadius: 2 } }),
-              h('span', { style: { color: 'hsl(0 8% 68%)' } }, '出牌'),
+              h('div', { style: { width: 10, height: 10, background: 'var(--c-danger-bright)', borderRadius: 4 } }),
+              h('span', { style: { color: 'var(--c-text-dim)' } }, '出牌'),
             ),
             h('div', { style: { display: 'flex', alignItems: 'center', gap: 4 } },
-              h('div', { style: { width: 10, height: 10, background: 'var(--c-accent)', borderRadius: 2 } }),
-              h('span', { style: { color: 'hsl(0 8% 68%)' } }, '质疑'),
+              h('div', { style: { width: 10, height: 10, background: 'var(--c-accent)', borderRadius: 4 } }),
+              h('span', { style: { color: 'var(--c-text-dim)' } }, '质疑'),
             ),
             h('div', { style: { display: 'flex', alignItems: 'center', gap: 4 } },
-              h('div', { style: { width: 10, height: 10, background: 'hsl(142 72% 45%)', borderRadius: 2 } }),
-              h('span', { style: { color: 'hsl(0 8% 68%)' } }, '开枪'),
+              h('div', { style: { width: 10, height: 10, background: 'var(--c-success)', borderRadius: 4 } }),
+              h('span', { style: { color: 'var(--c-text-dim)' } }, '开枪'),
             ),
           ),
           h('div', { style: { display: 'flex', justifyContent: 'space-around', marginTop: 12, fontSize: 11 } },
@@ -2210,12 +2210,12 @@ function Game() {
           return h('div', { className: 'panel', style: { margin: '12px 0', padding: 16, textAlign: 'left' } },
             h('h3', { style: { fontSize: 13, fontWeight: 600, marginBottom: 12 } }, `最近 ${hist.length} 局趋势`),
             hist.length === 0 ?
-              h('p', { style: { fontSize: 12, color: 'hsl(0 8% 40%)', textAlign: 'center', padding: '24px 0' } }, '暂无对局记录——完成一局后这里会出现你的五维画像') :
+              h('p', { style: { fontSize: 12, color: 'var(--c-text-faint)', textAlign: 'center', padding: '24px 0' } }, '暂无对局记录——完成一局后这里会出现你的五维画像') :
               h(Fragment, null,
                 h(RadarChart, { agg: aggRes.agg, raw: aggRes.raw }),
                 h('div', { style: { display: 'flex', justifyContent: 'center', gap: 14, fontSize: 11, marginTop: 8 } },
-                  h('span', { style: { color: 'hsl(142 72% 50%)' } }, `胜 ${w}`),
-                  h('span', { style: { color: 'hsl(0 72% 55%)' } }, `负 ${l}`),
+                  h('span', { style: { color: 'var(--c-success)' } }, `胜 ${w}`),
+                  h('span', { style: { color: 'var(--c-danger-bright)' } }, `负 ${l}`),
                   h('span', { style: { color: 'var(--c-text-dim)' } }, `平 ${hist.length - w - l}`),
                 ),
               ),
@@ -2275,7 +2275,7 @@ function Game() {
               : '本局进度将丢失，确定退出？'),
         h('div', { style: { display: 'flex', gap: 10, marginTop: 18, justifyContent: 'center' } },
           h('button', { className: 'btn btn-primary', onClick: () => setQuitConfirm(false) }, h(Icon.Play, { size: 14 }), '继续游戏'),
-          h('button', { className: 'btn btn-outline', style: { color: 'hsl(0 60% 60%)', borderColor: 'hsl(0 40% 30%)' }, onClick: () => { setQuitConfirm(false); quitGame(); } }, '确定退出'),
+          h('button', { className: 'btn btn-outline', style: { color: 'var(--c-danger)', borderColor: 'hsl(0 40% 30%)' }, onClick: () => { setQuitConfirm(false); quitGame(); } }, '确定退出'),
         ),
       ),
     ),
@@ -2308,7 +2308,7 @@ function Game() {
           chatMsgs.length === 0 && h('div', { style: { fontSize: 12, color: 'var(--c-text-dim)', textAlign: 'center', padding: 16 } }, '暂无消息'),
           chatMsgs.map((m, i) => h('div', { key: i, style: { fontSize: 12, border: '1px solid var(--c-border)', borderRadius: 8, padding: '5px 9px', background: 'var(--c-border-soft)' } },
             h('span', { style: { color: 'var(--c-accent)', fontWeight: 600 } }, m.name + ': '),
-            h('span', { style: { color: 'hsl(0 8% 78%)' } }, m.text)
+            h('span', { style: { color: 'var(--c-text)' } }, m.text)
           ))
         ),
         h('div', { style: { display: 'flex', gap: 4, padding: 8, borderTop: '1px solid var(--c-border)' } },
@@ -2319,7 +2319,7 @@ function Game() {
             onKeyDown: e => { if (e.key === 'Enter') sendChat(); },
             placeholder: '输入消息...',
             maxLength: 100,
-            style: { flex: 1, background: 'var(--c-border-soft)', border: '1px solid hsl(0 12% 20%)', borderRadius: 6, padding: '6px 10px', color: 'hsl(0 8% 88%)', fontSize: 12, outline: 'none' }
+            style: { flex: 1, background: 'var(--c-border-soft)', border: '1px solid var(--c-border)', borderRadius: 4, padding: '6px 10px', color: 'hsl(0 8% 88%)', fontSize: 12, outline: 'none' }
           }),
           h('button', { className: 'btn btn-sm btn-primary', onClick: sendChat, style: { padding: '4px 10px' } }, '发送'),
         )

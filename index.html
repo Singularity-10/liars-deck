@@ -6,7 +6,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>骗子牌酒馆 v119 - Liar's Deck</title>
+  <title>骗子牌酒馆 v120 - Liar's Deck</title>
   <link rel="preload" href="assets/fonts/title.woff2" as="font" type="font/woff2" crossorigin>
   <script src="js/vendor/react.production.min.js"></script>
   <script src="js/vendor/react-dom.production.min.js"></script>
@@ -17,19 +17,21 @@
        新增主题：复制任一 body[data-theme] 块改值即可。 */
     :root, body[data-theme='tavern'] {
       --c-bg: #1a0e06;
-      --c-text: hsl(30 15% 88%);
-      --c-text-bright: hsl(35 30% 85%);
-      --c-text-dim: hsl(0 8% 48%);
-      --c-text-faint: hsl(0 8% 35%);
+      --c-text: var(--c-text);
+      --c-text-bright: var(--c-text-bright);
+      --c-text-dim: var(--c-text-dim);
+      --c-text-faint: var(--c-text-faint);
       --c-accent: hsl(42 85% 55%);
-      --c-accent-soft: hsl(45 95% 58%);
-      --c-danger: hsl(0 75% 45%);
-      --c-danger-deep: hsl(0 80% 42%);
+      --c-accent-soft: var(--c-accent-soft);
+      --c-danger: var(--c-danger);
+      --c-danger-deep: var(--c-danger-deep);
+  --c-danger-bright: var(--c-danger-bright);
+  --c-accent-bright: var(--c-accent-bright);
       --c-danger-shadow: rgba(180,30,30,0.3);
       --c-success: hsl(142 70% 50%);
-      --c-ice: hsl(200 70% 70%);
-      --c-border: hsl(0 12% 16%);
-      --c-border-soft: hsl(0 12% 10%);
+      --c-ice: var(--c-ice);
+      --c-border: var(--c-border);
+      --c-border-soft: var(--c-border-soft);
       --c-input-bg: hsl(0 15% 7%);
       --c-panel-bg: rgba(15,8,4,0.7);
       --c-panel-strong: rgba(20,12,6,0.92);
@@ -61,7 +63,7 @@
       --c-danger-deep: hsl(350 75% 46%);
       --c-danger-shadow: rgba(220,60,90,0.3);
       --c-success: hsl(160 55% 52%);
-      --c-ice: hsl(200 70% 70%);
+      --c-ice: var(--c-ice);
       --c-border: hsl(210 30% 18%);
       --c-border-soft: hsl(210 30% 12%);
       --c-input-bg: hsl(210 28% 10%);
@@ -95,7 +97,7 @@
       --c-danger-deep: hsl(10 80% 44%);
       --c-danger-shadow: rgba(200,80,30,0.3);
       --c-success: hsl(100 45% 52%);
-      --c-ice: hsl(200 70% 70%);
+      --c-ice: var(--c-ice);
       --c-border: hsl(30 25% 18%);
       --c-border-soft: hsl(30 25% 12%);
       --c-input-bg: hsl(32 22% 9%);
@@ -648,7 +650,7 @@
       opacity: 0.85;
     }
     .game-card:hover:not(.disabled) { transform: translateY(-12px); box-shadow: 0 8px 20px rgba(0,0,0,0.5); z-index: 99 !important }
-    .game-card.selected { transform: translateY(-16px); box-shadow: 0 0 0 2px hsl(0 75% 45%), 0 8px 20px rgba(180,30,30,0.4); z-index: 99 !important }
+    .game-card.selected { transform: translateY(-16px); box-shadow: 0 0 0 2px var(--c-danger), 0 8px 20px rgba(180,30,30,0.4); z-index: 99 !important }
     .game-card.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none }
     @media (max-width: 640px) { .game-card { width: 48px; height: 70px } }
 
@@ -663,7 +665,7 @@
     .btn-primary:hover:not(:disabled) { filter: brightness(1.1) }
     .btn-outline { background: transparent; color: var(--c-text); border: 1px solid var(--c-border) }
     .btn-outline:hover:not(:disabled) { border-color: var(--c-accent); color: var(--c-accent) }
-    .btn-ghost { background: transparent; color: hsl(0 8% 48%) }
+    .btn-ghost { background: transparent; color: var(--c-text-dim) }
     .btn-ghost:hover:not(:disabled) { color: var(--c-text) }
     .btn-danger { background: var(--c-danger-deep); color: white }
     .btn-lg { height: 3.5rem; font-size: 1rem; padding: 0 1.5rem }
@@ -671,12 +673,12 @@
 
     .input {
       width: 100%; padding: 0.625rem 1rem;
-      background: hsl(0 15% 7%); border: 1px solid hsl(0 12% 16%);
-      border-radius: 0.75rem; color: hsl(30 15% 88%); font-size: 0.875rem;
+      background: hsl(0 15% 7%); border: 1px solid var(--c-border);
+      border-radius: 0.75rem; color: var(--c-text); font-size: 0.875rem;
       outline: none; transition: border-color 0.2s;
     }
-    .input:focus { border-color: hsl(0 75% 45%) }
-    .input::placeholder { color: hsl(0 8% 35%) }
+    .input:focus { border-color: var(--c-danger) }
+    .input::placeholder { color: var(--c-text-faint) }
 
     .panel { background: var(--c-panel-bg); backdrop-filter: blur(6px); border: 1px solid var(--c-panel-border); border-radius: 0.75rem }
 
@@ -685,7 +687,7 @@
       border-radius: 9999px; background: rgba(20,12,6,0.6);
       cursor: pointer; transition: background 0.2s; border: none; flex-shrink: 0;
     }
-    .switch.on { background: hsl(0 75% 45%) }
+    .switch.on { background: var(--c-danger) }
     .switch::after {
       content: ''; position: absolute; top: 2px; left: 2px;
       width: 1rem; height: 1rem; border-radius: 50%;

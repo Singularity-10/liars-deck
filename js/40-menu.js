@@ -110,12 +110,12 @@ function AuthModal({ onAuth, onClose, onCloseWrap }) {
     },
       h('button', {
         className: 'btn btn-ghost',
-        style: { position: 'absolute', top: 8, right: 8, width: 32, height: 32, borderRadius: '50%', padding: 0, fontSize: 18, color: 'hsl(0 8% 55%)' },
+        style: { position: 'absolute', top: 8, right: 8, width: 32, height: 32, borderRadius: '50%', padding: 0, fontSize: 18, color: 'var(--c-text-dim)' },
         onClick: onClose
       }, '×'),
       h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 22, fontWeight: 'bold', marginBottom: 4, color: 'var(--c-text-bright)' } }, '骗子牌酒馆'),
-      h('p', { style: { fontSize: 12, color: 'hsl(0 8% 55%)', marginBottom: 20 } }, mode === 'login' ? '登录账号以使用联机功能' : '注册新账号'),
-      h('div', { style: { display: 'flex', gap: 0, marginBottom: 16, borderRadius: 8, overflow: 'hidden', border: '1px solid hsl(30 15% 35%)' } },
+      h('p', { style: { fontSize: 12, color: 'var(--c-text-dim)', marginBottom: 20 } }, mode === 'login' ? '登录账号以使用联机功能' : '注册新账号'),
+      h('div', { style: { display: 'flex', gap: 0, marginBottom: 16, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--c-text-faint)' } },
         h('button', {
           className: mode === 'login' ? 'btn-primary' : 'btn-ghost',
           style: { flex: 1, borderRadius: 0, padding: '8px 0', fontSize: 13 },
@@ -135,7 +135,7 @@ function AuthModal({ onAuth, onClose, onCloseWrap }) {
         value: name,
         onChange: e => setName(e.target.value),
         maxLength: 12,
-        style: { width: '100%', padding: '10px 14px', marginBottom: 10, background: 'var(--c-surface)', border: '1px solid hsl(30 15% 35%)', borderRadius: 8, color: 'var(--c-text-bright)', fontSize: 14, boxSizing: 'border-box', outline: 'none' }
+        style: { width: '100%', padding: '10px 14px', marginBottom: 10, background: 'var(--c-surface)', border: '1px solid var(--c-text-faint)', borderRadius: 8, color: 'var(--c-text-bright)', fontSize: 14, boxSizing: 'border-box', outline: 'none' }
       }),
       h('input', {
         type: 'password',
@@ -143,7 +143,7 @@ function AuthModal({ onAuth, onClose, onCloseWrap }) {
         value: pwd,
         onChange: e => setPwd(e.target.value),
         onKeyDown: e => { if (e.key === 'Enter') submit(); },
-        style: { width: '100%', padding: '10px 14px', marginBottom: 10, background: 'var(--c-surface)', border: '1px solid hsl(30 15% 35%)', borderRadius: 8, color: 'var(--c-text-bright)', fontSize: 14, boxSizing: 'border-box', outline: 'none' }
+        style: { width: '100%', padding: '10px 14px', marginBottom: 10, background: 'var(--c-surface)', border: '1px solid var(--c-text-faint)', borderRadius: 8, color: 'var(--c-text-bright)', fontSize: 14, boxSizing: 'border-box', outline: 'none' }
       }),
       mode === 'register' && h('input', {
         type: 'password',
@@ -151,9 +151,9 @@ function AuthModal({ onAuth, onClose, onCloseWrap }) {
         value: pwd2,
         onChange: e => setPwd2(e.target.value),
         onKeyDown: e => { if (e.key === 'Enter') submit(); },
-        style: { width: '100%', padding: '10px 14px', marginBottom: 10, background: 'var(--c-surface)', border: '1px solid hsl(30 15% 35%)', borderRadius: 8, color: 'var(--c-text-bright)', fontSize: 14, boxSizing: 'border-box', outline: 'none' }
+        style: { width: '100%', padding: '10px 14px', marginBottom: 10, background: 'var(--c-surface)', border: '1px solid var(--c-text-faint)', borderRadius: 8, color: 'var(--c-text-bright)', fontSize: 14, boxSizing: 'border-box', outline: 'none' }
       }),
-      err && h('p', { style: { color: 'hsl(0 70% 60%)', fontSize: 12, marginBottom: 10 } }, err),
+      err && h('p', { style: { color: 'var(--c-danger-bright)', fontSize: 12, marginBottom: 10 } }, err),
       h('button', {
         className: 'btn btn-primary',
         style: { width: '100%', padding: '10px 0' },
@@ -161,7 +161,7 @@ function AuthModal({ onAuth, onClose, onCloseWrap }) {
         onClick: submit
       }, loading ? '请稍候...' : (mode === 'login' ? '登 录' : '注 册')),
       h('p', {
-        style: { fontSize: 10, color: 'hsl(0 8% 45%)', marginTop: 12, lineHeight: 1.5 }
+        style: { fontSize: 10, color: 'var(--c-text-dim)', marginTop: 12, lineHeight: 1.5 }
       }, '账号仅保存在本机浏览器（不上传服务器）· 信誉分初始100 · 每日恢复50 · 联机中途退出扣分'),
     )
   );
@@ -291,11 +291,11 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
       style: { position: 'absolute', top: 20, right: 20, display: 'flex', alignItems: 'center', gap: 8, opacity: 0, animation: 'enter-settings 0.5s ease 2.2s forwards', zIndex: 20 }
     },
       user && h('div', {
-        style: { display: 'flex', alignItems: 'center', gap: 8, background: 'var(--c-panel-bg)', padding: '4px 12px', borderRadius: 20, border: '1px solid hsl(30 15% 25%)' }
+        style: { display: 'flex', alignItems: 'center', gap: 8, background: 'var(--c-panel-bg)', padding: '4px 12px', borderRadius: 16, border: '1px solid hsl(30 15% 25%)' }
       },
         h('span', { style: { fontSize: 12, color: 'hsl(35 30% 80%)' } }, h(Icon.User, { size: 12 }), ' ' + user.name),
-        h('span', { style: { fontSize: 11, color: user.reputation >= 80 ? 'var(--c-success)' : user.reputation >= 50 ? 'var(--c-accent)' : 'hsl(0 70% 55%)', fontWeight: 600 } }, t('ui.reputation') + ' ' + user.reputation),
-        h('button', { className: 'btn btn-ghost', style: { padding: '2px 8px', fontSize: 11, color: 'hsl(0 8% 55%)' }, onClick: onLogout }, t('ui.logout')),
+        h('span', { style: { fontSize: 11, color: user.reputation >= 80 ? 'var(--c-success)' : user.reputation >= 50 ? 'var(--c-accent)' : 'var(--c-danger-bright)', fontWeight: 600 } }, t('ui.reputation') + ' ' + user.reputation),
+        h('button', { className: 'btn btn-ghost', style: { padding: '2px 8px', fontSize: 11, color: 'var(--c-text-dim)' }, onClick: onLogout }, t('ui.logout')),
       ),
       h('button', { 'aria-label': '打开设置', className: 'btn btn-ghost', style: { width: 40, height: 40, borderRadius: '50%', padding: 0 }, onClick: function () { setSettings(function (v) { return !v; }); } }, h(Icon.Settings, { size: 18 })),
     ),
@@ -383,7 +383,7 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
           isSelected && h('div', {
             onClick: function (e) { e.stopPropagation(); toggleAI(i); },
             title: '移出本局对手',
-            style: { position: 'absolute', top: -8, right: -8, width: 24, height: 24, borderRadius: '50%', background: 'hsl(0 65% 45%)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, lineHeight: 1, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.4)', zIndex: 2 }
+            style: { position: 'absolute', top: -8, right: -8, width: 24, height: 24, borderRadius: '50%', background: 'var(--c-danger)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, lineHeight: 1, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.4)', zIndex: 2 }
           }, '✕'),
             h('div', { style: { color: 'var(--c-accent)', marginBottom: 4, display: 'inline-flex' } }, h(Icon[AI_CRESTS[i]], { size: 20 })),
                         h('div', { style: { fontSize: 13, fontWeight: 600, color: 'var(--c-text)' } }, name), //：只展示名称
@@ -395,8 +395,8 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
           t('ui.aiParams', { name: AI_NAMES[activeAI] }) + (selectedAIs.indexOf(activeAI) >= 0 ? '' : t('ui.unselected')),
           h('div', { style: { display: 'flex', gap: 4 } },
             selectedAIs.indexOf(activeAI) >= 0 ?
-              h('button', { className: 'btn btn-outline', style: { padding: '2px 8px', fontSize: 10, color: 'hsl(0 70% 60%)', borderColor: 'hsl(0 40% 30%)' }, title: '将该 AI 移出本局对手', onClick: function () { toggleAI(activeAI); } }, t('ui.deselect')) :
-              h('button', { className: 'btn btn-outline', style: { padding: '2px 8px', fontSize: 10, color: 'hsl(142 60% 55%)', borderColor: 'hsl(142 40% 30%)' }, title: '将该 AI 加入本局对手', onClick: function () { if (selectedAIs.length < 3) toggleAI(activeAI); else toast.info(t('ui.aiFullToast')); } }, t('ui.pickAI')),
+              h('button', { className: 'btn btn-outline', style: { padding: '2px 8px', fontSize: 10, color: 'var(--c-danger-bright)', borderColor: 'hsl(0 40% 30%)' }, title: '将该 AI 移出本局对手', onClick: function () { toggleAI(activeAI); } }, t('ui.deselect')) :
+              h('button', { className: 'btn btn-outline', style: { padding: '2px 8px', fontSize: 10, color: 'var(--c-success)', borderColor: 'hsl(142 40% 30%)' }, title: '将该 AI 加入本局对手', onClick: function () { if (selectedAIs.length < 3) toggleAI(activeAI); else toast.info(t('ui.aiFullToast')); } }, t('ui.pickAI')),
             h('button', { className: 'btn btn-ghost', style: { padding: '2px 8px', fontSize: 10 }, onClick: function () { setActiveAI(-1); } }, t('ui.collapse')),
           ),
         ),
@@ -416,7 +416,7 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
           var unit = key === 'maxCards' ? '张' : '%';
           return h('div', { key: key, style: { marginBottom: 4 } },
             h('div', { style: { position: 'relative', height: 22, display: 'flex', alignItems: 'center', padding: '0 2px' } },
-              h('div', { style: { position: 'absolute', left: 0, right: 0, top: '50%', transform: 'translateY(-50%)', height: 10, borderRadius: 5, background: 'hsl(0 12% 15%)', overflow: 'hidden', pointerEvents: 'none' } },
+              h('div', { style: { position: 'absolute', left: 0, right: 0, top: '50%', transform: 'translateY(-50%)', height: 10, borderRadius: 4, background: 'hsl(0 12% 15%)', overflow: 'hidden', pointerEvents: 'none' } },
                 h('div', { style: { height: '100%', width: pct + '%', background: 'linear-gradient(90deg,var(--c-danger),hsl(0 65% 52%))', transition: 'width 0.15s ease-out' } }),
               ),
               h('input', {
@@ -454,17 +454,17 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
         return h('button', {
           key: m.id,
           onClick: function () { if (sel) { setPlayMode(m.id); setSetupView(m.id); } else setSelMode(m.id); }, // 两步：选中 → 进入
-          style: { display: 'flex', alignItems: 'center', gap: 14, padding: '18px 18px', borderRadius: 14, cursor: 'pointer', textAlign: 'left', background: 'transparent', border: '1.5px solid ' + (sel ? 'hsl(42 85% 60%)' : 'hsl(0 12% 20%)'), boxShadow: sel ? '0 0 16px rgba(220,170,60,0.25)' : 'none', transition: 'all 0.2s' },
+          style: { display: 'flex', alignItems: 'center', gap: 14, padding: '18px 18px', borderRadius: 12, cursor: 'pointer', textAlign: 'left', background: 'transparent', border: '1.5px solid ' + (sel ? 'var(--c-accent)' : 'var(--c-border)'), boxShadow: sel ? '0 0 16px rgba(220,170,60,0.25)' : 'none', transition: 'all 0.2s' },
         },
           h('span', { style: { display: 'inline-flex', color: m.accent ? 'var(--c-danger)' : 'var(--c-accent)', flexShrink: 0 } }, h(Icon[m.icon], { size: 34 })),
           h('span', { style: { flex: 1 } },
-            h('span', { style: { display: 'block', fontSize: 18, fontWeight: 800, fontFamily: 'var(--font-title)', color: 'hsl(42 85% 72%)' } }, m.label), // v116：亮色（默认继承 button 黑字看不清）
+            h('span', { style: { display: 'block', fontSize: 18, fontWeight: 800, fontFamily: 'var(--font-title)', color: 'var(--c-accent-bright)' } }, m.label), // v116：亮色（默认继承 button 黑字看不清）
             h('span', { style: { display: 'block', fontSize: 11.5, color: 'hsl(35 15% 68%)', marginTop: 3 } }, m.desc),
           ),
-          h('span', { style: { color: sel ? 'hsl(42 85% 72%)' : 'hsl(42 70% 55%)', fontSize: 18, animation: sel ? 'hint-breath 1.6s ease-in-out infinite' : 'none' } }, '▶'),
+          h('span', { style: { color: sel ? 'var(--c-accent-bright)' : 'var(--c-accent)', fontSize: 18, animation: sel ? 'hint-breath 1.6s ease-in-out infinite' : 'none' } }, '▶'),
         );
       }),
-      selMode && h('p', { style: { fontSize: 11, color: 'hsl(42 85% 72%)', textAlign: 'center', letterSpacing: '0.1em', margin: 0 } }, '再次点击「' + (selMode === 'cards' ? '经典牌局' : '大话骰') + '」进入'),
+      selMode && h('p', { style: { fontSize: 11, color: 'var(--c-accent-bright)', textAlign: 'center', letterSpacing: '0.1em', margin: 0 } }, '再次点击「' + (selMode === 'cards' ? '经典牌局' : '大话骰') + '」进入'),
       // 联机对战（牌局规则，走大厅）
       h('button', { className: 'btn btn-outline', style: { width: '100%', padding: '13px 0', fontSize: 16, justifyContent: 'center', borderRadius: '0.75rem' }, onClick: onMultiplayer },
         h(Icon.Wifi, { size: 16 }), t('ui.modeMulti')),
@@ -475,38 +475,38 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
       h('div', { style: { display: 'flex', gap: 10, marginBottom: (diff === 'hard' || diff === 'easy') ? 12 : 0 } },
         h('button', {
           className: 'btn ' + (diff === 'easy' ? 'btn-primary' : 'btn-outline'),
-          style: { flex: 1, padding: '10px 0', fontSize: 14, borderRadius: 10 },
+          style: { flex: 1, padding: '10px 0', fontSize: 14, borderRadius: 8 },
           onClick: function () { setDiff('easy'); }
         },
           h('span', { style: { marginRight: 4, display: 'inline-flex' } }, h(Icon.Clover, { size: 14 })), t('ui.diffEasy')),
         h('button', {
           className: 'btn ' + (diff === 'normal' ? 'btn-primary' : 'btn-outline'),
-          style: { flex: 1, padding: '10px 0', fontSize: 14, borderRadius: 10 },
+          style: { flex: 1, padding: '10px 0', fontSize: 14, borderRadius: 8 },
           onClick: function () { setDiff('normal'); }
         },
           h('span', { style: { marginRight: 4, display: 'inline-flex' } }, h(Icon.Swords, { size: 14 })), t('ui.diffNormal')),
         h('button', {
           className: 'btn ' + (diff === 'hard' ? 'btn-primary' : 'btn-outline'),
-          style: { flex: 1, padding: '10px 0', fontSize: 14, borderRadius: 10 },
+          style: { flex: 1, padding: '10px 0', fontSize: 14, borderRadius: 8 },
           onClick: function () { setDiff('hard'); }
         },
           h('span', { style: { marginRight: 4, display: 'inline-flex' } }, h(Icon.Flame, { size: 14 })), t('ui.diffHard')),
       ),
       diff === 'easy' && h('div', { style: { display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' } },
-        h('span', { style: { fontSize: 11, color: 'hsl(142 60% 55%)', background: 'rgba(34,139,80,0.12)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(34,139,80,0.25)' } }, 'AI 20% 失误率'),
-        h('span', { style: { fontSize: 11, color: 'hsl(142 60% 55%)', background: 'rgba(34,139,80,0.12)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(34,139,80,0.25)' } }, '适合熟悉规则'),
+        h('span', { style: { fontSize: 11, color: 'var(--c-success)', background: 'rgba(34,139,80,0.12)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(34,139,80,0.25)' } }, 'AI 20% 失误率'),
+        h('span', { style: { fontSize: 11, color: 'var(--c-success)', background: 'rgba(34,139,80,0.12)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(34,139,80,0.25)' } }, '适合熟悉规则'),
       ),
       diff === 'hard' && h('div', { style: { display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' } },
         (setupView === 'dice'
           ? ['AI 叫点更刁钻', '掀桌更果断', 'AI 判断更准']
           : ['AI质疑率+50%', '目标牌更少', '轮盘双子弹']
         ).map(function (txt, bi) {
-          return h('span', { key: bi, style: { fontSize: 11, color: 'hsl(0 70% 65%)', background: 'rgba(180,30,30,0.12)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(180,30,30,0.25)' } }, txt);
+          return h('span', { key: bi, style: { fontSize: 11, color: 'var(--c-danger-bright)', background: 'rgba(180,30,30,0.12)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(180,30,30,0.25)' } }, txt);
         }),
       ),
       setupView === 'dice' && h('div', { style: { display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' } },
-        h('span', { style: { fontSize: 11, color: 'hsl(42 70% 55%)', background: 'rgba(200,160,50,0.10)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(180,30,30,0.22)' } }, '每人 5 骰 · 偷看'),
-        h('span', { style: { fontSize: 11, color: 'hsl(42 70% 55%)', background: 'rgba(200,160,50,0.10)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(180,30,30,0.22)' } }, '只能加码或叫开'),
+        h('span', { style: { fontSize: 11, color: 'var(--c-accent)', background: 'rgba(200,160,50,0.10)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(180,30,30,0.22)' } }, '每人 5 骰 · 偷看'),
+        h('span', { style: { fontSize: 11, color: 'var(--c-accent)', background: 'rgba(200,160,50,0.10)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(180,30,30,0.22)' } }, '只能加码或叫开'),
       ),
       // 酒客配置入口（面板由设置内开关控制，此处提示行）
       h('button', { className: 'btn btn-outline', style: { width: '100%', justifyContent: 'center' }, onClick: function () { setShowAIConfig(function (v) { return !v; }); } },
@@ -528,7 +528,7 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
           h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 18, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 8 } }, h(Icon.Trophy, { size: 20 }), t('ui.ach')),
           h('div', { style: { display: 'flex', alignItems: 'center', gap: 10 } },
             h('span', { style: { fontSize: 12, color: 'hsl(42 60% 60%)' } }, '已解锁 ' + Object.keys((achData || {}).unlocked || {}).length + ' / ' + ACHIEVEMENTS.length),
-            h('button', { className: 'btn btn-ghost', style: { padding: '2px 8px', fontSize: 12, color: 'hsl(0 60% 60%)' }, onClick: function () { setShowAch(false); } }, '关闭'),
+            h('button', { className: 'btn btn-ghost', style: { padding: '2px 8px', fontSize: 12, color: 'var(--c-danger)' }, onClick: function () { setShowAch(false); } }, '关闭'),
           ),
           h('p', { style: { fontSize: 11, color: 'var(--c-text-faint)', textAlign: 'center', margin: '-6px 0 10px' } }, '成就与战绩仅统计经典牌局；大话骰不参与计分'), // v118：双玩法口径明示
         ),
@@ -537,11 +537,11 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
             const got = !!(achData || {}).unlocked && !!(achData.unlocked[a.id]);
             return h('div', {
               key: a.id,
-              style: { display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, background: got ? 'hsla(42,60%,40%,0.08)' : 'hsl(0 10% 8%)', border: '1px solid ' + (got ? 'hsla(42,70%,50%,0.35)' : 'hsl(0 12% 20%)'), opacity: got ? 1 : 0.55 },
+              style: { display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 8, background: got ? 'hsla(42,60%,40%,0.08)' : 'hsl(0 10% 8%)', border: '1px solid ' + (got ? 'hsla(42,70%,50%,0.35)' : 'var(--c-border)'), opacity: got ? 1 : 0.55 },
             },
-              h('span', { style: { display: 'inline-flex', color: got ? 'hsl(42 85% 60%)' : 'hsl(0 8% 40%)', flexShrink: 0 } }, h(Icon[a.icon] || Icon.Sparkles, { size: 22 })),
+              h('span', { style: { display: 'inline-flex', color: got ? 'var(--c-accent)' : 'var(--c-text-faint)', flexShrink: 0 } }, h(Icon[a.icon] || Icon.Sparkles, { size: 22 })),
               h('div', { style: { flex: 1 } },
-                h('h3', { style: { fontSize: 13, fontWeight: 600, marginBottom: 2, color: got ? 'hsl(42 80% 65%)' : 'hsl(0 12% 60%)' } }, a.name),
+                h('h3', { style: { fontSize: 13, fontWeight: 600, marginBottom: 2, color: got ? 'var(--c-accent)' : 'hsl(0 12% 60%)' } }, a.name),
                 h('p', { style: { fontSize: 11, color: 'var(--c-text-dim)', lineHeight: 1.5 } }, a.desc),
               ),
               got && h(Icon.CheckCircle2, { size: 16, style: undefined }),
@@ -565,15 +565,15 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
           h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 } },
             h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 18, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 8 } }, h(Icon.Swords, { size: 20 }), t('ui.stats')),
             h('div', { style: { display: 'flex', alignItems: 'center', gap: 10 } },
-              h('span', { style: { fontSize: 13, fontWeight: 700, color: 'hsl(42 80% 60%)', fontFamily: 'monospace' } }, 'ELO ' + (sh.elo || 1000)),
-              h('button', { className: 'btn btn-ghost', style: { padding: '2px 8px', fontSize: 12, color: 'hsl(0 60% 60%)' }, onClick: function () { setShowStats(false); } }, '关闭'),
+              h('span', { style: { fontSize: 13, fontWeight: 700, color: 'var(--c-accent)', fontFamily: 'monospace' } }, 'ELO ' + (sh.elo || 1000)),
+              h('button', { className: 'btn btn-ghost', style: { padding: '2px 8px', fontSize: 12, color: 'var(--c-danger)' }, onClick: function () { setShowStats(false); } }, '关闭'),
             ),
           ),
           ms.length === 0 ? h('p', { style: { fontSize: 13, color: 'var(--c-text-dim)', textAlign: 'center', padding: '28px 0' } }, '还没有对局记录——打完一局后这里会展示 ELO 走势与战绩雷达')
           : h('div', { style: { display: 'flex', flexDirection: 'column', gap: 14 } },
             h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 } },
-              [['胜', wins, 'hsl(142 60% 55%)'], ['负', losses, 'hsl(0 60% 55%)'], ['平', draws, 'hsl(0 8% 55%)']].map(function (s) {
-                return h('div', { key: s[0], style: { textAlign: 'center', padding: '10px 0', borderRadius: 8, background: 'hsl(0 10% 8%)', border: '1px solid hsl(0 12% 20%)' } },
+              [['胜', wins, 'var(--c-success)'], ['负', losses, 'var(--c-danger)'], ['平', draws, 'var(--c-text-dim)']].map(function (s) {
+                return h('div', { key: s[0], style: { textAlign: 'center', padding: '10px 0', borderRadius: 8, background: 'hsl(0 10% 8%)', border: '1px solid var(--c-border)' } },
                   h('div', { style: { fontSize: 20, fontWeight: 700, color: s[2] } }, s[1]),
                   h('div', { style: { fontSize: 11, color: 'var(--c-text-dim)', marginTop: 2 } }, s[0]),
                 );
@@ -585,10 +585,10 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
               h('p', { style: { fontSize: 12, fontWeight: 600, color: 'var(--c-text-dim)', marginBottom: 6 } }, '最近对局'),
               ms.slice(0, 5).map(function (m, i) {
                 const delta = m.eloAfter - m.eloBefore;
-                return h('div', { key: i, style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 10px', borderRadius: 8, background: 'hsl(0 10% 8%)', border: '1px solid hsl(0 12% 20%)', marginBottom: 6, fontSize: 12 } },
+                return h('div', { key: i, style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 10px', borderRadius: 8, background: 'hsl(0 10% 8%)', border: '1px solid var(--c-border)', marginBottom: 6, fontSize: 12 } },
                   h('span', { style: { color: 'var(--c-text-dim)' } }, (diffName[m.difficulty] || m.difficulty) + ' · ' + fmtDate(m.ts)),
-                  h('span', { style: { fontWeight: 700, color: m.result === 'win' ? 'hsl(142 60% 55%)' : m.result === 'draw' ? 'hsl(0 8% 55%)' : 'hsl(0 60% 55%)' } }, m.result === 'win' ? '胜' : m.result === 'draw' ? '平' : '负'),
-                  h('span', { style: { fontFamily: 'monospace', color: delta >= 0 ? 'hsl(142 60% 55%)' : 'hsl(0 60% 55%)' } }, (delta >= 0 ? '+' : '') + delta),
+                  h('span', { style: { fontWeight: 700, color: m.result === 'win' ? 'var(--c-success)' : m.result === 'draw' ? 'var(--c-text-dim)' : 'var(--c-danger)' } }, m.result === 'win' ? '胜' : m.result === 'draw' ? '平' : '负'),
+                  h('span', { style: { fontFamily: 'monospace', color: delta >= 0 ? 'var(--c-success)' : 'var(--c-danger)' } }, (delta >= 0 ? '+' : '') + delta),
                 );
               })
             ),
