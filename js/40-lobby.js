@@ -395,8 +395,8 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
       style: { position: 'absolute', top: 20, right: 20, display: 'flex', alignItems: 'center', gap: 8, background: 'var(--c-panel-bg)', padding: '4px 12px', borderRadius: 16, border: '1px solid hsl(30 15% 25%)', zIndex: 20 }
     },
       h('span', { style: { fontSize: 12, color: 'hsl(35 30% 80%)' } }, h(Icon.User, { size: 12 }), ' ' + user.name),
-      h('span', { style: { fontSize: 11, color: user.reputation >= 80 ? 'var(--c-success)' : user.reputation >= 50 ? 'var(--c-accent)' : 'var(--c-danger-bright)', fontWeight: 600 } }, '信誉 ' + user.reputation),
-      h('button', { className: 'btn btn-ghost', style: { padding: '2px 8px', fontSize: 11, color: 'var(--c-text-dim)' }, onClick: onLogout }, '登出'),
+      h('span', { style: { fontSize: 12, color: user.reputation >= 80 ? 'var(--c-success)' : user.reputation >= 50 ? 'var(--c-accent)' : 'var(--c-danger-bright)', fontWeight: 600 } }, '信誉 ' + user.reputation),
+      h('button', { className: 'btn btn-ghost', style: { padding: '2px 8px', fontSize: 12, color: 'var(--c-text-dim)' }, onClick: onLogout }, '登出'),
     ),
     h('p', { style: { color: 'var(--c-accent)', fontSize: 14, letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: 12, fontWeight: 600 } }, '跨网联机'),
     h('h1', { style: { fontFamily: 'var(--font-title)', fontSize: 'clamp(2rem,7vw,3.5rem)', fontWeight: 'bold' } }, '骗子牌'),
@@ -409,7 +409,7 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
         onClick: runNetTest,
         disabled: netTest.running
       }, netTest.running ? h('span', { style: { display: 'inline-flex', alignItems: 'center', gap: 6 } }, h(Icon.Loader2, { size: 15 }), '检测中...') : h('span', { style: { display: 'inline-flex', alignItems: 'center', gap: 6 } }, h(Icon.Search, { size: 15 }), '检测网络联机能力')),
-      netTest.result && h('div', { style: { marginTop: 8, padding: 12, background: 'rgba(0,0,0,0.3)', borderRadius: 8, width: '100%', fontSize: 13, lineHeight: 1.6 } },
+      netTest.result && h('div', { style: { marginTop: 8, padding: 12, background: 'rgba(0,0,0,0.3)', borderRadius: 8, width: '100%', fontSize: 12, lineHeight: 1.6 } },
         netTest.result.details.map((d, i) => h('div', { key: i, style: { marginBottom: 4 } }, d))
       ),
       h('button', { className: 'btn btn-ghost btn-lg', style: { width: '100%' }, onClick: onBack }, h(Icon.ArrowLeft, { size: 16 }), '返回'),
@@ -420,7 +420,7 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
     className: 'animate-fade-in',
     style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '3rem 1rem', gap: 16 }
   },
-    h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 20, fontWeight: 'bold' } }, '创建房间'),
+    h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 18, fontWeight: 'bold' } }, '创建房间'),
     h('input', {
       className: 'input',
       style: { maxWidth: 280, textAlign: 'center' },
@@ -434,18 +434,18 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
       disabled: !name.trim(),
       onClick: () => { setErr(''); createRoom('public'); }
     },
-      h('span', { style: { display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 17 } }, h(Icon.Globe, { size: 16 }), '公开房间'),
-      h('span', { style: { fontSize: 11, opacity: 0.75, fontWeight: 400 } }, '出现在房间列表，任何人都可加入'),
+      h('span', { style: { display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 18 } }, h(Icon.Globe, { size: 16 }), '公开房间'),
+      h('span', { style: { fontSize: 12, opacity: 0.75, fontWeight: 400 } }, '出现在房间列表，任何人都可加入'),
     ),
     h('button', {
       className: 'btn btn-outline btn-lg', style: { width: 280, display: 'flex', flexDirection: 'column', gap: 4, padding: '14px 16px' },
       disabled: !name.trim(),
       onClick: () => { setErr(''); createRoom('private'); }
     },
-      h('span', { style: { display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 17 } }, h(Icon.Lock, { size: 16 }), '私密房间'),
-      h('span', { style: { fontSize: 11, opacity: 0.65, fontWeight: 400 } }, '不出现在列表，仅凭 6 位房号加入'),
+      h('span', { style: { display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 18 } }, h(Icon.Lock, { size: 16 }), '私密房间'),
+      h('span', { style: { fontSize: 12, opacity: 0.65, fontWeight: 400 } }, '不出现在列表，仅凭 6 位房号加入'),
     ),
-    err && h('p', { style: { fontSize: 13, color: 'var(--c-danger-deep)' } }, err),
+    err && h('p', { style: { fontSize: 12, color: 'var(--c-danger-deep)' } }, err),
     h('button', { className: 'btn btn-ghost', onClick: () => { setView('menu'); setErr(''); } }, h(Icon.ArrowLeft, { size: 16 }), '返回'),
   );
 
@@ -454,7 +454,7 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
     className: 'animate-fade-in',
     style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '3rem 1rem', gap: 16 }
   },
-    h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 20, fontWeight: 'bold' } }, '公开房间'),
+    h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 18, fontWeight: 'bold' } }, '公开房间'),
     h('div', { style: { display: 'flex', alignItems: 'center', gap: 10, minHeight: 22 } },
       h('button', { className: 'btn btn-outline btn-sm', onClick: browseRooms, disabled: browsing },
         h(Icon.RefreshCw, { size: 14 }), browsing ? '搜索中...' : '刷新'),
@@ -481,16 +481,16 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
               },
                 h('div', { style: { fontFamily: 'monospace', fontSize: 18, fontWeight: 'bold', letterSpacing: '0.15em' } }, r.code),
                 h('div', { style: { flex: 1, minWidth: 0 } },
-                  h('div', { style: { fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, (r.hostName || '房主') + ' 的房间'),
-                  h('div', { style: { fontSize: 11, color: 'hsl(0 0% 55%)' } }, `${r.playerCount ?? 1}/${r.capacity ?? 4} 人`),
+                  h('div', { style: { fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, (r.hostName || '房主') + ' 的房间'),
+                  h('div', { style: { fontSize: 12, color: 'hsl(0 0% 55%)' } }, `${r.playerCount ?? 1}/${r.capacity ?? 4} 人`),
                 ),
                 h('span', {
-                  style: { fontSize: 11, padding: '2px 8px', borderRadius: 8, fontWeight: 600, color: r.inGame ? 'var(--c-text-dim)' : full ? 'hsl(30 20% 50%)' : 'hsl(142 60% 45%)', border: '1px solid hsl(30 15% 25%)' }
+                  style: { fontSize: 12, padding: '2px 8px', borderRadius: 8, fontWeight: 600, color: r.inGame ? 'var(--c-text-dim)' : full ? 'hsl(30 20% 50%)' : 'hsl(142 60% 45%)', border: '1px solid hsl(30 15% 25%)' }
                 }, r.inGame ? '游戏中' : full ? '已满' : '等待中'),
               );
             })
           ),
-    err && h('p', { style: { fontSize: 13, color: 'var(--c-danger-deep)' } }, err),
+    err && h('p', { style: { fontSize: 12, color: 'var(--c-danger-deep)' } }, err),
     h('button', { className: 'btn btn-ghost', onClick: () => { setView('join'); setErr(''); } }, h(Icon.ArrowLeft, { size: 16 }), '返回'),
   );
 
@@ -498,7 +498,7 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
     className: 'animate-fade-in',
     style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '3rem 1rem', gap: 16 }
   },
-    h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 20, fontWeight: 'bold' } }, '加入房间'),
+    h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 18, fontWeight: 'bold' } }, '加入房间'),
     h('input', {
       className: 'input',
       style: { maxWidth: 280, textAlign: 'center', fontSize: 18, letterSpacing: '0.3em', fontFamily: 'monospace' },
@@ -518,7 +518,7 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
       placeholder: '输入昵称',
       maxLength: 8
     }),
-    err && h('p', { style: { fontSize: 13, color: 'var(--c-danger-deep)' } }, err),
+    err && h('p', { style: { fontSize: 12, color: 'var(--c-danger-deep)' } }, err),
     h('button', {
       className: 'btn btn-primary btn-lg',
       disabled: !code.trim() || !name.trim() || joining,
@@ -534,7 +534,7 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
     className: 'animate-fade-in',
     style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '3rem 1rem', gap: 16 }
   },
-    h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 20, fontWeight: 'bold', marginBottom: 4 } }, '等待大厅'),
+    h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 18, fontWeight: 'bold', marginBottom: 4 } }, '等待大厅'),
     h('div', {
       className: 'panel',
       style: { padding: 16, width: '100%', maxWidth: 340, display: 'flex', alignItems: 'center', gap: 14, borderRadius: 12 }
@@ -543,8 +543,8 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
         h(Icon.Users, { size: 22, color: 'var(--c-danger-bright)' }),
       ),
       h('div', { style: { flex: 1 } },
-        h('p', { style: { fontSize: 11, color: 'var(--c-text-dim)', marginBottom: 2 } }, '房间号'),
-        h('p', { style: { fontSize: 26, fontWeight: 'bold', fontFamily: 'monospace', letterSpacing: '0.15em', color: 'var(--c-text-bright)' } }, roomId),
+        h('p', { style: { fontSize: 12, color: 'var(--c-text-dim)', marginBottom: 2 } }, '房间号'),
+        h('p', { style: { fontSize: 24, fontWeight: 'bold', fontFamily: 'monospace', letterSpacing: '0.15em', color: 'var(--c-text-bright)' } }, roomId),
         roomVis != null && h('p', { style: { fontSize: 10, marginTop: 2, color: roomVis === 'public' ? 'var(--c-success)' : 'hsl(0 0% 55%)', display: 'inline-flex', alignItems: 'center', gap: 4 } },
           roomVis === 'public' ? h(Icon.Globe, { size: 10 }) : h(Icon.Lock, { size: 10 }),
           roomVis === 'public' ? '公开 · 可被搜索加入' : '私密 · 仅房号加入'),
@@ -560,7 +560,7 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
     ),
     h('div', { style: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 } },
       h('span', { style: { color: 'var(--c-success)', display: 'inline-flex' } }, h(Icon.Wifi, { size: 14 })),
-      h('span', { style: { fontSize: 13, color: 'var(--c-success)', fontWeight: 500 } }, '已连接'),
+      h('span', { style: { fontSize: 12, color: 'var(--c-success)', fontWeight: 500 } }, '已连接'),
     ),
     h('div', { style: { width: '100%', maxWidth: 340 } },
       h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, padding: '0 4px' } },
@@ -600,13 +600,13 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
           h('div', { style: { display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' } },
             h('span', { style: { fontSize: 14, fontWeight: 600, color: 'var(--c-text)' } }, ' ' + p.name),
             p.isHost && h('span', { style: { display: 'inline-flex', color: 'var(--c-accent)' } }, h(Icon.Crown, { size: 13 })),
-            p.isLocal && h('span', { style: { fontSize: 11, color: 'var(--c-danger-bright)', fontWeight: 500 } }, '你'),
+            p.isLocal && h('span', { style: { fontSize: 12, color: 'var(--c-danger-bright)', fontWeight: 500 } }, '你'),
             p.ready && !p.isHost && h('span', { style: { fontSize: 10, background: 'rgba(34,197,94,0.15)', color: 'hsl(142 71% 45%)', padding: '1px 6px', borderRadius: 4 } }, '已准备'),
           ),
           h('div', { style: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 } },
-            !p.isAI && h('span', { style: { fontSize: 11, color: (p.reputation ?? 100) >= 30 ? 'var(--c-success)' : 'var(--c-danger-bright)' } }, '信誉' + (p.reputation ?? 100)),
-            !p.isAI && h('span', { style: { fontSize: 11, color: 'var(--c-success)' } }, h(Icon.Wifi, { size: 11 }), ' 已连接'),
-            p.isAI && h('span', { style: { fontSize: 11, color: 'var(--c-text-dim)' } }, 'AI 对手'),
+            !p.isAI && h('span', { style: { fontSize: 12, color: (p.reputation ?? 100) >= 30 ? 'var(--c-success)' : 'var(--c-danger-bright)' } }, '信誉' + (p.reputation ?? 100)),
+            !p.isAI && h('span', { style: { fontSize: 12, color: 'var(--c-success)' } }, h(Icon.Wifi, { size: 11 }), ' 已连接'),
+            p.isAI && h('span', { style: { fontSize: 12, color: 'var(--c-text-dim)' } }, 'AI 对手'),
           ),
         ),
         !p.isLocal && isHost && h('button', {
@@ -621,11 +621,11 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
           style: { position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%', padding: 0, fontSize: 14, color: 'var(--c-text-dim)' }
         }, '×'),
       )),
-      players.length < 4 && h('div', { style: { textAlign: 'center', padding: '12px 0', color: 'var(--c-text-faint)', fontSize: 13 } },
+      players.length < 4 && h('div', { style: { textAlign: 'center', padding: '12px 0', color: 'var(--c-text-faint)', fontSize: 12 } },
         h(Icon.Users, { size: 13 }), ` 等待更多玩家加入... (${players.length}/4)`
       ),
     ),
-    err && h('p', { style: { fontSize: 13, color: 'var(--c-danger-deep)' } }, err),
+    err && h('p', { style: { fontSize: 12, color: 'var(--c-danger-deep)' } }, err),
     isHost ?
       h('div', { style: { width: '100%', maxWidth: 320, marginTop: 8 } },
         h('p', { style: { fontSize: 12, color: 'var(--c-text-dim)', marginBottom: 4, textAlign: 'left' } }, '房主昵称：'),

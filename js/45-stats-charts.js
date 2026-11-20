@@ -70,7 +70,7 @@ function LineChart({ matches, width = 320, height = 150 }) {
   const W = width, H = height;
   const iw = W - padL - padR, ih = H - padT - padB;
   if (list.length === 0) {
-    return h('div', { style: { fontSize: 11, color: 'var(--c-text-faint)', textAlign: 'center', padding: '30px 0' } }, '暂无对局记录');
+    return h('div', { style: { fontSize: 12, color: 'var(--c-text-faint)', textAlign: 'center', padding: '30px 0' } }, '暂无对局记录');
   }
   const lo = Math.min(ELO_BASE - 40, Math.min(...list) - 24);
   const hi = Math.max(ELO_BASE + 40, Math.max(...list) + 24);
@@ -86,7 +86,7 @@ function LineChart({ matches, width = 320, height = 150 }) {
     h('svg', { width: '100%', viewBox: '0 0 ' + W + ' ' + H },
       // 基准线 1000
       baseY !== null && h('line', { x1: padL, x2: W - padR, y1: baseY, y2: baseY, stroke: 'hsl(42 60% 40%)', strokeWidth: 1, strokeDasharray: '5,4', opacity: 0.7 }),
-      baseY !== null && h('text', { x: 4, y: baseY + 3, fontSize: 8, fill: 'hsl(42 60% 45%)' }, '1000'),
+      baseY !== null && h('text', { x: 4, y: baseY + 3, fontSize: 10, fill: 'hsl(42 60% 45%)' }, '1000'),
       ...grid,
       // 折线
       h('polyline', { points: pts, fill: 'none', stroke: 'var(--c-accent)', strokeWidth: 2, strokeLinejoin: 'round', strokeLinecap: 'round' }),
@@ -97,9 +97,9 @@ function LineChart({ matches, width = 320, height = 150 }) {
         return h('circle', { key: i, cx: x(i), cy: y(v), r: 3, fill: c, stroke: 'hsl(0 10% 8%)', strokeWidth: 1 });
       }),
       // 两端标签
-      h('text', { x: padL, y: H - 6, fontSize: 9, fill: 'var(--c-text-faint)' }, '20局前'),
-      h('text', { x: W - padR, y: H - 6, fontSize: 9, fill: 'var(--c-text-faint)', textAnchor: 'end' }, '最新'),
-      h('text', { x: 4, y: padT + 4, fontSize: 8, fill: 'var(--c-text-faint)' }, Math.round(hi)),
+      h('text', { x: padL, y: H - 6, fontSize: 10, fill: 'var(--c-text-faint)' }, '20局前'),
+      h('text', { x: W - padR, y: H - 6, fontSize: 10, fill: 'var(--c-text-faint)', textAnchor: 'end' }, '最新'),
+      h('text', { x: 4, y: padT + 4, fontSize: 10, fill: 'var(--c-text-faint)' }, Math.round(hi)),
     ),
     h('div', { style: { display: 'flex', justifyContent: 'center', gap: 14, fontSize: 10, marginTop: 4 } },
       h('span', { style: { color: 'var(--c-success)' } }, '● 胜'),

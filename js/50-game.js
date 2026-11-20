@@ -144,7 +144,7 @@ function PlayerDetailPanel({ st, pid, onClose }) {
   const isMe = p.isLocal;
   const row = (k, v, accent) => h('div', { key: k, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' } },
     h('span', { style: { fontSize: 12, color: 'var(--c-text-dim)' } }, k),
-    h('span', { style: { fontSize: 13, fontWeight: 600, color: accent || 'var(--c-text)' } }, v));
+    h('span', { style: { fontSize: 12, fontWeight: 600, color: accent || 'var(--c-text)' } }, v));
   const tag = (text, color, bg) => h('span', { key: text, style: { fontSize: 10, color, background: bg, padding: '2px 8px', borderRadius: 8, border: '1px solid ' + color.replace(')', ',0.3)').replace('hsl', 'hsla') } }, text);
   return h('div', { style: { position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }, onClick: onClose },
     h('div', { style: { width: 'min(86vw, 340px)', maxHeight: '80vh', overflowY: 'auto', background: 'var(--c-panel, hsl(0 30% 8%))', border: '1px solid rgba(180,30,30,0.35)', borderRadius: 12, padding: '18px 20px' }, onClick: e => e.stopPropagation() },
@@ -152,7 +152,7 @@ function PlayerDetailPanel({ st, pid, onClose }) {
       h('div', { style: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 } },
         h('div', { style: { color: 'var(--c-accent)', display: 'flex' } }, aiCrest(p, 40) || h(Icon.User, { size: 40 })),
         h('div', { style: { flex: 1 } },
-          h('div', { style: { fontSize: 17, fontWeight: 700 } }, p.name, isMe && h('span', { style: { fontSize: 11, color: 'var(--c-danger-bright)', marginLeft: 6 } }, '（你）')),
+          h('div', { style: { fontSize: 18, fontWeight: 700 } }, p.name, isMe && h('span', { style: { fontSize: 12, color: 'var(--c-danger-bright)', marginLeft: 6 } }, '（你）')),
           h('div', { style: { display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' } },
             rd && tag(rn.name || rd.id, 'hsl(280 60% 72%)', 'rgba(147,51,234,0.12)'),
             p.persona && tag(String(p.persona), 'var(--c-ice)', 'rgba(34,211,238,0.1)'),
@@ -171,12 +171,12 @@ function PlayerDetailPanel({ st, pid, onClose }) {
         st.lastCaughtPid === pid && tag('上局被抓', 'var(--c-danger)', 'rgba(200,30,30,0.08)'),
       ),
       // 牌况
-      h('div', { style: { fontSize: 11, color: 'var(--c-accent)', letterSpacing: 2, margin: '10px 0 2px' } }, '牌况'),
+      h('div', { style: { fontSize: 12, color: 'var(--c-accent)', letterSpacing: 2, margin: '10px 0 2px' } }, '牌况'),
       row('手牌', String(handN)),
       row('个人牌库', String(libN), libN === 0 ? 'var(--c-danger-bright)' : null),
       frozen.length > 0 && row('被冻结牌', String(frozen.length) + ' 张', 'hsl(250 60% 70%)'),
       // 计数
-      h('div', { style: { fontSize: 11, color: 'var(--c-accent)', letterSpacing: 2, margin: '10px 0 2px' } }, '本局计数'),
+      h('div', { style: { fontSize: 12, color: 'var(--c-accent)', letterSpacing: 2, margin: '10px 0 2px' } }, '本局计数'),
       row('出牌次数', String(ps.playCount || 0)),
       row('质疑次数', String(ps.challengeCount || 0)),
       row('中弹次数', String(ps.shotCount || 0)),
@@ -185,14 +185,14 @@ function PlayerDetailPanel({ st, pid, onClose }) {
       row('轮盘存活', String(p.survivedCount || 0) + ' / 3'),
       // 技能
       rd && h('div', null,
-        h('div', { style: { fontSize: 11, color: 'var(--c-accent)', letterSpacing: 2, margin: '10px 0 2px' } }, '技能'),
+        h('div', { style: { fontSize: 12, color: 'var(--c-accent)', letterSpacing: 2, margin: '10px 0 2px' } }, '技能'),
         row('技能', (rn.name || rd.id) + '·' + (rd.trigger === 'once' ? '每局 1 次' : rd.trigger === 'cd' ? '冷却制' : '被动')),
         rd.trigger === 'once' && row('剩余次数', String(charge[rd.id] ?? (ONCE_ROLE_IDS.has(rd.id) ? 1 : 0))),
         rd.trigger === 'cd' && row('冷却状态', (st.skillCd || {})[pid] && (st.skillCd || {})[pid][rd.id] != null ? '第 ' + (st.skillCd || {})[pid][rd.id] + ' 轮已用' : '可用'),
       ),
       // B2 画像（仅本机有数据时显示——联机客户端自动隐藏）
       known && h('div', null,
-        h('div', { style: { fontSize: 11, color: 'var(--c-accent)', letterSpacing: 2, margin: '10px 0 2px' } }, '你的观察画像'),
+        h('div', { style: { fontSize: 12, color: 'var(--c-accent)', letterSpacing: 2, margin: '10px 0 2px' } }, '你的观察画像'),
         row('记录样本', String((known.bluffs || 0) + (known.honest || 0)) + ' 局'),
         row('吹牌记录', String(known.bluffs || 0)),
         row('诚实记录', String(known.honest || 0)),
@@ -267,9 +267,9 @@ function DiceTable({ dst, dispatch, onQuit, onRouletteDone }) {
     return h('div', { className: 'overlay' },
       h('div', { className: 'panel animate-slide-up', style: { textAlign: 'center', padding: 28, maxWidth: 340 } },
         h('div', { style: { display: 'flex', justifyContent: 'center', marginBottom: 10 } }, h(Icon[win ? 'Crown' : 'Skull'] || Icon.Crown, { size: 44 })),
-        h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 22, fontWeight: 'bold', color: win ? 'var(--c-accent)' : 'var(--c-text-dim)' } },
+        h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 24, fontWeight: 'bold', color: win ? 'var(--c-accent)' : 'var(--c-text-dim)' } },
           win ? '骰桌赢家！' : '骰桌失意'),
-        h('p', { style: { fontSize: 13, color: 'var(--c-text-dim)', marginTop: 6 } },
+        h('p', { style: { fontSize: 12, color: 'var(--c-text-dim)', marginTop: 6 } },
           win ? '全场只剩你一人还坐得稳——今晚的酒钱省下了' : ('胜者：' + (dst.winner ? dst.winner.name : '?'))),
         h('button', { className: 'btn btn-primary', style: { marginTop: 18, width: '100%' }, onClick: onQuit }, '回到主菜单'),
       ),
@@ -283,16 +283,16 @@ function DiceTable({ dst, dispatch, onQuit, onRouletteDone }) {
     return h('div', { className: 'overlay', style: { zIndex: 42 }, onClick: e => { if (e.target === e.currentTarget) dispatch({ type: 'DICE_REVEAL_DONE' }); } },
       h('div', { className: 'panel animate-slide-up', style: { textAlign: 'center', padding: '24px 28px', maxWidth: 420 } },
         h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 18, marginBottom: 4 } }, '开盅验点'),
-        h('p', { style: { fontSize: 13, color: 'var(--c-text-dim)', marginBottom: 14 } },
+        h('p', { style: { fontSize: 12, color: 'var(--c-text-dim)', marginBottom: 14 } },
           '叫点「' + cr.needed + ' 个 ' + cr.face + '」 · 全场实际 ' + cr.total + ' 个'),
         h('div', { style: { display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 } },
           dst.players.map(p => p.alive && h('div', { key: p.id, style: { display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', flexWrap: 'wrap' } },
             h('span', { style: { fontSize: 12, color: p.id === cr.loserPid ? 'var(--c-danger)' : 'var(--c-text-dim)', width: 64, textAlign: 'right' } }, p.name),
             (p.id === 0 ? me.dice : p.dice || []).map((v, i) => h(DiceFace, { key: i, v: v, size: 30 })),
-            p.id !== 0 && h('span', { style: { fontSize: 11, color: 'var(--c-text-faint)', width: 70, textAlign: 'left' } }, '（' + (p.dice || []).filter(d => d === cr.face).length + ' 个 ' + cr.face + '）'),
+            p.id !== 0 && h('span', { style: { fontSize: 12, color: 'var(--c-text-faint)', width: 70, textAlign: 'left' } }, '（' + (p.dice || []).filter(d => d === cr.face).length + ' 个 ' + cr.face + '）'),
           )),
         ),
-        h('div', { style: { fontSize: 15, fontWeight: 'bold', color: 'var(--c-danger)', marginBottom: 14 } },
+        h('div', { style: { fontSize: 14, fontWeight: 'bold', color: 'var(--c-danger)', marginBottom: 14 } },
           loser ? (loser.name + (loser.isAI ? '' : '（你）') + ' 判定失败，上桌受罚') : '判定失败'),
         h('button', { className: 'btn btn-primary', style: { width: '100%' }, onClick: () => dispatch({ type: 'DICE_REVEAL_DONE' }) }, '认命 · 转轮盘'),
       ),
@@ -309,10 +309,10 @@ function DiceTable({ dst, dispatch, onQuit, onRouletteDone }) {
       h('button', { className: 'btn btn-ghost', style: { padding: '4px 10px', flexShrink: 0 }, onClick: dismissDiceFtue }, '知道了'),
     ),
     // 顶部状态
-    h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, color: 'var(--c-text-dim)', padding: '4px 4px 8px' } },
+    h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--c-text-dim)', padding: '4px 4px 8px' } },
       h('span', null, '第 ' + dst.round + ' 局 · 存活 ' + aliveCount + ' · 全场骰 ' + totalDice),
       h('span', null, dst.shots > 0 ? '命运转盘已开 ' + dst.shots + ' 次' : '骰桌首局'),
-      h('button', { className: 'btn btn-ghost', style: { padding: '2px 10px', fontSize: 11 }, onClick: onQuit }, '退出'),
+      h('button', { className: 'btn btn-ghost', style: { padding: '2px 10px', fontSize: 12 }, onClick: onQuit }, '退出'),
     ),
     // 对手骰盅区
     h('div', { style: { display: 'flex', justifyContent: 'center', gap: 'clamp(10px,3vw,28px)', flexWrap: 'wrap', padding: '6px 0' } },
@@ -321,7 +321,7 @@ function DiceTable({ dst, dispatch, onQuit, onRouletteDone }) {
         const isBidder = lb && lb.pid === p.id;
         return h('div', { key: p.id, style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: p.alive ? 1 : 0.35, border: `1px solid ${isCur && p.alive ? 'hsl(0 45% 32%)' : 'var(--c-border-soft)'}`, borderRadius: 8, padding: '8px 10px', background: isCur && p.alive ? 'rgba(180,30,30,0.08)' : 'transparent' } },
           p.alive
-            ? h('div', { style: { display: 'flex', gap: 3 } }, [0, 1, 2, 3, 4].map(i => h('div', { key: i, style: { width: 22, height: 22, borderRadius: 4, background: 'var(--c-border)', border: '1px solid hsl(0 12% 26%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'hsl(0 8% 32%)' } }, '?')))
+            ? h('div', { style: { display: 'flex', gap: 3 } }, [0, 1, 2, 3, 4].map(i => h('div', { key: i, style: { width: 22, height: 22, borderRadius: 4, background: 'var(--c-border)', border: '1px solid hsl(0 12% 26%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: 'hsl(0 8% 32%)' } }, '?')))
             : h('div', { style: { color: 'var(--c-text-faint)' } }, h(Icon.Skull, { size: 20 })),
           h('span', { style: { fontSize: 12, fontWeight: isCur ? 600 : 400, color: p.alive ? 'var(--c-text)' : 'var(--c-text-faint)', textDecoration: p.alive ? 'none' : 'line-through' } }, p.name),
           isBidder && h('div', { style: { fontSize: 10, color: 'var(--c-accent)', background: 'rgba(200,160,50,0.15)', border: '1px solid rgba(180,30,30,0.3)', padding: '1px 8px', borderRadius: 12 } }, lb.count + ' 个 ' + lb.face),
@@ -332,12 +332,12 @@ function DiceTable({ dst, dispatch, onQuit, onRouletteDone }) {
     h('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '18px 0' } },
       h('div', { style: { border: '1px solid var(--c-border)', borderRadius: 999, padding: '8px 26px', background: 'var(--c-input-bg)' } },
         h('span', { style: { fontSize: 12, color: 'var(--c-text-dim)', marginRight: 8 } }, '当前叫点'),
-        h('span', { style: { fontSize: 20, fontWeight: 'bold', fontFamily: 'var(--font-title)', color: lb ? 'var(--c-text-bright)' : 'var(--c-text-dim)' } },
+        h('span', { style: { fontSize: 18, fontWeight: 'bold', fontFamily: 'var(--font-title)', color: lb ? 'var(--c-text-bright)' : 'var(--c-text-dim)' } },
           lb ? (lb.count + ' 个 ' + lb.face) : '任意起叫'),
       ),
       h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' } },
         me.alive ? me.dice.map((v, i) => h(DiceFace, { key: i, v: v, size: 46 })) : h('span', { style: { fontSize: 12, color: 'var(--c-text-faint)' } }, '你已出局（观局中）')),
-      h('span', { style: { fontSize: 11, color: 'var(--c-text-dim)' } }, me.alive ? ('你的「' + (lb ? lb.face : bidFace) + '」：' + me.dice.filter(d => d === (lb ? lb.face : bidFace)).length + ' 个') : ''),
+      h('span', { style: { fontSize: 12, color: 'var(--c-text-dim)' } }, me.alive ? ('你的「' + (lb ? lb.face : bidFace) + '」：' + me.dice.filter(d => d === (lb ? lb.face : bidFace)).length + ' 个') : ''),
     ),
     // 操作区 / 等待提示
     dst.phase === 'bid' && h('div', { style: { position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, background: 'linear-gradient(transparent, hsl(0 20% 5%) 45%)', padding: '14px 12px 16px' } },
@@ -348,13 +348,13 @@ function DiceTable({ dst, dispatch, onQuit, onRouletteDone }) {
             key: f,
             className: 'btn ' + (bidFace === f ? 'btn-primary' : 'btn-outline'),
             onClick: () => setBidFace(f),
-            style: { flex: 1, maxWidth: 56, height: 40, padding: 0, fontSize: 15, fontWeight: 'bold' },
+            style: { flex: 1, maxWidth: 56, height: 40, padding: 0, fontSize: 14, fontWeight: 'bold' },
           }, String(f))),
         ),
         // 数量步进行
         h('div', { style: { display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' } },
           h('button', { className: 'btn btn-outline', style: { width: 52, height: 42, padding: 0, fontSize: 18 }, onClick: () => setBidCount(c => Math.max(1, c - 1)) }, '−'),
-          h('span', { style: { fontSize: 22, fontWeight: 'bold', fontFamily: 'var(--font-title)', minWidth: 90, textAlign: 'center', color: legal ? 'var(--c-text-bright)' : 'var(--c-text-faint)' } }, bidCount + ' 个 ' + bidFace),
+          h('span', { style: { fontSize: 24, fontWeight: 'bold', fontFamily: 'var(--font-title)', minWidth: 90, textAlign: 'center', color: legal ? 'var(--c-text-bright)' : 'var(--c-text-faint)' } }, bidCount + ' 个 ' + bidFace),
           h('button', { className: 'btn btn-outline', style: { width: 52, height: 42, padding: 0, fontSize: 18 }, onClick: () => setBidCount(c => Math.min(totalDice, c + 1)) }, '+'),
         ),
         // 叫点 / 叫开按钮
@@ -364,7 +364,7 @@ function DiceTable({ dst, dispatch, onQuit, onRouletteDone }) {
           lb && h('button', { className: 'btn btn-outline', style: { flex: 1, height: 46, color: 'hsl(0 60% 62%)', borderColor: 'hsl(0 40% 32%)' }, onClick: doCall },
             h(Icon.Eye, { size: 14 }), '叫开'),
         ),
-      ) : h('div', { style: { textAlign: 'center', fontSize: 13, color: 'var(--c-text-dim)', padding: 8 } },
+      ) : h('div', { style: { textAlign: 'center', fontSize: 12, color: 'var(--c-text-dim)', padding: 8 } },
         cur ? ('等待 ' + cur.name + ' 叫点...') : ''),
     ),
   );
@@ -1700,26 +1700,26 @@ function Game() {
       },
         h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' } },
           // P3-8：顶栏小按钮热区扩容（padding 撑触控面 + 负 margin 保持视觉密度）
-          h('button', { className: 'btn btn-ghost', style: { padding: '8px 10px', margin: '-7px -2px', fontSize: 11, color: 'var(--c-danger)', flexShrink: 0 }, onClick: () => setQuitConfirm(true) }, '退出'),
-          isHost && h('button', { className: 'btn btn-ghost', style: { padding: '8px 10px', margin: '-7px -2px', fontSize: 11, color: paused ? 'var(--c-success)' : 'var(--c-accent)', flexShrink: 0 }, onClick: togglePause }, paused ? '继续' : '暂停'),
+          h('button', { className: 'btn btn-ghost', style: { padding: '8px 10px', margin: '-7px -2px', fontSize: 12, color: 'var(--c-danger)', flexShrink: 0 }, onClick: () => setQuitConfirm(true) }, '退出'),
+          isHost && h('button', { className: 'btn btn-ghost', style: { padding: '8px 10px', margin: '-7px -2px', fontSize: 12, color: paused ? 'var(--c-success)' : 'var(--c-accent)', flexShrink: 0 }, onClick: togglePause }, paused ? '继续' : '暂停'),
           h('button', { className: 'btn btn-ghost', title: '快捷键说明', style: { padding: '8px 10px', margin: '-7px -2px', display: 'inline-flex', alignItems: 'center', color: 'var(--c-ice)', flexShrink: 0 }, onClick: () => setHkHint(v => !v) }, h(Icon.Keyboard, { size: 13 })),
-          hkHint && h('div', { style: { position: 'fixed', top: 44, right: 10, zIndex: 80, background: 'var(--c-border-soft)', border: '1px solid hsl(0 15% 25%)', borderRadius: 8, padding: '10px 14px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)', fontSize: 11, color: 'hsl(0 10% 65%)', lineHeight: 2, pointerEvents: 'none' } },
+          hkHint && h('div', { style: { position: 'fixed', top: 44, right: 10, zIndex: 80, background: 'var(--c-border-soft)', border: '1px solid hsl(0 15% 25%)', borderRadius: 8, padding: '10px 14px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)', fontSize: 12, color: 'hsl(0 10% 65%)', lineHeight: 2, pointerEvents: 'none' } },
             h('div', { style: { fontWeight: 600, color: 'var(--c-accent)', marginBottom: 2 } }, '快捷键'),
             h('div', null, h('b', { style: { color: 'var(--c-ice)' } }, '1~9'), ' 选牌 / 取消选牌'),
             h('div', null, h('b', { style: { color: 'var(--c-ice)' } }, 'Space'), ' 确认出牌　', h('b', { style: { color: 'var(--c-ice)' } }, 'Z'), ' 清空选择'),
             h('div', null, h('b', { style: { color: 'var(--c-ice)' } }, 'F / W'), ' 跟牌　', h('b', { style: { color: 'var(--c-ice)' } }, 'D / Q'), ' 质疑'),
             h('div', null, h('b', { style: { color: 'var(--c-ice)' } }, 'Esc'), ' 关闭事件横幅'),
           ),
-          h('span', { style: { fontSize: 11, color: 'hsl(35 30% 80%)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 } }, h(Icon.Swords, { size: 11 }), '第' + st.round + '轮'),
+          h('span', { style: { fontSize: 12, color: 'hsl(35 30% 80%)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 } }, h(Icon.Swords, { size: 11 }), '第' + st.round + '轮'),
           h('span', { style: { fontSize: 10, color: 'var(--c-accent)', display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 } }, h(Icon.Sparkles, { size: 10 }), '事件' + eventsUntil + '回合后'),
           st.spectateId !== null && h('span', { style: { fontSize: 10, color: 'hsl(200 70% 65%)', display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 } },
             h(Icon.Eye, { size: 10 }), ((st.players.find(function (q) { return q.id === st.spectateId; }) || {}).name || '玩家') + ' 观战'),
           isBlackout(st) && h('span', { style: { fontSize: 10, color: 'hsl(250 60% 70%)', display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 } }, '长夜·手牌不可见'),
           (st.rouletteShift || 0) > 0 && h('span', { style: { fontSize: 10, color: 'hsl(0 75% 60%)', display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 } }, '天崩·中弹+' + st.rouletteShift + '/6'),
-          st.fatigueActive && h('span', { style: { fontSize: 9, color: 'hsl(280 60% 65%)', background: 'rgba(147,51,234,0.1)', padding: '1px 5px', borderRadius: 4, border: '1px solid rgba(147,51,234,0.2)', flexShrink: 0 } }, '疲劳'),
+          st.fatigueActive && h('span', { style: { fontSize: 10, color: 'hsl(280 60% 65%)', background: 'rgba(147,51,234,0.1)', padding: '1px 5px', borderRadius: 4, border: '1px solid rgba(147,51,234,0.2)', flexShrink: 0 } }, '疲劳'),
           st.frenzy && h('span', { className: 'frenzy-badge', style: { flexShrink: 0 } }, h(Icon.Flame, { size: 11 }), '狂热化'),
-          h('span', { style: { fontSize: 9, color: 'hsl(190 70% 55%)', background: 'rgba(34,211,238,0.08)', padding: '1px 5px', borderRadius: 4, border: '1px solid rgba(34,211,238,0.15)', flexShrink: 0 } }, h('span', { style: { color: 'var(--c-ice)', display: 'inline-flex' } }, h(Icon.Angel, { size: 9 })), h('span', { style: { color: 'hsl(25 95% 60%)', display: 'inline-flex' } }, h(Icon.Demon, { size: 9 })), '×' + Math.max(1, 4 - Math.floor((st.round - 1) / 2))),
-          st.reversed && h('span', { style: { fontSize: 9, color: 'hsl(38 92% 50%)', background: 'rgba(245,158,11,0.1)', padding: '1px 5px', borderRadius: 4, flexShrink: 0 } }, '逆时针'),
+          h('span', { style: { fontSize: 10, color: 'hsl(190 70% 55%)', background: 'rgba(34,211,238,0.08)', padding: '1px 5px', borderRadius: 4, border: '1px solid rgba(34,211,238,0.15)', flexShrink: 0 } }, h('span', { style: { color: 'var(--c-ice)', display: 'inline-flex' } }, h(Icon.Angel, { size: 9 })), h('span', { style: { color: 'hsl(25 95% 60%)', display: 'inline-flex' } }, h(Icon.Demon, { size: 9 })), '×' + Math.max(1, 4 - Math.floor((st.round - 1) / 2))),
+          st.reversed && h('span', { style: { fontSize: 10, color: 'hsl(38 92% 50%)', background: 'rgba(245,158,11,0.1)', padding: '1px 5px', borderRadius: 4, flexShrink: 0 } }, '逆时针'),
           h('div', { style: { display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', flexShrink: 0 } },
             st.players.map(p => h('div', { key: p.id, style: { display: 'flex', alignItems: 'center', gap: 3 } },
               h('span', { style: { width: 7, height: 7, borderRadius: '50%', background: p.alive ? (p.id === st.curPlayer ? 'var(--c-danger)' : 'var(--c-success)') : 'var(--c-text-faint)', flexShrink: 0 } }),
@@ -1750,13 +1750,13 @@ function Game() {
           ),
         ),
         h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
-          h('span', { style: { fontSize: 11, color: 'var(--c-text-dim)', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 } }, h(Icon.Timer, { size: 11 }), '当前回合：'),
-          h('span', { style: { fontSize: 11, fontWeight: 600, color: 'var(--c-text-bright)', flexShrink: 0 } }, (st.players.find(p => p.id === st.curPlayer)?.name || '?') + ' ' + (st.phase === 'player_turn' ? '决策中' : st.phase === 'ai_turn' ? '思考中' : st.phase === 'challenge_phase' ? '质疑中' : st.phase === 'peek_phase' ? '展示中' : st.phase === 'reconsider_phase' ? '考虑中' : st.phase === 'reveal' ? '揭晓中' : st.phase === 'roulette' ? '轮盘中' : st.phase === 'dealing' ? '发牌中' : st.phase === 'event' ? '事件中' : '')),
+          h('span', { style: { fontSize: 12, color: 'var(--c-text-dim)', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 } }, h(Icon.Timer, { size: 11 }), '当前回合：'),
+          h('span', { style: { fontSize: 12, fontWeight: 600, color: 'var(--c-text-bright)', flexShrink: 0 } }, (st.players.find(p => p.id === st.curPlayer)?.name || '?') + ' ' + (st.phase === 'player_turn' ? '决策中' : st.phase === 'ai_turn' ? '思考中' : st.phase === 'challenge_phase' ? '质疑中' : st.phase === 'peek_phase' ? '展示中' : st.phase === 'reconsider_phase' ? '考虑中' : st.phase === 'reveal' ? '揭晓中' : st.phase === 'roulette' ? '轮盘中' : st.phase === 'dealing' ? '发牌中' : st.phase === 'event' ? '事件中' : '')),
           dur > 0 && h(Fragment, null,
             h('div', { style: { flex: 1, height: 5, borderRadius: 4, background: 'var(--c-border-soft)', overflow: 'hidden', minWidth: 40 } },
               h('div', { style: { height: '100%', borderRadius: 4, background: isUrgent ? 'var(--c-danger-bright)' : 'var(--c-danger)', width: `${dur > 0 ? (timer / dur) * 100 : 0}%`, transition: 'width 0.3s linear' } }),
             ),
-            h('span', { style: { fontSize: 11, fontFamily: 'monospace', color: isUrgent ? 'var(--c-danger-bright)' : 'var(--c-text-dim)', fontWeight: isUrgent ? 'bold' : 'normal', minWidth: 24, textAlign: 'right' } }, '' + timer + 's'),
+            h('span', { style: { fontSize: 12, fontFamily: 'monospace', color: isUrgent ? 'var(--c-danger-bright)' : 'var(--c-text-dim)', fontWeight: isUrgent ? 'bold' : 'normal', minWidth: 24, textAlign: 'right' } }, '' + timer + 's'),
           ),
         ),
       ),
@@ -1795,19 +1795,19 @@ function Game() {
               dead ? h('div', { style: { color: 'var(--c-text-faint)' } }, h(Icon.Skull, { size: isCur ? 22 : 18 })) : h('div', { style: { color: 'var(--c-accent)' } }, aiCrest(opp, isCur ? 24 : 20) || h(Icon.User, { size: isCur ? 22 : 18 })),
               isCur && !dead && h('div', { style: { position: 'absolute', bottom: -4, right: -4, width: 12, height: 12, borderRadius: '50%', background: 'var(--c-danger)', border: '2px solid hsl(0 30% 3%)' } }),
             ),
-            h('span', { style: { fontSize: 13, fontWeight: 500, color: dead ? 'var(--c-text-faint)' : 'var(--c-text)', textDecoration: dead ? 'line-through' : 'none' } }, opp.name),
+            h('span', { style: { fontSize: 12, fontWeight: 500, color: dead ? 'var(--c-text-faint)' : 'var(--c-text)', textDecoration: dead ? 'line-through' : 'none' } }, opp.name),
             !dead && h('div', { key: 'hand' + handLen, className: 'num-pop', style: { display: 'flex', gap: 2, alignItems: 'center' } },
               handLen > 0 ?
                 h(Fragment, null,
                   Array.from({ length: Math.min(handLen, 5) }).map((_, j) => h('div', { key: j, style: { width: 16, height: 22, borderRadius: 4, marginLeft: j > 0 ? -6 : 0, background: 'linear-gradient(135deg,rgba(180,30,30,0.5),rgba(180,30,30,0.8))', border: '1px solid rgba(180,30,30,0.4)' } })),
                   handLen > 5 && h('span', { style: { fontSize: 10, color: 'var(--c-text-dim)', marginLeft: 2 } }, `+${handLen - 5}`),
                 ) :
-                h('span', { style: { fontSize: 11, color: 'var(--c-text-faint)', fontStyle: 'italic' } }, '无手牌'),
+                h('span', { style: { fontSize: 12, color: 'var(--c-text-faint)', fontStyle: 'italic' } }, '无手牌'),
             ),
             !dead && h('div', { style: { fontSize: 10, color: libLen === 0 ? 'var(--c-danger-bright)' : 'var(--c-text-faint)', marginTop: 2 } },
               `牌库: ${libLen}`,
             ),
-            st.phase === 'challenge_phase' && isClaimer && h('div', { style: { fontSize: 11, color: 'var(--c-accent)', background: 'rgba(200,160,50,0.15)', border: '1px solid rgba(180,30,30,0.3)', padding: '2px 8px', borderRadius: 12 } }, `出了 ${st.lastClaim?.count ?? 0} 张`),
+            st.phase === 'challenge_phase' && isClaimer && h('div', { style: { fontSize: 12, color: 'var(--c-accent)', background: 'rgba(200,160,50,0.15)', border: '1px solid rgba(180,30,30,0.3)', padding: '2px 8px', borderRadius: 12 } }, `出了 ${st.lastClaim?.count ?? 0} 张`),
           );
         }),
       ),
@@ -1820,7 +1820,7 @@ function Game() {
             const def = EMOTE_LIST.find(e => e.id === emotes[i].emote);
             if (def) return h('div', { key: 'myemote' + emotes[i].ts, className: 'emote-bubble', style: { position: 'fixed', bottom: 150, left: '50%', transform: 'translateX(-50%)', zIndex: 45, pointerEvents: 'none' } },
               h('div', { style: { display: 'flex', alignItems: 'center', gap: 6, background: 'var(--c-input-bg)', border: '1px solid var(--c-accent-dim, var(--c-accent))', borderRadius: 999, padding: '3px 12px', color: 'var(--c-text-bright)', boxShadow: '0 4px 12px rgba(0,0,0,0.45)', animation: 'emote-pop 0.3s ease' } },
-                h('span', { style: { fontSize: 11, color: 'var(--c-text-dim)' } }, '你'),
+                h('span', { style: { fontSize: 12, color: 'var(--c-text-dim)' } }, '你'),
                 h(Icon[def.icon] || Icon.EmoteAsk, { size: 18 }),
               ),
             );
@@ -1883,12 +1883,12 @@ function Game() {
             );
           }),
         ),
-        st.lastClaim && st.phase !== 'reveal' && !st.challengeResult && h('div', { style: { fontSize: 13, color: 'var(--c-text-dim)' } },
+        st.lastClaim && st.phase !== 'reveal' && !st.challengeResult && h('div', { style: { fontSize: 12, color: 'var(--c-text-dim)' } },
           st.lastClaim.playerId === humanPlayer?.id
             ? `你出了 ${st.lastClaim.count} 张，声称全部是 ${fmtTarget(st.lastClaim.suit)}`
             : `对手声称全部是 ${fmtTarget(st.lastClaim.suit)}`),
         st.challengeResult && h('div', { className: 'animate-slide-up', style: { padding: '8px 20px', borderRadius: 8, background: st.challengeResult === 'honest' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', border: `1px solid ${st.challengeResult === 'honest' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}` } },
-          h('span', { style: { fontWeight: 'bold', fontSize: 16, color: st.challengeResult === 'honest' ? '#10b981' : '#ef4444' } },
+          h('span', { style: { fontWeight: 'bold', fontSize: 14, color: st.challengeResult === 'honest' ? '#10b981' : '#ef4444' } },
             st.challengeResult === 'honest' ? '诚实！' : '撒谎！'),
           st.challengerId != null && h('p', { style: { fontSize: 12, color: 'var(--c-text-dim)', marginTop: 4 } }, `${st.players.find(p => p.id === st.challengerId)?.name} 发起了质疑`),
         ),
@@ -1899,7 +1899,7 @@ function Game() {
           h('button', { className: 'btn btn-outline', onClick: onContinue }, h(Icon.ArrowLeft, { size: 14 }), '跟牌继续'),
           h('button', { className: 'btn btn-danger', onClick: onChallenge }, h(Icon.Crosshairs, { size: 14 }), '质疑开牌'),
         ),
-        h('p', { style: { fontSize: 11, color: 'var(--c-text-faint)' } }, '快捷键: F 跟牌 · D 质疑'),
+        h('p', { style: { fontSize: 12, color: 'var(--c-text-faint)' } }, '快捷键: F 跟牌 · D 质疑'),
       ),
       st.phase === 'peek_phase' && st.lastClaim && (function () {
         const claimer = st.players.find(p => p.id === st.lastClaim.playerId);
@@ -1928,7 +1928,7 @@ function Game() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 20,
+                  fontSize: 18,
                   color: SUIT_COLOR[c.suit] || '#fff',
                   transition: 'all 0.2s',
                   transform: sel ? 'translateY(-4px)' : 'none',
@@ -1964,7 +1964,7 @@ function Game() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 20,
+                  fontSize: 18,
                   color: peeked ? (SUIT_COLOR[c.suit] || '#fff') : 'var(--c-text-faint)',
                   position: 'relative',
                 }
@@ -1981,7 +1981,7 @@ function Game() {
     skillFx && h('div', { key: skillFxKeyRef.current, className: 'skill-banner', style: { position: 'fixed', top: 64, left: '50%', zIndex: 76, background: 'linear-gradient(135deg, rgba(20,14,10,0.92), rgba(30,20,14,0.88))', border: '1px solid var(--c-accent-dim, var(--c-accent))', borderRadius: 8, padding: '9px 20px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 6px 26px rgba(0,0,0,0.55), 0 0 14px rgba(200,160,50,0.12)', pointerEvents: 'none', animation: 'skill-banner 2.6s ease forwards' } },
       h('span', { style: { color: 'var(--c-accent)', display: 'inline-flex', filter: 'drop-shadow(0 0 5px rgba(200,160,50,0.5))' } },
         skillFx.crest || h(Icon[skillFx.rIcon] || Icon.Sparkles, { size: 18 })),
-      h('span', { style: { fontSize: 13, fontWeight: 600, color: 'var(--c-text)', letterSpacing: '0.02em' } }, skillFx.text),
+      h('span', { style: { fontSize: 12, fontWeight: 600, color: 'var(--c-text)', letterSpacing: '0.02em' } }, skillFx.text),
     ),
         peekBanner && (function () {
       // 只有读心者本机能看到牌面（联机在广播层过滤）
@@ -2037,8 +2037,8 @@ function Game() {
     active && st.phase === 'library_dealt' && h('div', { className: 'overlay', style: { zIndex: 38 } },
       h('div', { className: 'panel animate-slide-up', style: { textAlign: 'center', padding: '28px 36px', maxWidth: 340 } },
         h('span', { style: { display: 'inline-flex', marginBottom: 10 } }, h(Icon.Joker, { size: 40 })),
-        h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 20, fontWeight: 'bold', marginBottom: 8, color: 'var(--c-accent)' } }, '牌库已空'),
-        h('p', { style: { fontSize: 13, color: 'var(--c-text-dim)', lineHeight: 1.6 } }, '所有玩家的牌已用尽，酒保正把弃牌区的牌收拢洗匀，即将重新发牌...'),
+        h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 18, fontWeight: 'bold', marginBottom: 8, color: 'var(--c-accent)' } }, '牌库已空'),
+        h('p', { style: { fontSize: 12, color: 'var(--c-text-dim)', lineHeight: 1.6 } }, '所有玩家的牌已用尽，酒保正把弃牌区的牌收拢洗匀，即将重新发牌...'),
         h('div', { style: { marginTop: 16, width: 40, height: 3, background: 'var(--c-danger)', borderRadius: 4, margin: '16px auto 0', animation: 'pulse 1s ease-in-out infinite' } }),
       ),
     ),
@@ -2046,7 +2046,7 @@ function Game() {
     active && st.phase === 'event' && st.event && h('div', { className: 'overlay' },
       h('div', { className: 'panel animate-slide-up', style: { textAlign: 'center', padding: 32, maxWidth: 360 } },
         h('span', { style: { display: 'inline-flex', marginBottom: 12 } }, h(Icon[st.event.icon] || Icon.Sparkles, { size: 46 })),
-        h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 22, fontWeight: 'bold', marginBottom: 8 } }, (I18N[getLang()].events[st.event.type] && I18N[getLang()].events[st.event.type].name) || st.event.name),
+        h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 24, fontWeight: 'bold', marginBottom: 8 } }, (I18N[getLang()].events[st.event.type] && I18N[getLang()].events[st.event.type].name) || st.event.name),
         h('p', { style: { fontSize: 14, color: 'var(--c-text-dim)', lineHeight: 1.6 } }, (I18N[getLang()].events[st.event.type] && I18N[getLang()].events[st.event.type].desc) || st.event.desc),
         st.eventResult && st.eventResult.lines && st.eventResult.lines.length > 0 && h('div', {
           style: { marginTop: 10, padding: '10px 12px', background: 'var(--c-border-soft)', border: '1px solid var(--c-border)', borderRadius: 8, textAlign: 'left' },
@@ -2062,7 +2062,7 @@ function Game() {
           const isMyPick = chooser && chooser.isHuman && chooser.isLocal && !isMpClient || (isMpClient && chooser && chooser.isLocal && chooser.isHuman);
           const dictChoices = evT.choices || [];
           return h('div', { style: { marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 } },
-            h('p', { style: { fontSize: 13, color: 'var(--c-accent)', fontWeight: 600 } },
+            h('p', { style: { fontSize: 12, color: 'var(--c-accent)', fontWeight: 600 } },
               isMyPick ? '轮到你抉择' : (chooser ? chooser.name + ' 正在抉择……' : '')),
             st.event.choices.map(function (c, ci) {
               const t = dictChoices[ci] || c;
@@ -2075,7 +2075,7 @@ function Game() {
                 onClick: function () { if (isMyPick) sendAction({ type: 'EVENT_CHOICE', choiceId: c.id }); },
               },
                 h('div', { style: { fontSize: 14, fontWeight: 700, color: 'hsl(30 15% 90%)' } }, (c.risk >= 0.5 ? '⚠ ' : '') + t.label),
-                h('div', { style: { fontSize: 11, color: 'var(--c-text-dim)', marginTop: 3 } }, t.desc),
+                h('div', { style: { fontSize: 12, color: 'var(--c-text-dim)', marginTop: 3 } }, t.desc),
               );
             }),
           );
@@ -2106,9 +2106,9 @@ function Game() {
         st.winner && h('div', { className: 'finale-card', style: { flexDirection: 'column', gap: 3 } },
           h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
             aiCrest(st.winner, 22) && h('span', { style: { color: 'var(--c-accent)', display: 'inline-flex' } }, aiCrest(st.winner, 22)),
-            h('span', { style: { fontSize: 15, fontWeight: 700, color: st.phase === 'won' ? 'var(--c-accent)' : 'var(--c-danger-deep)' } }, st.winner.name),
+            h('span', { style: { fontSize: 14, fontWeight: 700, color: st.phase === 'won' ? 'var(--c-accent)' : 'var(--c-danger-deep)' } }, st.winner.name),
           ),
-          h('span', { style: { fontSize: 11, color: 'var(--c-text-dim)' } }, (st.winner.survivedCount || 0) + ' 次轮盘存活 · ' + (st.winner.bluffSuccessCount || 0) + ' 次诈牌得手'),
+          h('span', { style: { fontSize: 12, color: 'var(--c-text-dim)' } }, (st.winner.survivedCount || 0) + ' 次轮盘存活 · ' + (st.winner.bluffSuccessCount || 0) + ' 次诈牌得手'),
         ),
         // D2：终局面板三 tab（单局数据 / 累计战绩 / 历史趋势）
         h('div', { style: { display: 'flex', gap: 6, marginTop: 20 } },
@@ -2120,15 +2120,15 @@ function Game() {
           // D2：ELO 徽章
           endHistory && h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 } },
             h('div', { style: { display: 'flex', alignItems: 'baseline', gap: 8 } },
-              h('span', { style: { fontSize: 20, fontWeight: 'bold', color: 'var(--c-accent)' } }, endHistory.elo),
-              h('span', { style: { fontSize: 11, color: 'var(--c-text-dim)' } }, 'ELO'),
+              h('span', { style: { fontSize: 18, fontWeight: 'bold', color: 'var(--c-accent)' } }, endHistory.elo),
+              h('span', { style: { fontSize: 12, color: 'var(--c-text-dim)' } }, 'ELO'),
             ),
             endHistory.matches[0] && endHistory.matches[0].eloAfter !== endHistory.matches[0].eloBefore && (() => {
               const d = endHistory.matches[0].eloAfter - endHistory.matches[0].eloBefore;
-              return h('span', { style: { fontSize: 11, fontWeight: 600, color: d > 0 ? 'var(--c-success)' : 'var(--c-danger-bright)' } }, (d > 0 ? '+' : '') + d + ' 本局');
+              return h('span', { style: { fontSize: 12, fontWeight: 600, color: d > 0 ? 'var(--c-success)' : 'var(--c-danger-bright)' } }, (d > 0 ? '+' : '') + d + ' 本局');
             })(),
           ),
-          h('h3', { style: { fontSize: 13, fontWeight: 600, marginBottom: 8 } }, '战绩统计'),
+          h('h3', { style: { fontSize: 12, fontWeight: 600, marginBottom: 8 } }, '战绩统计'),
           h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 12 } },
             h('span', { style: { color: 'var(--c-text-dim)' } }, '总局数'), h('span', { style: { textAlign: 'right' } }, st.stats.totalGames),
             h('span', { style: { color: 'var(--c-text-dim)' } }, '胜场'), h('span', { style: { textAlign: 'right', color: 'var(--c-success)' } }, st.stats.wins),
@@ -2143,7 +2143,7 @@ function Game() {
           ),
         ),
         resultTab === 0 && h('div', { className: 'panel', style: { margin: '12px 0', padding: 16, textAlign: 'left' } },
-          h('h3', { style: { fontSize: 13, fontWeight: 600, marginBottom: 12 } }, '本局数据'),
+          h('h3', { style: { fontSize: 12, fontWeight: 600, marginBottom: 12 } }, '本局数据'),
           (() => {
             const maxVal = Math.max(1, ...st.players.map(p => {
               const s = st.playerStats[p.id] || { playCount: 0, challengeCount: 0, shotCount: 0 };
@@ -2156,11 +2156,11 @@ function Game() {
                 return h('div', { key: p.id, style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 1, minWidth: 0 } },
                   h('div', { style: { display: 'flex', gap: 3, alignItems: 'flex-end', height: barH } },
                     h('div', { className: 'stat-bar-grow', style: { '--d': (0.55 + pi * 0.09).toFixed(2) + 's', width: 12, height: `${(s.playCount / maxVal) * barH}px`, background: 'var(--c-danger-bright)', borderRadius: '3px 3px 0 0', minHeight: s.playCount > 0 ? 3 : 0, position: 'relative' } },
-                      s.playCount > 0 && h('span', { style: { position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', fontSize: 9, color: 'var(--c-text-dim)', whiteSpace: 'nowrap' } }, s.playCount)),
+                      s.playCount > 0 && h('span', { style: { position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', fontSize: 10, color: 'var(--c-text-dim)', whiteSpace: 'nowrap' } }, s.playCount)),
                     h('div', { className: 'stat-bar-grow', style: { '--d': (0.55 + pi * 0.09 + 0.06).toFixed(2) + 's', width: 12, height: `${(s.challengeCount / maxVal) * barH}px`, background: 'var(--c-accent)', borderRadius: '3px 3px 0 0', minHeight: s.challengeCount > 0 ? 3 : 0, position: 'relative' } },
-                      s.challengeCount > 0 && h('span', { style: { position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', fontSize: 9, color: 'var(--c-text-dim)', whiteSpace: 'nowrap' } }, s.challengeCount)),
+                      s.challengeCount > 0 && h('span', { style: { position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', fontSize: 10, color: 'var(--c-text-dim)', whiteSpace: 'nowrap' } }, s.challengeCount)),
                     h('div', { className: 'stat-bar-grow', style: { '--d': (0.55 + pi * 0.09 + 0.12).toFixed(2) + 's', width: 12, height: `${(s.shotCount / maxVal) * barH}px`, background: 'var(--c-success)', borderRadius: '3px 3px 0 0', minHeight: s.shotCount > 0 ? 3 : 0, position: 'relative' } },
-                      s.shotCount > 0 && h('span', { style: { position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', fontSize: 9, color: 'var(--c-text-dim)', whiteSpace: 'nowrap' } }, s.shotCount)),
+                      s.shotCount > 0 && h('span', { style: { position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', fontSize: 10, color: 'var(--c-text-dim)', whiteSpace: 'nowrap' } }, s.shotCount)),
                   ),
                   aiCrest(p, 14) && h('div', { style: { color: 'var(--c-accent)', opacity: p.alive ? 1 : 0.4, display: 'inline-flex' } }, aiCrest(p, 14)),
                                     h('span', { style: { fontSize: 10, color: p.alive ? 'var(--c-text)' : 'var(--c-text-faint)', textDecoration: p.alive ? 'none' : 'line-through', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' } }, p.name),
@@ -2168,7 +2168,7 @@ function Game() {
               })
             );
           })(),
-          h('div', { style: { display: 'flex', justifyContent: 'center', gap: 16, marginTop: 4, fontSize: 11 } },
+          h('div', { style: { display: 'flex', justifyContent: 'center', gap: 16, marginTop: 4, fontSize: 12 } },
             h('div', { style: { display: 'flex', alignItems: 'center', gap: 4 } },
               h('div', { style: { width: 10, height: 10, background: 'var(--c-danger-bright)', borderRadius: 4 } }),
               h('span', { style: { color: 'var(--c-text-dim)' } }, '出牌'),
@@ -2182,7 +2182,7 @@ function Game() {
               h('span', { style: { color: 'var(--c-text-dim)' } }, '开枪'),
             ),
           ),
-          h('div', { style: { display: 'flex', justifyContent: 'space-around', marginTop: 12, fontSize: 11 } },
+          h('div', { style: { display: 'flex', justifyContent: 'space-around', marginTop: 12, fontSize: 12 } },
             st.players.map(p => h('div', { key: p.id, style: { textAlign: 'center', flex: 1 } },
               h('div', { style: { color: 'hsl(190 70% 55%)', display: 'flex', alignItems: 'center', gap: 2 } }, h(Icon.Shield, { size: 10 }), '' + (p.survivedCount || 0)),
               h('div', { style: { color: 'hsl(280 60% 65%)', display: 'flex', alignItems: 'center', gap: 2 } }, h(Icon.Masks, { size: 10 }), '' + (p.bluffSuccessCount || 0)),
@@ -2196,9 +2196,9 @@ function Game() {
             return h('div', { style: { marginTop: 14, padding: '10px 12px', background: 'var(--c-panel-strong)', borderRadius: 8, border: '1px solid var(--c-border)', textAlign: 'center' } },
               h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } },
                 h('span', { style: { fontSize: 10, color: 'var(--c-text-faint)', letterSpacing: 2 } }, '本场档案'),
-                h('span', { style: { fontFamily: 'var(--font-title)', fontSize: 15, fontWeight: 600, color: 'var(--c-accent)' } }, g.title),
+                h('span', { style: { fontFamily: 'var(--font-title)', fontSize: 14, fontWeight: 600, color: 'var(--c-accent)' } }, g.title),
               ),
-              h('p', { style: { fontSize: 11, color: 'var(--c-text-dim)', fontStyle: 'italic', marginTop: 4 } }, '“' + g.quote + '”'),
+              h('p', { style: { fontSize: 12, color: 'var(--c-text-dim)', fontStyle: 'italic', marginTop: 4 } }, '“' + g.quote + '”'),
             );
           })(),
         ),
@@ -2208,12 +2208,12 @@ function Game() {
           const hist = endHistory ? endHistory.matches.slice(0, 20) : [];
           const w = hist.filter(m => m.result === 'win').length, l = hist.filter(m => m.result === 'loss').length;
           return h('div', { className: 'panel', style: { margin: '12px 0', padding: 16, textAlign: 'left' } },
-            h('h3', { style: { fontSize: 13, fontWeight: 600, marginBottom: 12 } }, `最近 ${hist.length} 局趋势`),
+            h('h3', { style: { fontSize: 12, fontWeight: 600, marginBottom: 12 } }, `最近 ${hist.length} 局趋势`),
             hist.length === 0 ?
               h('p', { style: { fontSize: 12, color: 'var(--c-text-faint)', textAlign: 'center', padding: '24px 0' } }, '暂无对局记录——完成一局后这里会出现你的五维画像') :
               h(Fragment, null,
                 h(RadarChart, { agg: aggRes.agg, raw: aggRes.raw }),
-                h('div', { style: { display: 'flex', justifyContent: 'center', gap: 14, fontSize: 11, marginTop: 8 } },
+                h('div', { style: { display: 'flex', justifyContent: 'center', gap: 14, fontSize: 12, marginTop: 8 } },
                   h('span', { style: { color: 'var(--c-success)' } }, `胜 ${w}`),
                   h('span', { style: { color: 'var(--c-danger-bright)' } }, `负 ${l}`),
                   h('span', { style: { color: 'var(--c-text-dim)' } }, `平 ${hist.length - w - l}`),
@@ -2223,7 +2223,7 @@ function Game() {
         })(),
         h('div', { style: { display: 'flex', gap: 12, justifyContent: 'center' } },
           isMpClient ?
-            h('p', { style: { fontSize: 13, color: 'var(--c-text-dim)' } }, '等待房主操作...') :
+            h('p', { style: { fontSize: 12, color: 'var(--c-text-dim)' } }, '等待房主操作...') :
             h(Fragment, null,
               h('button', { className: 'btn btn-primary', onClick: onRestart }, h(Icon.RotateCcw, { size: 14 }), '再来一局'),
               h('button', { className: 'btn btn-outline', onClick: onBack }, h(Icon.ArrowLeft, { size: 14 }), '返回菜单'),
@@ -2251,7 +2251,7 @@ function Game() {
     reconnecting && h('div', { className: 'overlay', style: { zIndex: 100 } },
       h('div', { className: 'panel', style: { textAlign: 'center', padding: 32 } },
         h('div', { style: { display: 'flex', justifyContent: 'center', marginBottom: 16 } }, h(Icon.Undo2, { size: 46 })),
-        h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 22, fontWeight: 'bold', marginBottom: 8 } }, '连接断开'),
+        h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 24, fontWeight: 'bold', marginBottom: 8 } }, '连接断开'),
         h('p', { style: { fontSize: 14, color: 'var(--c-text-dim)' } }, '正在尝试重新连接...'),
       ),
     ),
@@ -2259,15 +2259,15 @@ function Game() {
     replayOpen && h(ReplayView, { data: replayOpen.data, onClose: () => setReplayOpen(null) }),
     paused && h('div', { className: 'overlay' },
       h('div', { className: 'panel', style: { textAlign: 'center', padding: 32 } },
-        h('span', { style: { fontSize: 48, display: 'block', marginBottom: 16 } }, h(Icon.Pause, { size: 48 })),
-        h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 22, fontWeight: 'bold', marginBottom: 8 } }, '游戏已暂停'),
+        h('span', { style: { fontSize: 40, display: 'block', marginBottom: 16 } }, h(Icon.Pause, { size: 48 })),
+        h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 24, fontWeight: 'bold', marginBottom: 8 } }, '游戏已暂停'),
         isHost && h('button', { className: 'btn btn-primary', onClick: () => setPaused(false), style: { marginTop: 16 } }, h(Icon.Play, { size: 16 }), '继续游戏'),
       ),
     ),
     // ── P1-1：退出二次确认（防误触毁局；联机局明示信誉分代价）──
     quitConfirm && h('div', { className: 'overlay', onClick: e => { if (e.target === e.currentTarget) setQuitConfirm(false); } },
       h('div', { className: 'panel animate-slide-up', style: { textAlign: 'center', padding: 28, width: '90%', maxWidth: 340 } },
-        h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 20, fontWeight: 'bold', marginBottom: 10 } }, '退出游戏'),
+        h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 18, fontWeight: 'bold', marginBottom: 10 } }, '退出游戏'),
         h('p', { style: { fontSize: 14, color: 'var(--c-text-dim)', lineHeight: 1.6 } },
           st.spectateId != null ? '确定退出观战？'
             : mode === 'multiplayer'
@@ -2300,7 +2300,7 @@ function Game() {
     ),
     mode === 'multiplayer' && h('div', { style: { position: 'fixed', right: 16, bottom: 16, zIndex: 60 } },
       chatOpen && h('div', { className: 'panel', style: { width: 280, maxHeight: 320, display: 'flex', flexDirection: 'column', marginBottom: 8, padding: 0, overflow: 'hidden' } },
-        h('div', { style: { padding: '10px 12px', borderBottom: '1px solid var(--c-border)', fontSize: 13, fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+        h('div', { style: { padding: '10px 12px', borderBottom: '1px solid var(--c-border)', fontSize: 12, fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
           '聊天',
           h('button', { className: 'btn btn-sm btn-ghost', onClick: () => setChatOpen(false), style: { padding: '12px 14px', margin: '-10px -12px', height: 'auto' } }, '✕'), // P3-8：热区扩至约40px，负margin保持视觉占位
         ),
@@ -2327,7 +2327,7 @@ function Game() {
       h('button', {
         className: 'btn btn-primary',
         onClick: () => setChatOpen(o => !o),
-        style: { width: 48, height: 48, borderRadius: '50%', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }
+        style: { width: 48, height: 48, borderRadius: '50%', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }
       }, h(Icon.MessageCircle, { size: 16 })),
     ),
     h(ToastBox),

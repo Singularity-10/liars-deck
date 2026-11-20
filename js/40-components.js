@@ -117,7 +117,7 @@ const Card = memo(function ({ card, selected, disabled, onClick, faceDown, small
       h(Icon[RANK_CREST[card.suit] || 'AceGem'], { size: small ? 20 : 30 })),
     card.mod === 'angel' && h('span', { style: { position: 'absolute', bottom: 2, right: 3, color: 'var(--c-ice)', filter: 'drop-shadow(0 0 3px rgba(34,211,238,0.5))' } }, h(Icon.Angel, { size: small ? 9 : 12 })),
     card.mod === 'demon' && h('span', { style: { position: 'absolute', bottom: 2, right: 3, color: 'hsl(25 95% 60%)', filter: 'drop-shadow(0 0 3px rgba(251,146,60,0.5))' } }, h(Icon.Demon, { size: small ? 9 : 12 })),
-    card.suit === 'J' && h('span', { style: { position: 'absolute', bottom: 3, left: 0, right: 0, textAlign: 'center', fontSize: 7, color: frenzy ? 'rgba(220,38,38,0.7)' : 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', textDecoration: frenzy ? 'line-through' : 'none' } }, frenzy ? '失效' : '万能'),
+    card.suit === 'J' && h('span', { style: { position: 'absolute', bottom: 3, left: 0, right: 0, textAlign: 'center', fontSize: 10, color: frenzy ? 'rgba(220,38,38,0.7)' : 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', textDecoration: frenzy ? 'line-through' : 'none' } }, frenzy ? '失效' : '万能'),
     // mod 卡箔金：天使冰蓝 / 恶魔暖金高光斜扫
     card.mod === 'angel' && h('div', { className: 'foil-angel', style: { '--foil-delay': (card.id.charCodeAt(card.id.length - 1) % 9) * 0.5 + 's' } }),
     card.mod === 'demon' && h('div', { className: 'foil-demon', style: { '--foil-delay': (card.id.charCodeAt(card.id.length - 1) % 9) * 0.5 + 's' } }),
@@ -221,7 +221,7 @@ function DealingAnimation({ players, onComplete }) {
     alignItems: 'center',
     justifyContent: 'center',
   };
-  const cbInner = h('span', { style: { fontSize: 13, color: 'rgba(200,160,50,0.3)', pointerEvents: 'none' } }, '♦');
+  const cbInner = h('span', { style: { fontSize: 12, color: 'rgba(200,160,50,0.3)', pointerEvents: 'none' } }, '♦');
 
   const renderAvatar = (pi, seat) => {
     const p = players[pi];
@@ -306,7 +306,7 @@ function DealingAnimation({ players, onComplete }) {
           bottom: -22,
           left: '50%',
           transform: 'translateX(-50%)',
-          fontSize: 11,
+          fontSize: 12,
           color: 'rgba(200,160,50,0.55)',
           fontWeight: 600,
           whiteSpace: 'nowrap',
@@ -383,7 +383,7 @@ function DealingAnimation({ players, onComplete }) {
         left: '50%',
         top: '50%',
         transform: 'translate(-50%,52px)',
-        fontSize: 13,
+        fontSize: 12,
         color: 'var(--c-accent)',
         fontWeight: 600,
         letterSpacing: '0.15em',
@@ -460,7 +460,7 @@ function PlayerHand({ hand, targetSuit, onPlay, disabled, autoSort, libraryCount
       ),
     ),
     disabled && h('button', { className: 'btn btn-primary', disabled: !sel.size, onClick: play, style: { minWidth: 120 } }, `出牌${sel.size ? ` (${sel.size}/${limit})` : ''}`),
-    h('div', { style: { display: 'flex', gap: 16, alignItems: 'center', fontSize: 11 } },
+    h('div', { style: { display: 'flex', gap: 16, alignItems: 'center', fontSize: 12 } },
       h('span', { style: { color: libraryCount === 0 ? 'var(--c-danger-bright)' : 'var(--c-text-dim)' } }, `牌库: ${libraryCount ?? 0} 张`),
       blackout
         ? h('span', { style: { color: 'hsl(250 60% 70%)' } }, '长夜中——你看不到自己的手牌，凭感觉出牌')
@@ -479,10 +479,10 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, info) { console.error('Game crashed:', error, info); }
   render() {
     if (this.state.error) {
-      return h('div', { style: { padding: 40, color: 'var(--c-danger-bright)', fontFamily: 'monospace', fontSize: 13, whiteSpace: 'pre-wrap', maxHeight: '80vh', overflow: 'auto', background: 'hsl(0 30% 3%)' } },
+      return h('div', { style: { padding: 40, color: 'var(--c-danger-bright)', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'pre-wrap', maxHeight: '80vh', overflow: 'auto', background: 'hsl(0 30% 3%)' } },
         h('h2', { style: { fontFamily: 'var(--font-title)', color: 'var(--c-accent)', marginBottom: 16 } }, '游戏崩溃了'),
         h('p', { style: { color: 'var(--c-text)', marginBottom: 12 } }, this.state.error.message),
-        h('pre', { style: { color: 'var(--c-text-dim)', fontSize: 11 } }, this.state.error.stack),
+        h('pre', { style: { color: 'var(--c-text-dim)', fontSize: 12 } }, this.state.error.stack),
         h('button', {
           onClick: () => { this.setState({ error: null });
             location.reload(); },
@@ -749,7 +749,7 @@ function RussianRoulette({ playerName, isHit, shotNumber, difficulty, shift = 0,
           border: '1px solid rgba(180,30,30,0.3)',
         }
       },
-        h('span', { style: { fontSize: 11, color: 'var(--c-danger-bright)' } }, `中弹概率 ${pctStr}%`),
+        h('span', { style: { fontSize: 12, color: 'var(--c-danger-bright)' } }, `中弹概率 ${pctStr}%`),
         ...Array.from({ length: 6 }, (_, i) =>
           h('span', {
             key: i,
@@ -772,11 +772,11 @@ function RussianRoulette({ playerName, isHit, shotNumber, difficulty, shift = 0,
       renderSafeClick(),
     ),
     h('div', { style: { textAlign: 'center', minHeight: 60 } },
-      phase === 'intro' && h('p', { style: { fontSize: 16, color: 'var(--c-accent)', fontWeight: 600, animation: 'pulse 1.5s ease-in-out infinite' } }, '举起左轮手枪...'),
+      phase === 'intro' && h('p', { style: { fontSize: 14, color: 'var(--c-accent)', fontWeight: 600, animation: 'pulse 1.5s ease-in-out infinite' } }, '举起左轮手枪...'),
       phase === 'spinning' && h('p', { style: { fontSize: 14, color: 'var(--c-text-dim)', letterSpacing: '0.15em' } }, '弹仓旋转中'),
       phase === 'firing' && h('p', { style: { fontSize: 18, color: '#ef4444', fontWeight: 700, letterSpacing: '0.3em', animation: 'pulse 0.3s ease-in-out infinite' } }, '扣动扳机'),
       phase === 'result' && isHit && h('div', null,
-        h('p', { style: { fontSize: 28, fontWeight: 800, color: '#ef4444', textShadow: '0 0 20px rgba(239,68,68,0.6)', letterSpacing: '0.2em' } }, '砰！'),
+        h('p', { style: { fontSize: 32, fontWeight: 800, color: '#ef4444', textShadow: '0 0 20px rgba(239,68,68,0.6)', letterSpacing: '0.2em' } }, '砰！'),
         h('p', { style: { fontSize: 14, color: 'var(--c-danger-bright)', marginTop: 8 } }, `${playerName} 中弹出局`),
       ),
       phase === 'result' && !isHit && h('div', null,

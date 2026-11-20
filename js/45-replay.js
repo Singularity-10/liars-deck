@@ -272,12 +272,12 @@ const ReplayView = function ({ data, onClose }) {
     h('div', { className: 'panel animate-slide-up', style: { padding: 20, maxWidth: 520, width: '94%', maxHeight: '88vh', overflowY: 'auto' } },
       // 标题行
       h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 } },
-        h('h3', { style: { fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 } },
+        h('h3', { style: { fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 } },
           h(Icon.Play, { size: 15 }), '对局回放'),
         h('button', { className: 'btn btn-sm btn-outline', onClick: onClose, style: { padding: '4px 10px' } }, h(Icon.XCircle, { size: 13 }), '退出回放'),
       ),
       // 步骤说明
-      h('div', { style: { fontSize: 13, color: 'var(--c-accent)', fontWeight: 600, marginBottom: 8, minHeight: 18 } },
+      h('div', { style: { fontSize: 12, color: 'var(--c-accent)', fontWeight: 600, marginBottom: 8, minHeight: 18 } },
         `第 ${idx} / ${snaps.length - 1} 步 · ${label}`),
       // 对局信息
       h('div', { style: { display: 'flex', gap: 10, flexWrap: 'wrap', fontSize: 12, color: 'var(--c-text-dim)', marginBottom: 10 } },
@@ -342,7 +342,7 @@ const ReplayView = function ({ data, onClose }) {
       h('div', { style: { display: 'flex', gap: 8, justifyContent: 'center' } },
         h('button', { className: 'btn btn-sm btn-outline', onClick: doExport }, h(Icon.Copy, { size: 12 }), copied ? '已复制到剪贴板' : '导出回放码'),
       ),
-      h('p', { style: { fontSize: 11, color: 'var(--c-text-faint)', textAlign: 'center', marginTop: 8 } },
+      h('p', { style: { fontSize: 12, color: 'var(--c-text-faint)', textAlign: 'center', marginTop: 8 } },
         '回放码包含本局完整动作与随机数序列，发给朋友即可在「终局 → 导入回放码」中复盘'),
     ));
 };
