@@ -496,31 +496,19 @@ class ErrorBoundary extends React.Component {
 
 // ── 俄罗斯轮盘动画 ──────────────────────────────────────────────────
 function RussianRoulette({ playerName, isHit, shotNumber, difficulty, shift = 0, onComplete, skipPenalty = false }) {
+  // v130 A 案「弹巢直示」：取消转动动画（转动暗示恒定概率，与逐次递增规则矛盾）。
+  // 弹巢正对玩家：已安全格盖击发痕，剩余格里实弹数=概率×6（hard 双发），位置不揭示——
+  // 规则与视觉同构：挨的枪越多，可见的空格越少，危险不言自明。
   const [phase, setPhase] = useState('intro');
-  const [cylinderAngle, setCylinderAngle] = useState(0);
-  const [spinSpeed, setSpinSpeed] = useState(0);
   const mountedRef = useRef(true);
   const timersRef = useRef([]);
-  const animRef = useRef(null);
-  const spinStartTimeRef = useRef(0);
-  const bulletPos = useRef(Math.floor(Math.random() * 6));
   const chamberAngles = [0, 60, 120, 180, 240, 300];
-
-  const SPIN_TOTAL = 3.5;
-  const ACCEL_TIME = 0.8;
-  const DECEL_TIME = 1.2;
-  const TOTAL_SPINS = 6;
-
-  const targetAngle = bulletPos.current * 60;
-  const finalAngle = TOTAL_SPINS * 360 + targetAngle;
-  const uniformTime = SPIN_TOTAL - ACCEL_TIME - DECEL_TIME;
-  const maxSpeed = finalAngle / (ACCEL_TIME * 0.5 + uniformTime + DECEL_TIME * 0.5);
 
   useEffect(() => {
     mountedRef.current = true;
     const t = (fn, ms) => { const id = setTimeout(fn, ms); timersRef.current.push(id); return id; };
 
-    // v100：跳过惩罚动画——跳过亮相/转轮/击发演出，直接显示结果 0.8s
+    // v100：跳过惩罚动画——跳过亮相/击发演出，直接显示结果 0.8s
     // 结果音效（shot/safe）由对局层在 rouletteResult 变化时播放，不受此开关影响
     if (skipPenalty) {
       setPhase('result');
@@ -528,99 +516,69 @@ function RussianRoulette({ playerName, isHit, shotNumber, difficulty, shift = 0,
       return () => {
         mountedRef.current = false;
         timersRef.current.forEach(clearTimeout);
-        if (animRef.current) cancelAnimationFrame(animRef.current);
       };
     }
 
-    const updateSpin = (timestamp) => {
-      if (!mountedRef.current) return;
-
-      const elapsed = (timestamp - spinStartTimeRef.current) / 1000;
-
-      let angle, speed;
-      if (elapsed < ACCEL_TIME) {
-        const progress = elapsed / ACCEL_TIME;
-        speed = maxSpeed * progress;
-        angle = 0.5 * maxSpeed * elapsed * progress;
-      } else if (elapsed < ACCEL_TIME + uniformTime) {
-        speed = maxSpeed;
-        const accelAngle = 0.5 * maxSpeed * ACCEL_TIME;
-        const uniformElapsed = elapsed - ACCEL_TIME;
-        angle = accelAngle + maxSpeed * uniformElapsed;
-      } else if (elapsed < SPIN_TOTAL) {
-        const decelElapsed = elapsed - ACCEL_TIME - uniformTime;
-        const progress = decelElapsed / DECEL_TIME;
-        speed = maxSpeed * (1 - progress);
-        const accelAngle = 0.5 * maxSpeed * ACCEL_TIME;
-        const uniformAngle = maxSpeed * uniformTime;
-        angle = accelAngle + uniformAngle + maxSpeed * decelElapsed * (1 - 0.5 * progress);
-      } else {
-        setCylinderAngle(finalAngle);
-        setSpinSpeed(0);
-        setPhase('firing');
-        return;
-      }
-
-      setCylinderAngle(angle);
-      setSpinSpeed(speed);
-      animRef.current = requestAnimationFrame(updateSpin);
-    };
-
+    // 三拍时序：intro 亮弹巢(0.9s) → hammer 击锤后拉(0.55s) → firing 扣扳机 → result
+    t(() => { if (mountedRef.current) setPhase('hammer'); }, 900);
     t(() => {
-      if (mountedRef.current) {
-        setPhase('spinning');
-        Sfx.play('roulette'); // 扳机连滴答
-        spinStartTimeRef.current = performance.now();
-        animRef.current = requestAnimationFrame(updateSpin);
-      }
-    }, 1200);
-
+      if (!mountedRef.current) return;
+      setPhase('firing');
+      try { Sfx.play('roulette'); } catch (e) {} // 扳机滴答保留（单击节奏）
+    }, 1450);
     t(() => {
       if (!mountedRef.current) return;
       setPhase('result');
-      t(() => { if (mountedRef.current) onComplete(); }, 2500);
-    }, 1200 + SPIN_TOTAL * 1000 + 800);
+      t(() => { if (mountedRef.current) onComplete(); }, 1400);
+    }, 2100);
 
     return () => {
       mountedRef.current = false;
       timersRef.current.forEach(clearTimeout);
-      if (animRef.current) cancelAnimationFrame(animRef.current);
     };
   }, []);
 
-  const renderCylinder = () => {
-    const isSpinning = phase === 'spinning';
-    const speedRatio = spinSpeed / maxSpeed;
-    const chamberOpacity = isSpinning ? Math.max(1 - speedRatio * 0.7, 0.3) : 1;
+  // 实弹格数：概率×6 向上取整，至少 1（hard/shift 递增=多发实弹，视觉同构）
+  const probability = Math.min(shotNumber * (difficulty === 'hard' ? 2 : 1) + shift, 6) / 6;
+  const bulletCount = Math.max(1, Math.round(probability * 6));
+  // 实弹位置：每枪随机分布（不提前揭示，中弹时爆红亮出）
+  const bulletSlots = useRef((() => {
+    const idx = Array.from({ length: 6 }, (_, i) => i);
+    for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+    return idx.slice(0, bulletCount).sort((a, b) => a - b);
+  })()).current;
 
+  const renderCylinder = () => {
+    const revealed = phase === 'result'; // 中弹/安全都揭示：安全时亮"弹还在"
+    const firedCount = Math.min(shotNumber - 1, 6 - bulletCount); // 已消耗格（击发痕）
+    const isHammer = phase === 'hammer';
+    const isFiring = phase === 'firing' || phase === 'result';
+
+    // 布局：前 firedCount 格=击发痕，随后 bulletCount 格=实弹（不揭示），余下=空格
     const chambers = chamberAngles.map((angle, i) => {
-      const isBullet = i === bulletPos.current;
       const rad = (angle - 90) * Math.PI / 180;
       const cx = 50 + 30 * Math.cos(rad);
       const cy = 50 + 30 * Math.sin(rad);
-      const showBullet = (phase === 'result' || phase === 'firing') && isBullet;
-      return h('g', { key: i, transform: `translate(${cx}, ${cy})`, opacity: chamberOpacity },
-        h('circle', { r: 6, fill: showBullet ? '#b91c1c' : '#1a0a0a', stroke: showBullet ? '#ef4444' : '#4a1515', strokeWidth: 1.5 }),
+      let kind = 'empty';
+      if (i < firedCount) kind = 'fired';
+      else if (bulletSlots.includes(i)) kind = 'bullet';
+      const showBullet = kind === 'bullet' && revealed;
+      const hammerPulse = (isHammer || isFiring) && kind !== 'fired';
+      return h('g', { key: i, transform: `translate(${cx}, ${cy})`, opacity: kind === 'fired' ? 0.55 : 1 },
+        // 击锤后拉时未消耗格轻微收紧（紧张感，透明度呼吸不动位置——晃动纪律）
+        h('circle', { r: hammerPulse ? 5.5 : 6, fill: showBullet ? '#b91c1c' : kind === 'fired' ? '#151009' : '#1a0a0a', stroke: showBullet ? '#ef4444' : kind === 'fired' ? '#6a5636' : '#4a1515', strokeWidth: 1.5, style: { transition: 'r 0.25s ease, fill 0.2s' } }),
+        kind === 'fired' && h('text', { y: 3.5, textAnchor: 'middle', fontSize: 9, fill: '#c8a36a', fontWeight: 'bold' }, '✕'),
         showBullet && h('circle', { r: 3, fill: '#fbbf24', opacity: 0.8 }),
         showBullet && h('circle', { r: 1.5, fill: '#fff', opacity: 0.6 }),
       );
     });
 
-    const animStyle = { transform: `rotate(${cylinderAngle}deg)` };
-
-    return h('svg', { viewBox: '0 0 100 100', width: 180, height: 180, style: animStyle },
-      h('circle', { cx: 50, cy: 50, r: 44, fill: 'none', stroke: '#4a3520', strokeWidth: 3 }),
-      h('circle', { cx: 50, cy: 50, r: 42, fill: '#1a0e08', stroke: '#8b6914', strokeWidth: 1 }),
-      spinSpeed > 0 && h('circle', {
-        cx: 50,
-        cy: 50,
-        r: 30,
-        fill: 'none',
-        stroke: 'rgba(139, 105, 20, 0.4)',
-        strokeWidth: 12,
-        opacity: Math.min(speedRatio * 0.7, 0.7),
-      }),
-      h('circle', { cx: 50, cy: 50, r: 4, fill: '#8b6914' }),
+    return h('svg', { viewBox: '0 0 100 100', width: 180, height: 180 },
+      // 黄铜弹巢圈（风格化：拉丝金属外环+皮革底）
+      h('circle', { cx: 50, cy: 50, r: 46, fill: 'none', stroke: '#8a6a3a', strokeWidth: 3 }),
+      h('circle', { cx: 50, cy: 50, r: 42, fill: '#1a0e08', stroke: '#c8a36a', strokeWidth: 1, strokeDasharray: '2 4' }),
+      // 中心轴
+      h('circle', { cx: 50, cy: 50, r: 4, fill: '#8a6a3a' }),
       ...chambers,
     );
   };
@@ -637,8 +595,9 @@ function RussianRoulette({ playerName, isHit, shotNumber, difficulty, shift = 0,
           height: 0,
           borderLeft: '8px solid transparent',
           borderRight: '8px solid transparent',
-          borderTop: `12px solid ${phase === 'firing' ? '#ef4444' : '#8b6914'}`,
+          borderTop: `12px solid ${phase === 'firing' ? '#ef4444' : '#8a6a3a'}`,
           transition: 'border-color 0.2s',
+          opacity: phase === 'hammer' || phase === 'firing' ? 1 : 0.45,
           filter: phase === 'firing' ? 'drop-shadow(0 0 6px rgba(239,68,68,0.8))' : 'none',
         }
       }),
@@ -718,7 +677,6 @@ function RussianRoulette({ playerName, isHit, shotNumber, difficulty, shift = 0,
     }, h(Icon.VolumeX, { size: 44 }));
   };
 
-  const probability = Math.min(shotNumber * (difficulty === 'hard' ? 2 : 1) + shift, 6) / 6;
   const pctStr = Math.round(probability * 100);
 
   return h('div', {
