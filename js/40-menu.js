@@ -399,7 +399,7 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
             h('span', { style: { display: 'block', fontSize: 18, fontWeight: 800, fontFamily: 'var(--font-title)', color: 'var(--c-accent-bright)' } }, m.label), // v116：亮色（默认继承 button 黑字看不清）
             h('span', { style: { display: 'block', fontSize: 12, color: 'hsl(35 15% 68%)', marginTop: 3 } }, m.desc),
           ),
-          h('span', { style: { color: sel ? 'var(--c-accent-bright)' : 'var(--c-accent)', fontSize: 18, animation: sel ? 'hint-breath 1.6s ease-in-out infinite' : 'none' } }, '▶'),
+          h('span', { style: { color: sel ? 'var(--c-accent-bright)' : 'var(--c-accent)', fontSize: 18 } }, '▶'), // v129：不做动画（闪烁/晃动两轮反馈后干脆静态）
         );
       }),
       selMode && h('p', { style: { fontSize: 12, color: 'var(--c-accent-bright)', textAlign: 'center', letterSpacing: '0.1em', margin: 0 } }, '再次点击「' + (selMode === 'cards' ? '经典牌局' : '大话骰') + '」进入'),
