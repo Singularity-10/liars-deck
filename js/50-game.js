@@ -1626,6 +1626,14 @@ function Game() {
       // v103 深度分层容器（BgTilt 五档挂点，见 12-bg-tilt.js）：
       // far=远景大光斑(-180) / mid=烟烛暗角(-60) / near=悬浮粒子(+140，晃动最明显)
       h('div', { className: 'bg-far', style: { position: 'absolute', inset: 0 } },
+        // v126 P3 橡木背景：墙面（细密木纹+年轮亮线，仅酒馆主题）——铺底于光斑之下
+        themeName === 'tavern' && h('div', { style: { position: 'absolute', inset: 0,
+          background: 'repeating-linear-gradient(91deg, rgba(200,163,106,0.06) 0px, rgba(200,163,106,0.06) 2px, transparent 2px, transparent 7px, rgba(200,163,106,0.035) 7px, rgba(200,163,106,0.035) 9px, transparent 9px, transparent 23px), repeating-linear-gradient(180deg, transparent 0px, transparent 118px, rgba(200,163,106,0.05) 118px, rgba(200,163,106,0.05) 120px, transparent 120px, transparent 240px), linear-gradient(180deg, #33261701 0%, #2e2214 55%, #241a0f 100%)',
+          opacity: 0.9 } }),
+        // v126 P3 橡木吧台台面：底部横向木板+顶边高光（吧台沿被灯照亮的金属感）
+        themeName === 'tavern' && h('div', { style: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '16vh', minHeight: 90,
+          background: 'repeating-linear-gradient(93deg, rgba(200,163,106,0.07) 0px, rgba(200,163,106,0.07) 3px, transparent 3px, transparent 11px), linear-gradient(180deg, #4a3620 0%, #3c2c19 40%, #2f2213 100%)',
+          boxShadow: '0 -1px 0 rgba(233,200,119,0.22), 0 -4px 14px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,235,190,0.08)' } }),
         // v105b 大气透视：远墙整体蒙薄雾（远处朦胧、近景粒子锐利——静态深度线索，零运行时成本）
         h('div', { style: { position: 'absolute', inset: 0, background: 'rgba(32,20,10,0.24)' } }),
         h('div', { style: { position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 900, height: 600, background: 'radial-gradient(ellipse at 50% 0%,var(--c-glow-top) 0%,var(--c-glow-side) 30%,transparent 70%)' } }),
