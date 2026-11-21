@@ -192,9 +192,7 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
   const [aiSpeedTick, setAiSpeedTick] = useState(0); // v108：AI 节奏按钮文案刷新
   const [historyR, historyClosing] = useExitAnim(showHistory, 250);
   const [aiCfgR, aiCfgClosing] = useExitAnim(showAIConfig, 250);
-  const [aiCfgs, setAiCfgs] = useState(AI_PRESETS.map(p => ({ ...p })));
   const [selectedAIs, setSelectedAIs] = useState([0, 1, 2]);
-  const [activeAI, setActiveAI] = useState(-1); //：先只展示 AI 名称，点击后再进入编辑
   // 牌局音效偏好存 Sfx 'liar_sfx'——总闸关时不改子偏好，只执行静音，开闸按偏好恢复）
   const [soundOn, setSoundOn] = useState(function () { try { return localStorage.getItem('ld_sound_master') !== '0'; } catch (e) { return true; } });
   // v100：跳过惩罚动画偏好（轮盘演出压缩为直接显示结果）
@@ -263,22 +261,14 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
 
   const toggleAI = (idx) => {
     if (selectedAIs.includes(idx)) {
-      if (selectedAIs.length > 1) {
-        const newSel = selectedAIs.filter(i => i !== idx);
-        setSelectedAIs(newSel);
-        if (activeAI === idx) setActiveAI(newSel[0]);
-      }
-    } else {
-      if (selectedAIs.length < 3) {
-        const newSel = [...selectedAIs, idx];
-        setSelectedAIs(newSel);
-        if (!newSel.includes(activeAI)) setActiveAI(newSel[0]);
-      }
+      if (selectedAIs.length > 1) setSelectedAIs(selectedAIs.filter(i => i !== idx));
+    } else if (selectedAIs.length < 3) {
+      setSelectedAIs([...selectedAIs, idx]);
     }
   };
 
   const handleStart = function (pm) {
-    var cfgs = selectedAIs.map(function (i) { return aiCfgs[i]; });
+    var cfgs = selectedAIs.map(function (i) { return AI_PRESETS[i]; }); // v124：预设定值（滑条编辑已删）
     onStart(diff, cfgs, selectedAIs, incRoulette, autoSort, 5, pm || playMode); //：上限锁定 5（设置开关已移除）；v113 玩法由模式选择弹层传入
   };
 
@@ -301,7 +291,7 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
     ),
     h('div', { style: { textAlign: 'center', marginBottom: 40 } },
       h('p', { style: { color: 'var(--c-accent)', fontSize: 14, letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: 12, fontWeight: 600, opacity: 0, animation: 'enter-subtitle 0.8s ease 0.2s forwards' } }, t('ui.subtitle')),
-      h('h1', { style: { fontFamily: 'var(--font-title)', fontSize: 'clamp(2.5rem,8vw,4.5rem)', fontWeight: 'bold', letterSpacing: '-0.02em', opacity: 0, animation: 'enter-title 1s cubic-bezier(0.16,1,0.3,1) 0.7s forwards, enter-glow-pulse 2s ease 1.6s 1' } }, t('ui.title')),
+      h('h1', { style: { fontFamily: 'var(--font-title)', fontSize: 'clamp(2.5rem,8vw,4.5rem)', fontWeight: 'bold', letterSpacing: '-0.02em', opacity: 0, animation: 'enter-title 1s cubic-bezier(0.16,1,0.3,1) 0.7s forwards, enter-glow-pulse 2s ease 1.6s 1', /* v123 门户黄铜化：拉丝金属字 */ backgroundImage: 'linear-gradient(170deg, #f0d896 0%, var(--c-accent) 30%, #8a6a3a 50%, var(--c-accent-soft) 68%, #a67c3f 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', textShadow: 'none', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.6))' } }, t('ui.title')),
       h('p', { style: { fontSize: 18, color: 'var(--c-text-dim)', marginTop: 8, letterSpacing: '0.2em', textTransform: 'uppercase', opacity: 0, animation: 'enter-en-title 0.8s ease 1.2s forwards' } },
         t('ui.titleEn') + '  ·  ',
         // v106：版本号即编年史入口——点击查看重大改动历史对照
@@ -313,7 +303,7 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
       ),
       h('div', {
         className: 'menu-divider',
-        style: { marginTop: 16, height: 2, background: 'var(--c-danger)', borderRadius: 4, opacity: 0, width: 0, margin: '16px auto 0', animation: 'enter-divider 0.6s ease 1.5s forwards' }
+        style: { marginTop: 16, height: 2, background: 'linear-gradient(90deg, transparent, var(--c-accent) 20%, var(--c-accent-bright) 50%, var(--c-accent) 80%, transparent)', borderRadius: 4, opacity: 0, width: 0, margin: '16px auto 0', animation: 'enter-divider 0.6s ease 1.5s forwards' }
       }),
     ),
     h('div', { style: { width: '100%', maxWidth: 480, marginBottom: 28, opacity: 0, animation: 'enter-rise 0.6s ease 1.6s forwards' } },
@@ -351,28 +341,22 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
       h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 } },
         AI_NAMES.map(function (name, i) {
           var isSelected = selectedAIs.indexOf(i) >= 0;
-          var isActive = activeAI === i;
-          return h('button', {
+                    return h('button', {
             key: i,
             type: 'button',
-            title: isSelected ? '已选 · 点击' + (isActive ? t('ui.collapse') : 'edit') : t('ui.pickAITip'),
+            title: isSelected ? '已选 · 点击移出' : t('ui.pickAITip'),
             onClick: function () {
-              if (isSelected) {
-                if (isActive) setActiveAI(-1);        // 激活中再点 → 收起编辑
-                else setActiveAI(i);                   // 已选未激活 → 进入编辑
-              } else {
-                if (selectedAIs.length < 3) {          // 未选满 → 选中并进入编辑
-                  toggleAI(i);
-                  setActiveAI(i);
-                } else { setActiveAI(i); toast.info(t('ui.aiFullToast')); } // P2-4：选满时明确告知（右上角✕可一键腾位）
-              }
+              // v124：参数编辑已删（八 AI 性格预设定值足够），点击=直接选/取消
+              if (isSelected) { toggleAI(i); }
+              else if (selectedAIs.length < 3) { toggleAI(i); }
+              else { toast.info(t('ui.aiFullToast')); } // P2-4：选满时明确告知（右上角✕可一键腾位）
             },
             style: {
               position: 'relative',
               padding: '12px 10px',
               borderRadius: 8,
-              border: '2px solid ' + (isActive ? 'var(--c-accent)' : isSelected ? 'var(--c-danger)' : 'var(--c-border)'),
-              background: isActive ? 'rgba(66,135,55,0.15)' : isSelected ? 'rgba(180,30,30,0.1)' : 'transparent',
+              border: '2px solid ' + (isSelected ? 'var(--c-accent)' : 'var(--c-border)'),
+              background: isSelected ? 'rgba(176,141,87,0.12)' : 'transparent',
               cursor: 'pointer',
               transition: 'all 0.2s',
               textAlign: 'center',
@@ -387,60 +371,14 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
           }, '✕'),
             h('div', { style: { color: 'var(--c-accent)', marginBottom: 4, display: 'inline-flex' } }, h(Icon[AI_CRESTS[i]], { size: 20 })),
                         h('div', { style: { fontSize: 12, fontWeight: 600, color: 'var(--c-text)' } }, name), //：只展示名称
+            // v124：参数只读展示（滑条编辑已删，八 AI 用预设定值）——诚实/质疑/手牌上限
+            h('div', { style: { fontSize: 10, color: 'var(--c-accent)', marginTop: 3, fontFamily: 'monospace' } },
+              '诚实 ' + AI_PRESETS[i].honestChance + '% · 质疑 ' + AI_PRESETS[i].challengeChance + '% · 上限 ' + AI_PRESETS[i].maxCards + ' 张'),
           );
         }),
       ),
-      activeAI >= 0 && h('div', { style: { padding: '12px', background: 'var(--c-border-soft)', borderRadius: 8 } },
-        h('div', { style: { fontSize: 12, fontWeight: 600, marginBottom: 10, color: 'var(--c-accent)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
-          t('ui.aiParams', { name: AI_NAMES[activeAI] }) + (selectedAIs.indexOf(activeAI) >= 0 ? '' : t('ui.unselected')),
-          h('div', { style: { display: 'flex', gap: 4 } },
-            selectedAIs.indexOf(activeAI) >= 0 ?
-              h('button', { className: 'btn btn-outline', style: { padding: '2px 8px', fontSize: 10, color: 'var(--c-danger-bright)', borderColor: 'hsl(0 40% 30%)' }, title: '将该 AI 移出本局对手', onClick: function () { toggleAI(activeAI); } }, t('ui.deselect')) :
-              h('button', { className: 'btn btn-outline', style: { padding: '2px 8px', fontSize: 10, color: 'var(--c-success)', borderColor: 'hsl(142 40% 30%)' }, title: '将该 AI 加入本局对手', onClick: function () { if (selectedAIs.length < 3) toggleAI(activeAI); else toast.info(t('ui.aiFullToast')); } }, t('ui.pickAI')),
-            h('button', { className: 'btn btn-ghost', style: { padding: '2px 8px', fontSize: 10 }, onClick: function () { setActiveAI(-1); } }, t('ui.collapse')),
-          ),
-        ),
-        [
-          [t('ui.slHonest')[0], 'honestChance', 10, 90, 5, t('ui.slHonest')[1]],
-          [t('ui.slChallenge')[0], 'challengeChance', 5, 80, 5, t('ui.slChallenge')[1]],
-          [t('ui.slMaxCards')[0], 'maxCards', 1, 6, 1, t('ui.slMaxCards')[1]]
-        ].map(function (item) {
-          var label = item[0],
-            key = item[1],
-            min = item[2],
-            max = item[3],
-            step = item[4],
-            desc = item[5];
-          var val = aiCfgs[activeAI][key];
-          var pct = ((val - min) / (max - min)) * 100;
-          var unit = key === 'maxCards' ? '张' : '%';
-          return h('div', { key: key, style: { marginBottom: 4 } },
-            h('div', { style: { position: 'relative', height: 22, display: 'flex', alignItems: 'center', padding: '0 2px' } },
-              h('div', { style: { position: 'absolute', left: 0, right: 0, top: '50%', transform: 'translateY(-50%)', height: 10, borderRadius: 4, background: 'hsl(0 12% 15%)', overflow: 'hidden', pointerEvents: 'none' } },
-                h('div', { style: { height: '100%', width: pct + '%', background: 'linear-gradient(90deg,var(--c-danger),hsl(0 65% 52%))', transition: 'width 0.15s ease-out' } }),
-              ),
-              h('input', {
-                type: 'range',
-                min: min,
-                max: max,
-                step: step,
-                value: val,
-                onChange: function (e) { var v = +e.target.value;
-                  setAiCfgs(function (prev) { return prev.map(function (c, j) { return j === activeAI ? Object.assign({}, c, { [key]: v }) : c; }); }); },
-                style: { width: '100%', margin: 0, position: 'relative', zIndex: 1, background: 'transparent' }
-              }),
-              h('div', { style: { position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', display: 'flex', alignItems: 'baseline', gap: 4 } },
-                h('span', { style: { fontSize: 10, fontWeight: 500, color: 'var(--c-text)', textShadow: '0 1px 2px rgba(0,0,0,0.8)' } }, label),
-                h('span', { style: { fontSize: 10, color: 'hsl(0 8% 50%)', textShadow: '0 1px 2px rgba(0,0,0,0.8)' } }, desc),
-              ),
-              h('div', { style: { position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' } },
-                h('span', { style: { fontSize: 12, fontWeight: 700, color: 'hsl(0 0% 98%)', fontFamily: 'monospace', textShadow: '0 1px 3px rgba(0,0,0,0.9)' } }, val + unit),
-              ),
-            )
-          );
-        })
-      ),
     ),
+
     // ── v116：配置屏左上角固定返回酒馆 ──
     setupView && h('button', { className: 'btn btn-ghost', style: { position: 'absolute', top: 18, left: 16, zIndex: 20, fontSize: 12, color: 'hsl(35 25% 72%)', display: 'flex', alignItems: 'center', gap: 4 }, onClick: function () { setSetupView(null); } }, '◀ 返回酒馆'),
     // ═══ v115：酒馆门户 / 玩法配置屏 双态渲染 ═══
@@ -454,7 +392,7 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
         return h('button', {
           key: m.id,
           onClick: function () { if (sel) { setPlayMode(m.id); setSetupView(m.id); } else setSelMode(m.id); }, // 两步：选中 → 进入
-          style: { display: 'flex', alignItems: 'center', gap: 14, padding: '18px 18px', borderRadius: 12, cursor: 'pointer', textAlign: 'left', background: 'transparent', border: '1.5px solid ' + (sel ? 'var(--c-accent)' : 'var(--c-border)'), boxShadow: sel ? '0 0 16px rgba(220,170,60,0.25)' : 'none', transition: 'all 0.2s' },
+          style: { display: 'flex', alignItems: 'center', gap: 14, padding: '18px 18px', borderRadius: 12, cursor: 'pointer', textAlign: 'left', background: 'transparent', border: '1.5px solid ' + (sel ? 'var(--c-accent-bright)' : 'rgba(176,141,87,0.45)'), boxShadow: sel ? '0 0 16px rgba(220,170,60,0.25)' : 'inset 0 1px 0 rgba(233,200,119,0.08)', transition: 'all 0.2s' },
         },
           h('span', { style: { display: 'inline-flex', color: m.accent ? 'var(--c-danger)' : 'var(--c-accent)', flexShrink: 0 } }, h(Icon[m.icon], { size: 34 })),
           h('span', { style: { flex: 1 } },
@@ -510,7 +448,7 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
       ),
       // 酒客配置入口（面板由设置内开关控制，此处提示行）
       h('button', { className: 'btn btn-outline', style: { width: '100%', justifyContent: 'center' }, onClick: function () { setShowAIConfig(function (v) { return !v; }); } },
-        h(Icon.Users, { size: 14 }), '酒客与配置'),
+        h(Icon.Users, { size: 14 }), '选择酒客对手'),
       h('div', { style: { width: '100%', borderRadius: '0.75rem', overflow: 'hidden', boxShadow: '0 4px 12px var(--c-danger-shadow)' } },
         h('button', { className: 'btn btn-primary', style: { width: '100%', borderRadius: 0, padding: '13px 0', fontSize: 14 }, onClick: function () { handleStart(setupView); } },
           h(Icon.Play, { size: 16 }), setupView === 'dice' ? '开始骰局' : t('ui.startGame')),
@@ -629,7 +567,6 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
       h('div', { className: 'panel animate-slide-up' + (settingsClosing ? ' panel-exit' : ''), style: { width: '90%', maxWidth: 380, maxHeight: '80vh', overflow: 'auto', padding: 24, background: 'rgba(15,8,4,0.62)' } }, // v120：半透明（背景 3D 可透出）
         h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 18, fontWeight: 'bold', marginBottom: 20 } }, t('ui.settingsTitle')),
         [
-          t('ui.setAICfg').concat([showAIConfig, setShowAIConfig]), // v86：前两项（渐进轮盘/自动排序）已锁定开启，从面板移除
           t('ui.setSkipPenalty').concat([skipPenalty, setSkipPenaltyPref]),
           t('ui.setBgTilt').concat([bgTilt, setBgTiltPref])
         ].map(function (item, i) {
