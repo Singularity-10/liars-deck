@@ -14,6 +14,7 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
   const [myPlayerId, setMyPlayerId] = useState(null);
   const myPlayerIdRef = useRef(null);
   const [mpDifficulty, setMpDifficulty] = useState('normal');
+  const [mpPlayMode, setMpPlayMode] = useState('cards'); // v131：联机玩法——cards 牌局 | dice 大话骰（host 权威，game_start 携带）
   const [joining, setJoining] = useState(false);
   const playersRef = useRef([]);
   useEffect(() => { playersRef.current = players; }, [players]);
@@ -308,7 +309,7 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
               ...p,
               isLocal: p.id === myId
             }));
-            onMultiStart(roomId, gamePlayers, false, mpRef.current, mpDifficulty);
+            onMultiStart(roomId, gamePlayers, false, mpRef.current, mpDifficulty, data.playMode || 'cards'); // v131：玩法随开局下发
           }
         });
         conn.on('error', (e) => {
@@ -679,20 +680,37 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
             }, '困难'),
           ),
         ),
+        // v131：联机玩法选择（host 权威；骰局 2~4 人开局，牌局固定 4 人）
+        h('div', { style: { marginTop: 12 } },
+          h('p', { style: { fontSize: 12, color: 'var(--c-text-dim)', marginBottom: 6, textAlign: 'left' } }, '玩法：'),
+          h('div', { style: { display: 'flex', gap: 8 } },
+            h('button', {
+              className: 'btn btn-sm ' + (mpPlayMode === 'cards' ? 'btn-primary' : 'btn-outline'),
+              style: { flex: 1 },
+              onClick: () => setMpPlayMode('cards'),
+            }, '经典牌局'),
+            h('button', {
+              className: 'btn btn-sm ' + (mpPlayMode === 'dice' ? 'btn-primary' : 'btn-outline'),
+              style: { flex: 1 },
+              onClick: () => setMpPlayMode('dice'),
+            }, '大话骰'),
+          ),
+        ),
         h('button', {
           className: 'btn btn-primary btn-lg',
-          disabled: players.length !== 4 || !players.every(p => p.ready) || players.some(p => (p.reputation ?? 100) < 30),
+          // v131：牌局固定 4 人；骰局 2~4 人
+          disabled: players.length < (mpPlayMode === 'dice' ? 2 : 4) || players.length > 4 || !players.every(p => p.ready) || players.some(p => (p.reputation ?? 100) < 30),
           onClick: () => {
             if (players.some(p => (p.reputation ?? 100) < 30)) { toast.error('有玩家信誉分低于30，无法开始'); return; }
             if (mpRef.current?.conns) {
               mpRef.current.conns.forEach(c => {
-                try { if (c.open) c.send({ type: 'game_start', players: players }); } catch (e) {}
+                try { if (c.open) c.send({ type: 'game_start', players: players, playMode: mpPlayMode }); } catch (e) {}
               });
             }
-            onMultiStart(roomId, players, isHost, mpRef.current, mpDifficulty);
+            onMultiStart(roomId, players, isHost, mpRef.current, mpDifficulty, mpPlayMode);
           },
           style: { width: '100%', marginTop: 8 }
-        }, players.length !== 4 ? `需要4名玩家（当前${players.length}/4）` : (!players.every(p => p.ready) ? '等待所有玩家准备' : (players.some(p => (p.reputation ?? 100) < 30) ? '有玩家信誉分不足' : '开始游戏'))),
+        }, players.length < (mpPlayMode === 'dice' ? 2 : 4) ? (mpPlayMode === 'dice' ? `需要2~4名玩家（当前${players.length}）` : `需要4名玩家（当前${players.length}/4）`) : (!players.every(p => p.ready) ? '等待所有玩家准备' : (players.some(p => (p.reputation ?? 100) < 30) ? '有玩家信誉分不足' : '开始游戏'))),
       ) :
       h('button', {
         className: players.find(p => p.isLocal)?.ready ? 'btn btn-outline btn-lg' : 'btn btn-primary btn-lg',

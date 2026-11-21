@@ -3,7 +3,7 @@
  * 职责：大话骰（骰子模式）独立规则与状态机（v111）
  *   规则：每人 5 骰偷看；轮番叫「N 个 X」；下家须加码（数量+ 或 同量点数+）或叫开；
  *         开盅全场验点——达成则叫开者输，未达成则叫点者输；输者上命运转盘，死则出局。
- *   范围：仅单机（联机协议扩展留 backlog）；1 点不设万能（标准 Liar's Dice）。
+ *   范围：单机+联机（v131：dice_action/dice_state_sync 协议，host 权威，toDicePublicState 剥离）；1 点不设万能（标准 Liar's Dice）。
  * 依赖：无前置（rouletteHit 由 20-engine.js 全局提供，UI 层调用）
  * 对外暴露：newDiceState, diceReducer, diceLegalBid, diceCanCall, diceCountFace, DICE_FACES
  */
@@ -44,6 +44,22 @@ function newDiceState({ difficulty, players, shots = 0, round = 1 }) {
     round,
     winner: null,
     roulettePending: null,   // { pid, isHit } 转盘演出排队
+  };
+}
+
+/**
+ * 联机公开态剥离（v131）：只有 viewer 自己能看到自己的骰。
+ * 规则物理同构：bid 阶段骰盅盖着（别人 dice 置空）；reveal/won 全场开盅（dice 公开）——
+ * 与"开盅验点=全场验点"的规则一致，host 不做额外保密。
+ */
+function toDicePublicState(dst, viewerPid) {
+  const open = dst.phase === 'reveal' || dst.phase === 'won';
+  return {
+    ...dst,
+    players: dst.players.map(p => {
+      if (p.id === viewerPid) return { ...p, isLocal: true };
+      return { ...p, isLocal: false, dice: open ? p.dice : [], diceCount: p.dice.length };
+    }),
   };
 }
 
@@ -185,6 +201,18 @@ function diceReducer(st, act) {
     }
     case 'DICE_RESET':
       return null; // v111：退出骰子局清空平行状态
+    case 'SYNC_DICE': // v131：联机客户端整体接管（host 广播的公开态）
+      return act.state || st;
+    case 'DICE_PLAYER_LEFT': { // v131：联机玩家断线离席——出局；若正轮到他则跳至下家
+      const ps = st.players.map(p => p.id === act.pid ? { ...p, alive: false } : p);
+      const alive = ps.filter(p => p.alive);
+      if (alive.length <= 1) return { ...st, phase: 'won', winner: alive[0] || null, players: ps };
+      let cur = st.curPlayer;
+      if (cur === act.pid || !ps[cur].alive) {
+        cur = diceNextAlive({ players: ps }, act.pid);
+      }
+      return { ...st, players: ps, curPlayer: cur };
+    }
     default:
       return st;
   }

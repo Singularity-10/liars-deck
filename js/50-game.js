@@ -215,15 +215,15 @@ function DiceFace({ v, size = 40, dim = false }) {
   );
 }
 
-function DiceTable({ dst, dispatch, onQuit, onRouletteDone }) {
+function DiceTable({ dst, dispatch, onQuit, onRouletteDone, myPid = 0, skipPenalty = false }) { // v131：联机 myPid 泛化（单机=0）
   const [bidCount, setBidCount] = useState(1);
   const [bidFace, setBidFace] = useState(2);
   // v113：骰局首遇提示（一次即记，localStorage 去重）
   const [diceFtue, setDiceFtue] = useState(() => { try { return !localStorage.getItem('ld_dice_ftue'); } catch (e) { return false; } });
   const dismissDiceFtue = () => { setDiceFtue(false); try { localStorage.setItem('ld_dice_ftue', '1'); } catch (e) {} };
-  const me = dst.players[0];
+  const me = dst.players[myPid];
   const cur = dst.players[dst.curPlayer];
-  const myTurn = dst.phase === 'bid' && dst.curPlayer === 0 && me && me.alive;
+  const myTurn = dst.phase === 'bid' && dst.curPlayer === myPid && me && me.alive;
   const aliveCount = dst.players.filter(p => p.alive).length;
   const totalDice = aliveCount * DICE_PER_HAND;
   const lb = dst.lastBid;
@@ -240,11 +240,11 @@ function DiceTable({ dst, dispatch, onQuit, onRouletteDone }) {
   const doBid = () => {
     if (!legal) return;
     try { Sfx.play('card'); } catch (e) {}
-    dispatch({ type: 'DICE_BID', pid: 0, count: bidCount, face: bidFace });
+    dispatch({ type: 'DICE_BID', pid: myPid, count: bidCount, face: bidFace });
   };
   const doCall = () => {
     try { Sfx.play('challenge'); } catch (e) {}
-    dispatch({ type: 'DICE_CALL', pid: 0 });
+    dispatch({ type: 'DICE_CALL', pid: myPid });
   };
 
   // ── 转盘演出 ──
@@ -256,14 +256,14 @@ function DiceTable({ dst, dispatch, onQuit, onRouletteDone }) {
       shotNumber: pend.shot,
       difficulty: dst.difficulty,
       shift: 0,
-      skipPenalty: skipPenaltyRef.current, // v118：骰局转盘同样遵循"跳过惩罚动画"设置（原硬编码 false 与设置文案不同步）
+      skipPenalty: skipPenalty, // v131 修存量崩溃：v118 引用了 Game 作用域的 skipPenaltyRef（本组件无此变量），骰局转盘一触发即崩——改 prop 下传
       onComplete: onRouletteDone,
     });
   }
 
   // ── 结算 ──
   if (dst.phase === 'won') {
-    const win = dst.winner && dst.winner.id === 0;
+    const win = dst.winner && dst.winner.id === myPid;
     return h('div', { className: 'overlay' },
       h('div', { className: 'panel animate-slide-up', style: { textAlign: 'center', padding: 28, maxWidth: 340 } },
         h('div', { style: { display: 'flex', justifyContent: 'center', marginBottom: 10 } }, h(Icon[win ? 'Crown' : 'Skull'] || Icon.Crown, { size: 44 })),
@@ -288,8 +288,8 @@ function DiceTable({ dst, dispatch, onQuit, onRouletteDone }) {
         h('div', { style: { display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 } },
           dst.players.map(p => p.alive && h('div', { key: p.id, style: { display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', flexWrap: 'wrap' } },
             h('span', { style: { fontSize: 12, color: p.id === cr.loserPid ? 'var(--c-danger)' : 'var(--c-text-dim)', width: 64, textAlign: 'right' } }, p.name),
-            (p.id === 0 ? me.dice : p.dice || []).map((v, i) => h(DiceFace, { key: i, v: v, size: 30 })),
-            p.id !== 0 && h('span', { style: { fontSize: 12, color: 'var(--c-text-faint)', width: 70, textAlign: 'left' } }, '（' + (p.dice || []).filter(d => d === cr.face).length + ' 个 ' + cr.face + '）'),
+            (p.id === myPid ? me.dice : p.dice || []).map((v, i) => h(DiceFace, { key: i, v: v, size: 30 })),
+            p.id !== myPid && h('span', { style: { fontSize: 12, color: 'var(--c-text-faint)', width: 70, textAlign: 'left' } }, '（' + (p.dice || []).filter(d => d === cr.face).length + ' 个 ' + cr.face + '）'),
           )),
         ),
         h('div', { style: { fontSize: 14, fontWeight: 'bold', color: 'var(--c-danger)', marginBottom: 14 } },
@@ -316,7 +316,7 @@ function DiceTable({ dst, dispatch, onQuit, onRouletteDone }) {
     ),
     // 对手骰盅区
     h('div', { style: { display: 'flex', justifyContent: 'center', gap: 'clamp(10px,3vw,28px)', flexWrap: 'wrap', padding: '6px 0' } },
-      dst.players.filter(p => p.id !== 0).map(p => {
+      dst.players.filter(p => p.id !== myPid).map(p => {
         const isCur = p.id === dst.curPlayer && dst.phase === 'bid';
         const isBidder = lb && lb.pid === p.id;
         return h('div', { key: p.id, style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: p.alive ? 1 : 0.35, border: `1px solid ${isCur && p.alive ? 'hsl(0 45% 32%)' : 'var(--c-border-soft)'}`, borderRadius: 8, padding: '8px 10px', background: isCur && p.alive ? 'rgba(180,30,30,0.08)' : 'transparent' } },
@@ -336,7 +336,7 @@ function DiceTable({ dst, dispatch, onQuit, onRouletteDone }) {
           lb ? (lb.count + ' 个 ' + lb.face) : '任意起叫'),
       ),
       h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' } },
-        me.alive ? me.dice.map((v, i) => h(DiceFace, { key: i, v: v, size: 46 })) : h('span', { style: { fontSize: 12, color: 'var(--c-text-faint)' } }, '你已出局（观局中）')),
+        me.alive ? (me.dice.length ? me.dice.map((v, i) => h(DiceFace, { key: i, v: v, size: 46 })) : [0, 1, 2, 3, 4].map(i => h('div', { key: 'm' + i, style: { width: 46, height: 46, borderRadius: 9, background: 'var(--c-border)', border: '2px solid hsl(0 12% 24%)' } }))) : h('span', { style: { fontSize: 12, color: 'var(--c-text-faint)' } }, '你已出局（观局中）')),
       h('span', { style: { fontSize: 12, color: 'var(--c-text-dim)' } }, me.alive ? ('你的「' + (lb ? lb.face : bidFace) + '」：' + me.dice.filter(d => d === (lb ? lb.face : bidFace)).length + ' 个') : ''),
     ),
     // 操作区 / 等待提示
@@ -374,6 +374,7 @@ function Game() {
   const [st, rawDispatch] = useReducer(wrappedReducer, INIT);
   // v111：大话骰（骰子模式）平行状态机——单机限定，联机协议扩展留 backlog
   const [gameKind, setGameKind] = useState('cards'); // 'cards' | 'dice'
+  const gameKindRef = useRef('cards'); gameKindRef.current = gameKind; // v131：conn handler 读最新玩法
   const [dst, diceDispatch] = useReducer(diceReducer, null);
   const dstRef = useRef(dst); dstRef.current = dst;
   // 批二：Replay 开关移到 dispatch 包装层同步判定（原 effect 同步存在渲染-提交窗口：
@@ -387,6 +388,7 @@ function Game() {
   const [hkHint, setHkHint] = useState(false);
   const achDoneRef = useRef(null);
   const [mode, setMode] = useState('single');
+  // v131：骰局本机 pid 在 DiceTable 渲染处惰性求值（组件体顶层引用 mode/localPlayerIdRef 均会 TDZ——v112 同款教训）
   const [paused, setPaused] = useState(false);
   const [resultTab, setResultTab] = useState(0); // D2：终局面板 tab（0单局 1累计 2趋势）
   const [endHistory, setEndHistory] = useState(null); // D2：本机对局历史快照
@@ -601,7 +603,7 @@ function Game() {
     startMusic();
   }, [startMusic]);
 
-  const startMulti = useCallback((rid, pls, host, mp, difficulty = 'normal') => {
+  const startMulti = useCallback((rid, pls, host, mp, difficulty = 'normal', playMode = 'cards') => {
     mpRef.current = mp;
     // 信令层自动重连：WebSocket 意外断开时 PeerJS 默认不恢复，这里主动 reconnect
     if (mp && mp.peer && !mp._sigBound) {
@@ -638,6 +640,28 @@ function Game() {
         }, 90000);
       });
       c.on('data', data => {
+        if (data?.type === 'client_left' && gameKindRef.current === 'dice') {
+          diceDispatch({ type: 'DICE_PLAYER_LEFT', pid: c.playerId }); // v131：骰局断线即出局
+          return;
+        }
+        // v131：骰局动作——host 权威校验后推进（骰局 state 与牌局 st 平行，走 diceDispatch）
+        if (data?.type === 'dice_action') {
+          if (gameKindRef.current !== 'dice') return;
+          const act = data.action;
+          if (!act || !['DICE_BID', 'DICE_CALL', 'DICE_REVEAL_DONE'].includes(act.type)) return;
+          const d = dstRef.current;
+          if (!d) return;
+          if (act.type === 'DICE_BID') {
+            if (d.phase !== 'bid' || act.pid !== d.curPlayer) return;
+            if (!diceLegalBid(d, act.count, act.face)) return;
+          } else if (act.type === 'DICE_CALL') {
+            if (d.phase !== 'bid' || act.pid !== d.curPlayer || !d.lastBid) return;
+          } else if (act.type === 'DICE_REVEAL_DONE') {
+            if (d.phase !== 'reveal') return;
+          }
+          diceDispatch(act);
+          return;
+        }
         if (data?.type === 'game_action') {
           const act = data.action;
           const s = stRef.current;
@@ -756,6 +780,20 @@ function Game() {
         setupHostConnListener(c);
       });
     }
+    if (playMode === 'dice') {
+      // v131：联机大话骰——host 权威：host 建局摇骰广播；client 由 dice_state_sync 接管
+      setGameKind('dice');
+      dispatch({ type: 'RESTART' }); // 清牌局残留（v118 同款，骰局不复用 st）
+      diceDispatch({
+        type: 'DICE_START',
+        difficulty: difficulty,
+        players: pls.map(p => ({ name: p.name, isAI: false })),
+      });
+      startMusic();
+      return;
+    }
+    setGameKind('cards');
+    diceDispatch({ type: 'DICE_RESET' });
     dispatch({ type: 'START', difficulty: difficulty, mpPlayers: pls, incrementalRoulette: true, autoSortHand: true }); // v86：两项锁定开启（host 权威，SYNC_STATE 广播覆盖 client 本地壳值）
     startMusic();
   }, [startMusic]);
@@ -1065,6 +1103,18 @@ function Game() {
     broadcastState(st);
   }, [mode, isHost, st, broadcastState]);
 
+  // v131：骰局广播——逐 client 发各自视角剥离态（别人骰盖盅；reveal/won 全场开盅）
+  useEffect(() => {
+    if (gameKind !== 'dice' || mode !== 'multiplayer' || !isHost || !dst) return;
+    const mp = mpRef.current;
+    if (!mp || !mp.conns) return;
+    mp.conns.forEach((c, ci) => {
+      if (!c.open) return;
+      const pid = c.playerId ?? (ci + 1);
+      try { c.send({ type: 'dice_state_sync', state: toDicePublicState(dst, pid) }); } catch (e) {}
+    });
+  }, [gameKind, mode, isHost, dst]);
+
   useEffect(() => {
     if (mode !== 'multiplayer' || isHost) return;
     const conn = connRef.current;
@@ -1072,6 +1122,8 @@ function Game() {
     const handler = (data) => {
       if (data && data.type === 'state_sync') {
         dispatch({ type: 'SYNC_STATE', state: data.state });
+      } else if (data && data.type === 'dice_state_sync') { // v131：骰局同步接管（host 公开态）
+        diceDispatch({ type: 'SYNC_DICE', state: data.state });
       } else if (data && data.type === 'meta') {
         if (data.subType === 'PAUSE') setPaused(true);
         else if (data.subType === 'RESUME') setPaused(false);
@@ -1494,9 +1546,10 @@ function Game() {
     }
   }, [mode, isHost]);
 
-  // ── v111：大话骰 AI 回合驱动（单机限定）──────────────────────────────
+  // ── v111/v131：大话骰 AI 回合驱动（单机+联机 host 侧；client 剥离态无 AI 骰不跑）──
   useEffect(() => {
     if (gameKind !== 'dice' || !dst || dst.phase !== 'bid' || paused) return undefined;
+    if (mode === 'multiplayer' && !isHost) return undefined; // v131：AI 判定要读真实骰，host 权威
     const ai = dst.players[dst.curPlayer];
     if (!ai || !ai.isAI || !ai.alive) return undefined;
     const aliveCount = dst.players.filter(p => p.alive).length;
@@ -1517,8 +1570,19 @@ function Game() {
 
   // v111：骰子局轮盘演出完成后推进状态机
   const onDiceRouletteDone = useCallback(() => {
-    diceDispatch({ type: 'DICE_ROULETTE_DONE' });
+    sendDiceAction({ type: 'DICE_REVEAL_DONE' }); // v131：演出完成复用同一联机门（host 权威推进）
   }, []);
+
+  // v131：骰局动作统一联机门——client 只上报不乐观执行（开盅验点/生死必须 host 权威，
+  // 乐观执行会显示错误 total；RTT 内等待 dice_state_sync，回合制可接受）
+  const sendDiceAction = useCallback((act) => {
+    if (mode === 'multiplayer' && !isHost) {
+      const conn = connRef.current;
+      if (conn && conn.open) { try { conn.send({ type: 'dice_action', action: act }); } catch (e) {} }
+      return;
+    }
+    diceDispatch(act);
+  }, [mode, isHost]);
 
   const quitGame = useCallback(() => {
     setGameKind('cards'); diceDispatch({ type: 'DICE_RESET' }); // v111：骰子局一并清理
@@ -1678,7 +1742,7 @@ function Game() {
     screen === 'lobby' && h(Lobby, { onStart: startSingle, onMultiStart: startMulti, onBack, user: currentUser, onLogout: () => { clearSession();
         setCurrentUser(null); } }),
     // ── v111：骰子模式对局屏（平行状态机 dst 驱动，单机限定）──
-    screen === 'playing' && gameKind === 'dice' && dst && h(DiceTable, { dst, dispatch: diceDispatch, onQuit: quitGame, onRouletteDone: onDiceRouletteDone }),
+    screen === 'playing' && gameKind === 'dice' && dst && h(DiceTable, { dst, dispatch: sendDiceAction, onQuit: quitGame, onRouletteDone: onDiceRouletteDone, myPid: (mode === 'multiplayer' && !isHost && localPlayerIdRef.current != null) ? localPlayerIdRef.current : 0, skipPenalty: skipPenaltyRef.current }),
     screen === 'playing' && active && h('div', { key: 'screen-playing', style: { animation: 'fade-in 0.35s ease' } }, //：对局屏切入淡入（Fragment→div 包裹；纯 opacity 不影响 fixed 子元素与布局）
       st.frenzy && h('div', { className: 'frenzy-overlay' }),
       detailPid != null && h(PlayerDetailPanel, { st, pid: detailPid, onClose: () => setDetailPid(null) }),
