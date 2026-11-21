@@ -6,7 +6,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>骗子牌酒馆 v122 - Liar's Deck</title>
+  <title>骗子牌酒馆 v123 - Liar's Deck</title>
   <link rel="preload" href="assets/fonts/title.woff2" as="font" type="font/woff2" crossorigin>
   <script src="js/vendor/react.production.min.js"></script>
   <script src="js/vendor/react-dom.production.min.js"></script>
@@ -16,28 +16,34 @@
        色板分五层：底/文字/强调/语义/纹理。JS 内联色值已批量映射到 var(--c-*)。
        新增主题：复制任一 body[data-theme] 块改值即可。 */
     :root, body[data-theme='tavern'] {
-      --c-bg: #1a0e06;
-      --c-text: hsl(30 15% 88%);
-      --c-text-bright: hsl(35 30% 85%);
-      --c-text-dim: hsl(0 8% 48%);
-      --c-text-faint: hsl(0 8% 35%);
-      --c-accent: hsl(42 85% 55%);
-      --c-accent-soft: hsl(45 95% 58%);
-      --c-danger: hsl(0 75% 45%);
-      --c-danger-deep: hsl(0 80% 42%);
-      --c-danger-bright: hsl(0 72% 55%);
-      --c-accent-bright: hsl(42 85% 72%);
-      --c-danger-shadow: rgba(180,30,30,0.3);
-      --c-success: hsl(142 70% 50%);
-      --c-ice: hsl(200 70% 70%);
-      --c-border: hsl(0 12% 16%);
-      --c-border-soft: hsl(0 12% 10%);
-      --c-input-bg: hsl(0 15% 7%);
-      --c-panel-bg: rgba(15,8,4,0.7);
-      --c-panel-strong: rgba(20,12,6,0.92);
-      --c-surface: hsl(30 10% 15%);
-      --c-panel-border: rgba(80,50,25,0.3);
-      --c-dust: rgba(255,230,180,0.55);
+      /* v122 风格化：黄铜×皮革×橡木色板（Brass Coal / Smoked Leather 参考）
+         黄铜=强调(accent 族) / 皮革=面板(panel 族) / 橡木=底(surface·bg 族) */
+      --c-bg: #171210;
+      --c-text: hsl(36 28% 84%);
+      --c-text-bright: hsl(38 32% 88%);
+      --c-text-dim: hsl(33 16% 58%);
+      --c-text-faint: hsl(32 12% 40%);
+      --c-accent: #b08d57;
+      --c-accent-soft: #d4b06a;
+      --c-danger: hsl(8 55% 42%);
+      --c-danger-deep: hsl(8 60% 38%);
+      --c-danger-bright: hsl(10 62% 52%);
+      --c-accent-bright: #e9c877;
+      --c-danger-shadow: rgba(140,45,30,0.3);
+      --c-success: hsl(95 28% 48%);
+      --c-ice: hsl(30 20% 72%);
+      --c-border: #3a2f28;
+      --c-border-soft: #2b231d;
+      --c-input-bg: #211a15;
+      --c-panel-bg: rgba(43,31,26,0.72);
+      --c-panel-strong: rgba(35,25,20,0.94);
+      --c-surface: #3f2f20;
+      --c-panel-border: rgba(122,90,64,0.45);
+      --c-dust: rgba(233,200,119,0.5);
+      /* 皮革面板质感变量（v122 新增；其它主题回退中性值） */
+      --panel-stitch: rgba(194,162,122,0.38);
+      --panel-brass-rivet: #8a6a3a;
+      --oak-grain: rgba(200,163,106,0.07);
       --c-glow-top: hsla(0,60%,35%,0.12);
       --c-glow-top2: hsla(0,70%,40%,0.1);
       --c-glow-bottom: hsla(0,50%,30%,0.08);
@@ -71,6 +77,7 @@
       --c-panel-strong: rgba(10,18,30,0.92);
       --c-surface: hsl(210 20% 16%);
       --c-panel-border: rgba(100,140,180,0.28);
+      --panel-stitch: rgba(255,255,255,0.14); --panel-brass-rivet: transparent; --oak-grain: transparent;
       --c-dust: rgba(210,235,255,0.5);
       --c-glow-top: hsla(210,60%,60%,0.10);
       --c-glow-top2: hsla(210,70%,70%,0.08);
@@ -105,6 +112,7 @@
       --c-panel-strong: rgba(32,20,10,0.92);
       --c-surface: hsl(35 18% 16%);
       --c-panel-border: rgba(150,105,50,0.32);
+      --panel-stitch: rgba(255,255,255,0.14); --panel-brass-rivet: transparent; --oak-grain: transparent;
       --c-dust: rgba(255,220,170,0.55);
       --c-glow-top: hsla(40,70%,45%,0.12);
       --c-glow-top2: hsla(45,80%,50%,0.10);
@@ -661,7 +669,7 @@
       border: 1px solid var(--c-border-soft); cursor: pointer; transition: all 0.2s; white-space: nowrap; /* v88：信息块卡片化——全部按钮统一带边框 */
     }
     .btn:disabled { opacity: 0.5; cursor: not-allowed }
-    .btn-primary { background: var(--c-danger); color: hsl(0 0% 98%); border-color: hsl(0 45% 30%); box-shadow: 0 4px 12px var(--c-danger-shadow) }
+    .btn-primary { background: linear-gradient(160deg, var(--c-accent-bright) 0%, var(--c-accent) 38%, #8a6a3a 55%, var(--c-accent-soft) 78%, var(--c-accent) 100%); color: #2e2110; font-weight: 700; border-color: #6b5230; text-shadow: 0 1px 0 rgba(255,235,190,0.35); box-shadow: inset 0 1px 0 rgba(255,240,200,0.65), inset 0 -2px 3px rgba(60,35,10,0.45), 0 4px 12px rgba(60,40,15,0.5) }
     .btn-primary:hover:not(:disabled) { filter: brightness(1.1) }
     .btn-outline { background: transparent; color: var(--c-text); border: 1px solid var(--c-border) }
     .btn-outline:hover:not(:disabled) { border-color: var(--c-accent); color: var(--c-accent) }
@@ -680,7 +688,16 @@
     .input:focus { border-color: var(--c-danger) }
     .input::placeholder { color: var(--c-text-faint) }
 
-    .panel { background: var(--c-panel-bg); backdrop-filter: blur(6px); border: 1px solid var(--c-panel-border); border-radius: 0.75rem }
+    .panel { position: relative; background: radial-gradient(ellipse at 30% 12%, rgba(122,90,64,0.16), transparent 55%), var(--c-panel-bg); backdrop-filter: blur(6px); border: 1.5px solid var(--c-panel-border); border-radius: 0.75rem; box-shadow: inset 0 0 22px rgba(0,0,0,0.35) }
+    /* v122 面板皮革化：虚线缝线内描边 + 四角黄铜铆钉（可经主题变量关闭） */
+    .panel::before { content: ''; position: absolute; inset: 5px; border: 1px dashed var(--panel-stitch, transparent); border-radius: calc(0.75rem - 4px); pointer-events: none; z-index: 1 }
+    .panel::after { content: ''; position: absolute; inset: 0; border-radius: 0.75rem; pointer-events: none; z-index: 1;
+      background:
+        radial-gradient(circle 3px at 9px 9px, var(--panel-brass-rivet, transparent) 2.2px, transparent 3px),
+        radial-gradient(circle 3px at calc(100% - 9px) 9px, var(--panel-brass-rivet, transparent) 2.2px, transparent 3px),
+        radial-gradient(circle 3px at 9px calc(100% - 9px), var(--panel-brass-rivet, transparent) 2.2px, transparent 3px),
+        radial-gradient(circle 3px at calc(100% - 9px) calc(100% - 9px), var(--panel-brass-rivet, transparent) 2.2px, transparent 3px) }
+    .panel > * { position: relative; z-index: 2 }
 
     .switch {
       position: relative; width: 2.2rem; height: 1.25rem;
