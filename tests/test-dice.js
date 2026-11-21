@@ -125,7 +125,9 @@ assert(/gameKind === 'dice' && dst && h\(DiceTable/.test(code50), '骰子对局�
 assert(/playMode === 'dice'/.test(code50), 'startSingle 玩法分叉已接线');
 assert(/aiDiceBid\(/.test(code50) && /aiDiceCallOpen\(/.test(code50), 'AI 叫点/叫开已驱动');
 assert(/type: 'DICE_CALL'/.test(code50), '叫开动作名对齐 reducer（DICE_CALL）');
-assert(/DICE_ROULETTE_DONE/.test(code50), '转盘收尾回调已接线');
+assert(/sendDiceAction\(\{ type: 'DICE_ROULETTE_DONE' \}\)/.test(code50), '转盘收尾回调=推进重摇（v131.1：REVEAL_DONE 是 reveal→roulette 前置步，收尾必须 ROULETTE_DONE）');
+assert(/'DICE_ROULETTE_DONE'\]\/.includes\(act.type\)/.test(code50) || /DICE_BID', 'DICE_CALL', 'DICE_REVEAL_DONE', 'DICE_ROULETTE_DONE'/.test(code50), 'host 白名单含 DICE_ROULETTE_DONE（联机收尾）');
+assert(/type: 'dice_action'/.test(code50) && /type: 'dice_state_sync'/.test(code50) && /toDicePublicState/.test(code50), 'v131 骰局联机协议已接线（dice_action/dice_state_sync/公开态剥离）');
 assert(/setGameKind\('cards'\); diceDispatch\(\{ type: 'DICE_RESET' \}\)/.test(code50), 'quitGame 骰子局清理');
 const codeMenu = fs.readFileSync(path.join('js', '40-menu.js'), 'utf8');
 assert(/playMode/.test(codeMenu) && /大话骰/.test(codeMenu), '主菜单玩法选择已接线');

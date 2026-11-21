@@ -648,7 +648,7 @@ function Game() {
         if (data?.type === 'dice_action') {
           if (gameKindRef.current !== 'dice') return;
           const act = data.action;
-          if (!act || !['DICE_BID', 'DICE_CALL', 'DICE_REVEAL_DONE'].includes(act.type)) return;
+          if (!act || !['DICE_BID', 'DICE_CALL', 'DICE_REVEAL_DONE', 'DICE_ROULETTE_DONE'].includes(act.type)) return;
           const d = dstRef.current;
           if (!d) return;
           if (act.type === 'DICE_BID') {
@@ -658,6 +658,8 @@ function Game() {
             if (d.phase !== 'bid' || act.pid !== d.curPlayer || !d.lastBid) return;
           } else if (act.type === 'DICE_REVEAL_DONE') {
             if (d.phase !== 'reveal') return;
+          } else if (act.type === 'DICE_ROULETTE_DONE') { // v131.1：多端各自收尾，首个推进后其余被拒（幂等）
+            if (d.phase !== 'roulette') return;
           }
           diceDispatch(act);
           return;
@@ -1570,7 +1572,7 @@ function Game() {
 
   // v111：骰子局轮盘演出完成后推进状态机
   const onDiceRouletteDone = useCallback(() => {
-    sendDiceAction({ type: 'DICE_REVEAL_DONE' }); // v131：演出完成复用同一联机门（host 权威推进）
+    sendDiceAction({ type: 'DICE_ROULETTE_DONE' }); // v131.1 修回归：演出收尾=推进重摇（REVEAL_DONE 是 reveal→roulette 的前置步，发错致 roulette 阶段卡死）
   }, []);
 
   // v131：骰局动作统一联机门——client 只上报不乐观执行（开盅验点/生死必须 host 权威，
