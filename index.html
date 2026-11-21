@@ -6,7 +6,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>骗子牌酒馆 v126 - Liar's Deck</title>
+  <title>骗子牌酒馆 v127 - Liar's Deck</title>
   <link rel="preload" href="assets/fonts/title.woff2" as="font" type="font/woff2" crossorigin>
   <script src="js/vendor/react.production.min.js"></script>
   <script src="js/vendor/react-dom.production.min.js"></script>
@@ -378,9 +378,10 @@
     @keyframes slide-down-out { to { opacity: 0; transform: translateY(12px) } }
     .overlay.overlay-exit { animation: fade-out .25s ease forwards; pointer-events: none; } /* 双类压过 .overlay 的 fade-in */
     .panel.panel-exit { animation: slide-down-out .25s ease forwards; } /* 双类压过 .animate-slide-up */
+    /* v127：闪烁整改——大幅透明度摆动在暗底上呈高频闪烁，改轻微呼吸+位移脉冲 */
     @keyframes hint-breath {
-      0%, 100% { opacity: .35; }
-      50% { opacity: .85; }
+      0%, 100% { opacity: 1; transform: translateX(0); }
+      50% { opacity: 0.72; transform: translateX(3px); }
     }
     .no-enter-anim .menu-divider {
       width: 64px !important;
