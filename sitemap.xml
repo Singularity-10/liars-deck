@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  站点地图：落地页 + 单文件版游戏页
+  lastmod 取构建当天日期（由 build-pages.py 自动填充 2026-11-22）
+  提交方式：Search Console / 百度收录平台提交此 URL
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://singularity-10.github.io/liars-deck/</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://singularity-10.github.io/liars-deck/game.html</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+</urlset>

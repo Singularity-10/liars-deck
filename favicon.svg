@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="骗子牌酒馆">
+  <title>骗子牌酒馆</title>
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6e3b4"/>
+      <stop offset="0.5" stop-color="#e8c078"/>
+      <stop offset="1" stop-color="#b8802f"/>
+    </linearGradient>
+    <radialGradient id="bg" cx="0.3" cy="0.2" r="0.9">
+      <stop offset="0" stop-color="#2a2116"/>
+      <stop offset="1" stop-color="#14100b"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <rect x="1.5" y="1.5" width="61" height="61" rx="12.5" fill="none" stroke="#5c4a2c" stroke-width="1.6"/>
+
+  <!-- 扇形三张牌 -->
+  <g fill="none" stroke="#d4a24e" stroke-width="2.4" stroke-linejoin="round">
+    <rect x="13" y="22" width="20" height="28" rx="3" transform="rotate(-16 23 36)" opacity="0.55"/>
+    <rect x="21" y="17" width="21" height="29" rx="3" transform="rotate(-2 31.5 31.5)" opacity="0.8"/>
+  </g>
+  <rect x="30" y="15" width="21" height="29" rx="3" fill="#1d1610" stroke="#e8c078" stroke-width="2.6"/>
+  <path d="M40.5 22.5c-3.6 0-6.4 2.6-6.4 6.1 0 2.4 1.3 4.3 3.2 5.3l-.9 3.1h8.2l-.9-3.1c1.9-1 3.2-2.9 3.2-5.3 0-3.5-2.8-6.1-6.4-6.1zm0 2.3c1.3 0 2.4 1 2.4 2.3 0 1.3-1.1 2.3-2.4 2.3s-2.4-1-2.4-2.3c0-1.3 1.1-2.3 2.4-2.3z" fill="url(#gold)"/>
+
+  <!-- 左轮弹巢：一颗实弹 -->
+  <circle cx="45" cy="45" r="9.5" fill="#1d1610" stroke="#8a6a34" stroke-width="2"/>
+  <circle cx="45" cy="41.8" r="2.9" fill="#f0d49a"/>
+</svg>
