@@ -991,6 +991,16 @@ function endGame(st, won, winner, winReason, extra = {}) {
     ns.currentWinStreak = 0;
   }
   saveStats(ns);
+  // 埋点：终局上报（唯一出口，每局只发一次；未配置统计 provider 时静默跳过）
+  try {
+    if (typeof LDAnalytics !== 'undefined') {
+      LDAnalytics.track('game_end', {
+        won: !!won,
+        winReason: winReason || null,
+        winner: winner ? (winner.name || null) : null,
+      });
+    }
+  } catch (e) { /* 统计异常不影响结算 */ }
   return {
     ...st,
     ...extra,

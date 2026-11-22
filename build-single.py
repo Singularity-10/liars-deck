@@ -3,6 +3,7 @@
 # 产物：dist/骗子牌酒馆.html（单文件、双击即玩、可直接发人）
 # 2026-10-31 形态定版（TA 拍板）：单文件版=最小化分发物——业务 js 经 uglify 压缩
 #（-m -c，顶层名不动，兼容全局符号串联架构）后内联；要看可读源码请用拆分版。
+import argparse
 import base64 as b64
 import pathlib
 import re
@@ -55,22 +56,52 @@ out, n = re.subn(
 assert n == 1, 'SPLIT 标记缺失或重复'
 
 # 单文件版把标题字体回填内联（保证 dist 双击即玩不丢字体）
-font = root / 'assets' / 'fonts' / 'title.woff2'
-if font.exists():
+# v133 修复：此前只内联 title.woff2，漏了 title-extra.woff2（门户格补充字形），
+# 单文件版里它仍指向不存在的相对文件 → 换台机器/移动到微信后标题少字。
+FONTS = ['title.woff2', 'title-extra.woff2']
+for fname in FONTS:
+    font = root / 'assets' / 'fonts' / fname
+    if not font.exists():
+        continue
     data_uri = 'data:font/woff2;base64,' + b64.b64encode(font.read_bytes()).decode()
-    out, fn = re.subn(r"url\('assets/fonts/title\.woff2'\)", 'url(' + data_uri + ')', out)
-    assert fn == 1, '字体引用回填失败'
+    out, fn = re.subn(r"url\('assets/fonts/" + re.escape(fname) + r"'\)",
+                      'url(' + data_uri + ')', out)
+    assert fn == 1, f'字体引用回填失败: {fname} (匹配 {fn} 处)'
     # head 里的字体 preload 外链一并移除：字体已 data-URI 内联，preload 反而指向
     # 不存在的相对文件，file:// 下报 CORS/ERR_FAILED（存量问题，随本次压缩内联根治）
-    out, fn = re.subn(r'\s*<link rel="preload" href="assets/fonts/title\.woff2"[^>]*>', '', out)
-    assert fn == 1, f'字体 preload 清理异常: {fn}'
+    out, fn = re.subn(r'\s*<link rel="preload" href="assets/fonts/'
+                      + re.escape(fname) + r'"[^>]*>', '', out)
+    assert fn <= 1, f'字体 preload 清理异常: {fname} ({fn})'
 
 # 移除 head 里 vendor 外链（已随 SPLIT 内联），否则单文件挪走后 404
 out, fn = re.subn(r'\s*<script src="js/vendor/[^"]*"></script>', '', out)
 assert fn == 3, f'vendor 外链清理异常: {fn}'
 
-dist = root / 'dist' / '骗子牌酒馆.html'
-dist.parent.mkdir(exist_ok=True)
+# ── CLI ───────────────────────────────────────────────────────────
+# --title 覆盖 <title>（网页版发布用；{version} 会替换成 GAME_VERSION）
+# --out   指定输出路径（默认 dist/骗子牌酒馆.html）
+#   网页版发布：
+#     python3 build-single.py --title "酒馆 {version} - 骗子牌酒馆网页版在线玩" --out game.html
+ap = argparse.ArgumentParser(description='构建单文件版')
+ap.add_argument('--title', default=None, help='覆盖 <title>，支持 {version} 占位')
+ap.add_argument('--out', default=None, help='输出路径（默认 dist/骗子牌酒馆.html）')
+args = ap.parse_args()
+
+if args.title:
+    version = ''
+    m = re.search(r"const GAME_VERSION\s*=\s*'([^']+)'",
+                  (root / 'js' / '00-constants.js').read_text(encoding='utf-8'))
+    if m:
+        version = m.group(1)
+    title = args.title.replace('{version}', version)
+    out, fn = re.subn(r'<title>.*?</title>', '<title>' + title + '</title>',
+                      out, count=1, flags=re.S)
+    assert fn == 1, 'title 覆盖失败'
+
+dist = pathlib.Path(args.out) if args.out else root / 'dist' / '骗子牌酒馆.html'
+if not dist.is_absolute():
+    dist = root / dist
+dist.parent.mkdir(parents=True, exist_ok=True)
 dist.write_text(out, encoding='utf-8')
 print(f'built: {dist} ({len(out)} bytes, {len(biz)} modules, '
       f'biz {len(biz_min)}/src {len(biz_src)} + vendor {len(vend_src)})')

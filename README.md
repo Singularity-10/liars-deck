@@ -42,6 +42,7 @@ index.html          入口（开发版，引用本地相对路径）
 game.html           单文件构建产物（gh-pages 部署源，可直接发人）
 js/
   00-constants.js   常量与版本号（GAME_VERSION）
+  01-analytics.js   访问统计与行为埋点（多 provider，默认零配置）
   05-i18n.js        文案词典（t() 机制）
   08-lobby-beacon.js  联机房间广播
   10-utils.js       工具函数
@@ -61,8 +62,12 @@ types/game.d.ts     TypeScript 类型基座（渐进点亮中）
 assets/fonts/       本地字体
 tests/              白盒测试套件（21 个 test-*.js，零依赖）
 sim-*.js            蒙特卡洛模拟器（平衡性验证）
+web/index.html      落地页（营销页，gh-pages 首页的源码）
 build-single.py     单文件版构建脚本
+build-pages.py      gh-pages 整站构建脚本（落地页 + 单文件版 + 统计模块）
+ci.sh               本地/CI 三合一检查（白盒 + 蒙特卡洛 + 构建冒烟）
 diag-persona.js     人格诊断脚本（开发调试用）
+.github/workflows/  CI（白盒测试 + 蒙特卡洛 + 单文件构建冒烟）
 tsconfig.json
 ```
 
@@ -78,13 +83,66 @@ node sim-roles.js      # 角色平衡性蒙特卡洛（SIM_STRICT 3600 局零卡
 
 测试零依赖：直接用 Node 读源码文件进沙盒执行断言，不需要 npm install。
 
+## 访问统计与埋点
+
+统计模块是 `js/01-analytics.js`，**默认零配置 = 一个请求都不发**（不加载任何第三方脚本）。
+启用只需改这一个文件顶部的 `ANALYTICS_CONFIG`：
+
+```js
+const ANALYTICS_CONFIG = {
+  baidu:      { siteId: '' },   // 百度统计 hm.baidu.com 站点 ID
+  ga4:        { id: '' },       // GA4 Measurement ID（G-XXXXXXX）
+  umami:      { websiteId: '', scriptUrl: 'https://cloud.umami.is/script.js' },
+  plausible:  { domain: '', scriptUrl: 'https://plausible.io/js/script.js' },
+  beacon:     { token: '' },    // Cloudflare Web Analytics token
+  custom:     { endpoint: '' }, // 自建端点：POST JSON（text/plain，无预检）
+};
+```
+
+填哪个就启用哪个，多个可并存。改完记得重新构建并部署：
+
+```bash
+python3 build-single.py --title "酒馆 {version} - 骗子牌酒馆网页版在线玩" --out game.html
+python3 build-pages.py          # 生成 dist-pages/，推到 gh-pages 分支根目录
+```
+
+**自动上报的事件**（无需额外配置）：
+
+| 事件 | 触发时机 | 附带参数 |
+|---|---|---|
+| `pageview` | 页面打开（落地页 / 游戏页各算一次） | `app` `v`(版本) `path` `lang` |
+| `game_start` | 单机开局 / 联机开局 | `mode` `playMode` `difficulty` `aiCount` / `players` `isHost` |
+| `game_end` | 每局终局（引擎唯一出口，只发一次） | `won` `winReason` `winner` |
+
+**隐私**：遵守浏览器的 Do Not Track；`LDAnalytics.optOut(true)` 可让玩家本地永久关闭上报；
+只上报路径与游戏行为，不含任何身份信息。
+
+## CI
+
+检查逻辑全在仓库内的 `ci.sh`，本地和 CI 跑的是同一套：
+
+```bash
+bash ci.sh         # 全跑（白盒 + 蒙特卡洛 + 构建冒烟）
+bash ci.sh unit    # 只跑白盒测试
+bash ci.sh sim     # 只跑蒙特卡洛
+bash ci.sh build   # 只跑构建检查
+```
+
+- **白盒测试**：逐个执行 21 件套 `tests/test-*.js`（零依赖，不需要 npm install）
+- **蒙特卡洛**：`SIM_STRICT=1 node sim-roles.js 2000` + `sim-persona.js` + `sim-discard.js`
+- **单文件构建冒烟**：构建 `build-single.py`，校验产物**无任何外链**（script/字体必须内联），
+  并校验仓库里的 `game.html` 与源码一致——改完源码忘了重新构建，CI 会直接报错
+
+`.github/workflows/tests.yml` 在 push / PR / 每周定时自动跑 `ci.sh`（需 `uglifyjs` 在 PATH：
+`npm i -g uglify-js@3.19.3`）。CI 挂了先在本地跑一遍 `bash ci.sh` 复现。
+
 ## 云端 AI 对手（可选）
 
 游戏内置本地 AI，也可接 [GLM](https://open.bigmodel.cn/) 提升对手"演技"：游戏内设置 → 粘贴你自己的 API Key。Key 只存浏览器 localStorage，不进代码、不上传。
 
 ## 版本
 
-当前 **v132**（酒馆门户：大标题「酒馆」玩法拆分，经典牌局与大话骰各自独立配置界面；v131 起大话骰支持 PeerJS 联机，v132 修复转盘收尾回归）。版本号由 `GAME_VERSION`（`js/00-constants.js`）与发版脚本统一维护，单调递增。
+当前 **v133**（v133 新增访问统计与埋点模块 `js/01-analytics.js`——多 provider 适配、默认零配置；补 GitHub Actions CI：白盒 21 件套 + 蒙特卡洛 + 单文件构建冒烟；修 `build-single.py` 漏内联 `title-extra.woff2` 导致单文件版丢字的问题，并把落地页源码 `web/index.html` 收回仓库）。版本号由 `GAME_VERSION`（`js/00-constants.js`）与发版脚本统一维护，单调递增。
 
 ## 许可
 

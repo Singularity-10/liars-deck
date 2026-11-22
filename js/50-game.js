@@ -583,6 +583,14 @@ function Game() {
     setIsHost(false);
     connRef.current = null;
     localPlayerIdRef.current = null;
+    // 埋点：单机开局（未配置统计 provider 时静默跳过，不影响游戏）
+    try {
+      if (typeof LDAnalytics !== 'undefined') {
+        LDAnalytics.track('game_start', {
+          mode: 'single', playMode, difficulty: diff, aiCount: (selectedAis || []).length,
+        });
+      }
+    } catch (e) { /* 统计异常不影响开局 */ }
     if (playMode === 'dice') {
       // v111：大话骰——1 玩家 + 所选 AI，平行状态机接管对局
       setGameKind('dice');
@@ -618,6 +626,14 @@ function Game() {
     gameStartRef.current = Date.now();
     setMode('multiplayer');
     setScreen('playing');
+    // 埋点：联机开局
+    try {
+      if (typeof LDAnalytics !== 'undefined') {
+        LDAnalytics.track('game_start', {
+          mode: 'multiplayer', playMode, players: (pls || []).length, isHost: !!host,
+        });
+      }
+    } catch (e) { /* 统计异常不影响开局 */ }
     const humanLobbyIdx = pls.findIndex(p => p.isLocal);
     localPlayerIdRef.current = humanLobbyIdx;
     connRef.current = !host && mp ? (mp.conns?.[0] || null) : null;
