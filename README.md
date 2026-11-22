@@ -66,6 +66,7 @@ web/index.html      落地页（营销页，gh-pages 首页的源码）
 build-single.py     单文件版构建脚本
 build-pages.py      gh-pages 整站构建脚本（落地页 + 单文件版 + 统计模块）
 ci.sh               本地/CI 三合一检查（白盒 + 蒙特卡洛 + 构建冒烟）
+publish.sh          一键发布（重建产物 + 推 main 与 gh-pages 两个分支）
 diag-persona.js     人格诊断脚本（开发调试用）
 .github/workflows/  CI（白盒测试 + 蒙特卡洛 + 单文件构建冒烟）
 tsconfig.json
@@ -135,6 +136,21 @@ bash ci.sh build   # 只跑构建检查
 
 `.github/workflows/tests.yml` 在 push / PR / 每周定时自动跑 `ci.sh`（需 `uglifyjs` 在 PATH：
 `npm i -g uglify-js@3.19.3`）。CI 挂了先在本地跑一遍 `bash ci.sh` 复现。
+
+## 发布
+
+```bash
+bash publish.sh              # 重建产物 + 推 main 与 gh-pages
+bash publish.sh --build-only # 只构建，不动 git
+```
+
+`publish.sh` 做三件事：用 `build-single.py` 重建根目录 `game.html`、用 `build-pages.py`
+生成 `dist-pages/`（落地页 + 单文件版 + 统计模块）、再把两者分别推到 `main` 与
+`gh-pages` 分支。线上站点的内容 100% 由仓库生成，不手工改 HTML。
+
+> 注：单文件版 `game.html` 约 690KB，超过 GitHub App 写文件接口的单请求上限
+> （约 500KB），只能用本地 `git push` 上线——这就是 `publish.sh` 存在的原因。
+> CI 会校验仓库里的 `game.html` 与源码是否一致，防止产物漂移。
 
 ## 云端 AI 对手（可选）
 
