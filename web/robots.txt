@@ -1,0 +1,12 @@
+# 骗子牌酒馆 · 站点爬虫策略
+#
+# 说明：GitHub Pages 项目页（https://<user>.github.io/<repo>/）的 robots.txt
+# 实际生效位置是域名根目录（https://<user>.github.io/robots.txt），项目页内放置的
+# robots.txt 爬虫并不会读取。本文件放在站点根，一旦将来绑定自有域名
+# （CNAME），这里就是域名根，规则立即生效——所以保留并保持同步。
+
+User-agent: *
+Allow: /
+
+# 站点地图（绑定自有域名后生效）
+Sitemap: https://singularity-10.github.io/liars-deck/sitemap.xml

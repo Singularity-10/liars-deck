@@ -62,7 +62,8 @@ types/game.d.ts     TypeScript 类型基座（渐进点亮中）
 assets/fonts/       本地字体
 tests/              白盒测试套件（21 个 test-*.js，零依赖）
 sim-*.js            蒙特卡洛模拟器（平衡性验证）
-web/index.html      落地页（营销页，gh-pages 首页的源码）
+web/                站点资产（落地页源码 + favicon / 分享卡 / PWA 图标 / robots / sitemap）
+build-og-image.py   生成 og-image.png 与各尺寸图标（Chromium 渲染，产物为二进制）
 build-single.py     单文件版构建脚本
 build-pages.py      gh-pages 整站构建脚本（落地页 + 单文件版 + 统计模块）
 ci.sh               本地/CI 三合一检查（白盒 + 蒙特卡洛 + 构建冒烟）
@@ -136,6 +137,32 @@ bash ci.sh build   # 只跑构建检查
 
 `.github/workflows/tests.yml` 在 push / PR / 每周定时自动跑 `ci.sh`（需 `uglifyjs` 在 PATH：
 `npm i -g uglify-js@3.19.3`）。CI 挂了先在本地跑一遍 `bash ci.sh` 复现。
+
+## 站点与分享
+
+线上站点（gh-pages）的内容全部由仓库生成，**不要手改 HTML**：
+
+| 文件 | 作用 |
+|---|---|
+| `web/index.html` | 落地页（营销页，gh-pages 首页的源码） |
+| `web/favicon.svg` | 站点图标（SVG，矢量，浏览器标签页） |
+| `web/og-image.png` | 社交分享卡（1200×630）——微信/微博/X 分享时的缩略图 |
+| `web/apple-touch-icon.png` | iOS「添加到主屏幕」图标（180×180） |
+| `web/icon-192.png` / `web/icon-512.png` | PWA 图标 |
+| `web/manifest.webmanifest` | PWA 清单（可全屏、可加桌面） |
+| `web/robots.txt` / `web/sitemap.xml` | 爬虫策略与站点地图 |
+
+图片类产物是二进制，由 `build-og-image.py` 用 Chromium 渲染模板 `web/og-image.html` 生成：
+
+```bash
+python3 build-og-image.py    # 需要 playwright + chromium
+```
+
+改完站点资产后跑 `bash publish.sh` 才会真正上线（产物随 dist-pages/ 一起推）。
+
+> 注意：`robots.txt` 在 GitHub Pages **项目页**上不生效（爬虫只读域名根的 robots.txt），
+> 它是给将来绑定自有域名（CNAME）准备的，届时该文件即位于域名根，规则自动生效。
+> `sitemap.xml` 不受此限制，可直接提交到百度收录平台 / Search Console。
 
 ## 发布
 

@@ -12,6 +12,7 @@
 # 改了就没法追溯、也没法在本地预览。把它收回 web/ 后，这里负责把
 # 仓库布局（web/index.html + js/）翻译成 gh-pages 布局（站点根），
 # 唯一的差异是统计模块的相对路径深浅，脚本里改这一处即可。
+import datetime
 import pathlib
 import re
 import shutil
@@ -43,8 +44,26 @@ assert n == 1, f'落地页统计模块引用改写异常: {n}'
 (out_dir / 'js').mkdir(parents=True, exist_ok=True)
 shutil.copyfile(root / 'js' / '01-analytics.js', out_dir / 'js' / '01-analytics.js')
 
+# ── 4. 站点资产：favicon / 分享卡 / PWA 图标 / manifest / robots / sitemap ──
+# 模板文件（og-image.html）与渲染中间产物不进产物目录；
+# index.html 已在上一步做过「相对路径改写」，绝不能被通用拷贝覆盖回去
+SKIP = {'og-image.html', 'index.html'}
+copied = []
+for f in sorted((root / 'web').iterdir()):
+    if not f.is_file() or f.name in SKIP or f.name.startswith('.'):
+        continue
+    dst = out_dir / f.name
+    shutil.copyfile(f, dst)
+    copied.append(f.name)
+
+# sitemap 的 lastmod 用今天
+sm = out_dir / 'sitemap.xml'
+if sm.exists():
+    today = datetime.date.today().isoformat()
+    sm.write_text(sm.read_text(encoding='utf-8').replace('{DATE}', today), encoding='utf-8')
+
 print(f'built: {out_dir}/')
-for f in ['index.html', 'game.html', 'js/01-analytics.js']:
+for f in ['index.html', 'game.html', 'js/01-analytics.js'] + copied:
     p = out_dir / f
     print(f'  {f:22} {p.stat().st_size:>8} bytes')
 print('提示：把 dist-pages/ 下的内容推到 gh-pages 分支根目录即可生效。')
