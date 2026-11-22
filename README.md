@@ -39,6 +39,7 @@ python3 build-single.py   # 产出 dist/ 下的单文件版，可直接发人
 
 ```
 index.html          入口（开发版，引用本地相对路径）
+game.html           单文件构建产物（gh-pages 部署源，可直接发人）
 js/
   00-constants.js   常量与版本号（GAME_VERSION）
   05-i18n.js        文案词典（t() 机制）
@@ -58,9 +59,10 @@ js/
   vendor/           第三方（React 18 + ReactDOM + PeerJS 1.5.4，已内置无需安装）
 types/game.d.ts     TypeScript 类型基座（渐进点亮中）
 assets/fonts/       本地字体
-tests/              白盒测试套件（16 个 test-*.js，零依赖）
+tests/              白盒测试套件（21 个 test-*.js，零依赖）
 sim-*.js            蒙特卡洛模拟器（平衡性验证）
 build-single.py     单文件版构建脚本
+diag-persona.js     人格诊断脚本（开发调试用）
 tsconfig.json
 ```
 
@@ -70,7 +72,7 @@ tsconfig.json
 node tests/test-roles.js     # 角色系统
 node tests/test-events.js    # 事件系统
 node tests/test-replay.js    # 回放
-# ...共 16 件套，node tests/test-<模块名>.js 逐个运行（在仓库根目录执行）
+# ...共 21 件套，node tests/test-<模块名>.js 逐个运行（在仓库根目录执行）
 node sim-roles.js      # 角色平衡性蒙特卡洛（SIM_STRICT 3600 局零卡死）
 ```
 
@@ -82,7 +84,7 @@ node sim-roles.js      # 角色平衡性蒙特卡洛（SIM_STRICT 3600 局零卡
 
 ## 版本
 
-当前 **v115**（酒馆门户：大标题「酒馆」玩法拆分，经典牌局与大话骰各自独立配置界面）。版本号由 `GAME_VERSION`（`js/00-constants.js`）与发版脚本统一维护，单调递增。
+当前 **v132**（酒馆门户：大标题「酒馆」玩法拆分，经典牌局与大话骰各自独立配置界面；v131 起大话骰支持 PeerJS 联机，v132 修复转盘收尾回归）。版本号由 `GAME_VERSION`（`js/00-constants.js`）与发版脚本统一维护，单调递增。
 
 ## 许可
 
