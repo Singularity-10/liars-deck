@@ -39,8 +39,8 @@ run_unit() {
   done
   echo "   共 $total 件套，通过 $pass"
   # 件数下限：防止有人误删测试文件
-  if [ "$total" -lt 21 ]; then
-    bad "测试件数异常（$total < 21），可能有测试文件被误删"
+  if [ "$total" -lt 22 ]; then
+    bad "测试件数异常（$total < 22），可能有测试文件被误删"
   fi
 }
 

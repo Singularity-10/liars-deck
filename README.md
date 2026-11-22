@@ -60,7 +60,7 @@ js/
   vendor/           第三方（React 18 + ReactDOM + PeerJS 1.5.4，已内置无需安装）
 types/game.d.ts     TypeScript 类型基座（渐进点亮中）
 assets/fonts/       本地字体
-tests/              白盒测试套件（21 个 test-*.js，零依赖）
+tests/              白盒测试套件（22 个 test-*.js，零依赖）
 sim-*.js            蒙特卡洛模拟器（平衡性验证）
 web/                站点资产（落地页源码 + favicon / 分享卡 / PWA 图标 / robots / sitemap）
 build-og-image.py   生成 og-image.png 与各尺寸图标（Chromium 渲染，产物为二进制）
@@ -79,7 +79,7 @@ tsconfig.json
 node tests/test-roles.js     # 角色系统
 node tests/test-events.js    # 事件系统
 node tests/test-replay.js    # 回放
-# ...共 21 件套，node tests/test-<模块名>.js 逐个运行（在仓库根目录执行）
+# ...共 22 件套，node tests/test-<模块名>.js 逐个运行（在仓库根目录执行）
 node sim-roles.js      # 角色平衡性蒙特卡洛（SIM_STRICT 3600 局零卡死）
 ```
 
@@ -130,7 +130,7 @@ bash ci.sh sim     # 只跑蒙特卡洛
 bash ci.sh build   # 只跑构建检查
 ```
 
-- **白盒测试**：逐个执行 21 件套 `tests/test-*.js`（零依赖，不需要 npm install）
+- **白盒测试**：逐个执行 22 件套 `tests/test-*.js`（零依赖，不需要 npm install）
 - **蒙特卡洛**：`SIM_STRICT=1 node sim-roles.js 2000` + `sim-persona.js` + `sim-discard.js`
 - **单文件构建冒烟**：构建 `build-single.py`，校验产物**无任何外链**（script/字体必须内联），
   并校验仓库里的 `game.html` 与源码一致——改完源码忘了重新构建，CI 会直接报错
@@ -185,7 +185,7 @@ bash publish.sh --build-only # 只构建，不动 git
 
 ## 版本
 
-当前 **v133**（v133 新增访问统计与埋点模块 `js/01-analytics.js`——多 provider 适配、默认零配置；补 GitHub Actions CI：白盒 21 件套 + 蒙特卡洛 + 单文件构建冒烟；修 `build-single.py` 漏内联 `title-extra.woff2` 导致单文件版丢字的问题，并把落地页源码 `web/index.html` 收回仓库）。版本号由 `GAME_VERSION`（`js/00-constants.js`）与发版脚本统一维护，单调递增。
+当前 **v133**（v133 新增访问统计与埋点模块 `js/01-analytics.js`——多 provider 适配、默认零配置；补 GitHub Actions CI：白盒 22 件套 + 蒙特卡洛 + 单文件构建冒烟；修 `build-single.py` 漏内联 `title-extra.woff2` 导致单文件版丢字的问题，并把落地页源码 `web/index.html` 收回仓库）。版本号由 `GAME_VERSION`（`js/00-constants.js`）与发版脚本统一维护，单调递增。
 
 ## 许可
 
