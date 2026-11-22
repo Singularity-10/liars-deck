@@ -1,0 +1,4 @@
+# 构建目录不得提交到 gh-pages（否则 /dist-pages/ 会公开可访问，
+# 其中的 index.html 是重复落地页，会被搜索引擎当成重复内容索引）
+dist/
+dist-pages/
