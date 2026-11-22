@@ -38,6 +38,10 @@ if [ ! -d .git ]; then
 fi
 
 echo '── 提交 game.html → main'
+# CI 里 actions/checkout 可能是 detached HEAD，先确保在 main 上，否则 commit 会落空
+if ! git rev-parse --abbrev-ref HEAD | grep -q '^main$'; then
+  git checkout main 2> /dev/null || git checkout -b main origin/main
+fi
 git add game.html
 if git diff --cached --quiet; then
   echo '   game.html 无变化，跳过'
