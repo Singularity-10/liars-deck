@@ -208,6 +208,21 @@ function PlayerDetailPanel({ st, pid, onClose }) {
 // 骰面 pip 点阵（3×3 网格格位 0-8）
 const DICE_PIP_MAP = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
 
+// v133 P0-②：断线横幅——"×× 断线 · 剩余 Ns 可重连"，1s tick 自倒计时，归零自动消失（host 会随即落地离席）
+function LeftBanner({ name, deadline }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const left = Math.max(0, Math.ceil((deadline - now) / 1000));
+  if (left <= 0) return null;
+  return h('div', { style: { position: 'fixed', top: 0, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', pointerEvents: 'none' } },
+    h('div', { style: { display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(60,40,10,0.88)', border: '1px solid var(--c-accent-dim, #8a6a3a)', borderTop: 'none', borderRadius: '0 0 10px 10px', padding: '5px 16px', fontSize: 12, color: 'var(--c-accent-bright, #e9c877)' } },
+      '⚠ ' + name + ' 断线 · ' + left + 's 内可重连'),
+  );
+}
+
 function DiceFace({ v, size = 40, dim = false }) {
   return h('div', { style: { width: size, height: size, borderRadius: size * 0.2, background: dim ? 'var(--c-border)' : 'hsl(40 25% 90%)', border: '2px solid ' + (dim ? 'hsl(0 12% 24%)' : 'hsl(40 20% 65%)'), display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gridTemplateRows: 'repeat(3,1fr)', padding: size * 0.13, boxSizing: 'border-box', flexShrink: 0 } },
     DICE_PIP_MAP[v].map(i => h('div', { key: i, style: { display: 'flex', alignItems: 'center', justifyContent: 'center' } },
@@ -393,6 +408,7 @@ function Game() {
   const [resultTab, setResultTab] = useState(0); // D2：终局面板 tab（0单局 1累计 2趋势）
   const [endHistory, setEndHistory] = useState(null); // D2：本机对局历史快照
   const [quitConfirm, setQuitConfirm] = useState(false); // P1-1：退出二次确认
+  const [leftAnn, setLeftAnn] = useState(null); // v133：断线横幅 {pid,name,deadline}（host 本地+client 经 meta 同步）
   const [srMsg, setSrMsg] = useState(''); // v109：读屏播报（aria-live，视觉隐藏）
   const srPrevRef = useRef({ phase: '', rid: '' });
   const [mpPlayers, setMpPlayers] = useState([]);
@@ -644,6 +660,12 @@ function Game() {
         if (pid == null) return;
         if (mpRef.current) mpRef.current.conns = mpRef.current.conns.filter(x => x !== c);
         toast.info('玩家断开连接，等待重连...');
+        // v133：断线可视化——host 横幅 + 广播 client 同步展示（原 toast 一闪而过，旁观者不知情）
+        const offP = stRef.current && stRef.current.players && stRef.current.players[pid];
+        setLeftAnn({ pid: pid, name: (offP && offP.name) || '玩家', deadline: Date.now() + 90000 });
+        mpRef.current.conns.forEach(ec => {
+          if (ec.open) try { ec.send({ type: 'meta', subType: 'PLAYER_OFFLINE', pid: pid, name: (offP && offP.name) || '玩家', leftAt: Date.now() }); } catch (e) {}
+        });
         // v106：90s 未重连 → 自动离席（先推进阻塞点再清人，动作序列见 playerLeftActions）
         if (leftTimersRef.current[pid]) clearTimeout(leftTimersRef.current[pid]);
         leftTimersRef.current[pid] = setTimeout(() => {
@@ -653,6 +675,10 @@ function Game() {
           if (!p || !p.alive || !p.isHuman) return; // 已重连后复活判定在此（重连会清 timer，这里是兜底）
           playerLeftActions(s, pid).forEach(a => dispatch(a));
           toast.info((p.name || '玩家') + ' 长时间未重连，已自动离席');
+          setLeftAnn(null); // v133：离席落地，撤横幅
+          if (mpRef.current && mpRef.current.conns) mpRef.current.conns.forEach(ec => {
+            if (ec.open) try { ec.send({ type: 'meta', subType: 'PLAYER_ONLINE', pid: pid }); } catch (e) {}
+          });
         }, 90000);
       });
       c.on('data', data => {
@@ -733,9 +759,11 @@ function Game() {
           }
           dispatch(act);
         } else if (data?.type === 'meta') {
-          // 房主广播的元信息（PAUSE/RESUME），房主自己也会收到
+          // 房主广播的元信息（PAUSE/RESUME/断线公告 v133），房主自己也会收到
           if (data.subType === 'PAUSE') setPaused(true);
           else if (data.subType === 'RESUME') setPaused(false);
+          else if (data.subType === 'PLAYER_OFFLINE') setLeftAnn({ pid: data.pid, name: data.name, deadline: (data.leftAt || Date.now()) + 90000 }); // v133
+          else if (data.subType === 'PLAYER_ONLINE') setLeftAnn(prev => (prev && prev.pid === data.pid) ? null : prev); // v133：回归/离席落地撤横幅
         } else if (data?.type === 'chat') {
           // v106：host 接收侧清洗后再入列/转发（防超长刷屏与不可见字符）
           const msg = { name: sanitizeChatName(data.name), text: sanitizeChatText(data.text), time: Date.now() };
@@ -778,6 +806,10 @@ function Game() {
               const safe = toPublicState(s, targetP.id); // P2：与广播共用剥离出口（重连角落泄露修复，见引擎注释）
               try { conn.send({ type: 'state_sync', state: safe }); } catch (e) {}
               toast.info(targetP.name + ' 已重连');
+              setLeftAnn(null); // v133：重连回归，撤横幅
+              mp.conns.forEach(ec => {
+                if (ec.open && ec !== conn) try { ec.send({ type: 'meta', subType: 'PLAYER_ONLINE', pid: targetP.id }); } catch (e) {}
+              });
               setupHostConnListener(conn);
             } else {
               try { conn.send({ type: 'host_returned_lobby' }); } catch (e) {}
@@ -1120,6 +1152,40 @@ function Game() {
     if (mode !== 'multiplayer' || !isHost) return;
     broadcastState(st);
   }, [mode, isHost, st, broadcastState]);
+
+  // ── v133 P0-①：联机人类回合超时托管（host 权威）──────────────────────
+  // 挂机玩家会无限阻塞全场（此前只有 AI 有节奏）。player_turn 超时自动出首张牌，
+  // challenge_phase 超时自动放过（CONTINUE）；单机不受影响（mode 门）。
+  useEffect(() => {
+    if (mode !== 'multiplayer' || !isHost || paused) return undefined;
+    if (!st || !st.players) return undefined;
+    const turnP = st.players[st.curPlayer];
+    if (!turnP || !turnP.isHuman || !turnP.alive) return undefined;
+    let ms = 0, act = null;
+    if (st.phase === 'player_turn') {
+      ms = (st.frenzy ? 25 : 45) * 1000;
+      act = () => {
+        const s = stRef.current;
+        if (!s || s.phase !== 'player_turn' || s.curPlayer !== st.curPlayer) return;
+        const hand = s.players[s.curPlayer] && s.players[s.curPlayer].hand;
+        if (hand && hand.length > 0) {
+          dispatch({ type: 'PLAY', pid: s.curPlayer, ids: [hand[0].id] });
+          toast.warning((s.players[s.curPlayer].name || '玩家') + ' 超时，已自动出牌');
+        }
+      };
+    } else if (st.phase === 'challenge_phase') {
+      ms = (st.frenzy ? 15 : 25) * 1000;
+      act = () => {
+        const s = stRef.current;
+        if (!s || s.phase !== 'challenge_phase' || s.curPlayer !== st.curPlayer) return;
+        dispatch({ type: 'CONTINUE', pid: s.curPlayer });
+        toast.warning((s.players[s.curPlayer].name || '玩家') + ' 超时，已自动放过');
+      };
+    }
+    if (!act) return undefined;
+    const t = setTimeout(act, ms);
+    return () => clearTimeout(t);
+  }, [mode, isHost, paused, st]);
 
   // v131：骰局广播——逐 client 发各自视角剥离态（别人骰盖盅；reveal/won 全场开盅）
   useEffect(() => {
@@ -1762,6 +1828,10 @@ function Game() {
     // ── v111：骰子模式对局屏（平行状态机 dst 驱动，单机限定）──
     screen === 'playing' && gameKind === 'dice' && dst && h(DiceTable, { dst, dispatch: sendDiceAction, onQuit: quitGame, onRouletteDone: onDiceRouletteDone, myPid: (mode === 'multiplayer' && !isHost && localPlayerIdRef.current != null) ? localPlayerIdRef.current : 0, skipPenalty: skipPenaltyRef.current }),
     screen === 'playing' && active && h('div', { key: 'screen-playing', style: { animation: 'fade-in 0.35s ease' } }, //：对局屏切入淡入（Fragment→div 包裹；纯 opacity 不影响 fixed 子元素与布局）
+      // v133 P0-③：对局内房号（掉线/杀后台后重新加入的锚点）
+      mode === 'multiplayer' && roomIdRef.current && h('div', { style: { position: 'fixed', top: 8, right: 10, zIndex: 30, fontSize: 11, color: 'var(--c-text-faint)', background: 'rgba(0,0,0,0.25)', padding: '2px 10px', borderRadius: 10, pointerEvents: 'none' } }, '房间 ' + roomIdRef.current),
+      // v133 P0-②：断线横幅（host 本地判定 + client 经 meta 同步；1s tick 倒计时）
+      mode === 'multiplayer' && leftAnn && h(LeftBanner, { key: 'left-banner', name: leftAnn.name, deadline: leftAnn.deadline }),
       st.frenzy && h('div', { className: 'frenzy-overlay' }),
       detailPid != null && h(PlayerDetailPanel, { st, pid: detailPid, onClose: () => setDetailPid(null) }),
       st.stains.length > 0 && h('div', { style: { position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 1, overflow: 'hidden' } },
