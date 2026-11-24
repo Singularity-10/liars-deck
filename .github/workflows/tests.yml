@@ -1,0 +1,64 @@
+name: tests
+
+# 白盒测试 + 蒙特卡洛 + 单文件构建冒烟
+# 逻辑全在仓库内的 ci.sh 里，本文件只做「装依赖 → 跑 ci.sh → 上报结果」
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # 每周一 03:17 UTC：蒙特卡洛是随机种子，多跑几局抓偶发卡死
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: '是否顺带重建并推送产物（game.html + gh-pages）'
+        type: boolean
+        default: false
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: CI（白盒 21 件套 + 蒙特卡洛 + 构建冒烟）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # uglify 只在构建期需要（游戏运行时零依赖）；钉死版本保证产物可复现
+      - name: 安装构建期依赖 uglify-js
+        run: npm i -g uglify-js@3.19.3
+      - name: 运行 ci.sh
+        run: bash ci.sh
+
+  publish:
+    name: 发布产物（game.html → main，dist-pages → gh-pages）
+    # 只在手动触发且勾选了 publish 时跑；单文件版 ~690KB 超过 GitHub App
+    # 写文件接口上限，只能靠 git push 上线，这个 job 就是那一步。
+    if: github.event_name == 'workflow_dispatch' && inputs.publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 安装构建期依赖 uglify-js
+        run: npm i -g uglify-js@3.19.3
+      - name: 重建并推送产物
+        run: bash publish.sh
+      - name: 校验产物自包含
+        run: |
+          if grep -qE '<script src="js/|assets/fonts/[a-z-]*\.woff2' dist-pages/game.html; then
+            echo '::error::单文件产物仍有外链'
+            exit 1
+          fi
+          echo "产物 $(wc -c < dist-pages/game.html) bytes，自包含校验通过"
