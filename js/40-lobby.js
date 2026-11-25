@@ -5,7 +5,7 @@
 function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
   const [view, setView] = useState('menu');
   const [roomId, setRoomId] = useState('');
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(() => { try { return localStorage.getItem('ld_last_room') || ''; } catch (e) { return ''; } }); // v134：预填上次房号
   const [name, setName] = useState(() => user?.name || (localStorage.getItem('__ld_name') || '').trim() || '玩家');
   const [players, setPlayers] = useState([]);
   const [isHost, setIsHost] = useState(false);
@@ -309,6 +309,7 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
               ...p,
               isLocal: p.id === myId
             }));
+            try { localStorage.setItem('ld_last_room', roomId); } catch (e) {} // v134：记住房号供下次预填
             onMultiStart(roomId, gamePlayers, false, mpRef.current, mpDifficulty, data.playMode || 'cards'); // v131：玩法随开局下发
           }
         });
@@ -707,6 +708,7 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
                 try { if (c.open) c.send({ type: 'game_start', players: players, playMode: mpPlayMode }); } catch (e) {}
               });
             }
+            try { localStorage.setItem('ld_last_room', roomId); } catch (e) {} // v134：记住房号供下次预填
             onMultiStart(roomId, players, isHost, mpRef.current, mpDifficulty, mpPlayMode);
           },
           style: { width: '100%', marginTop: 8 }

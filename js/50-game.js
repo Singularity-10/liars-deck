@@ -350,6 +350,14 @@ function DiceTable({ dst, dispatch, onQuit, onRouletteDone, myPid = 0, skipPenal
         h('span', { style: { fontSize: 18, fontWeight: 'bold', fontFamily: 'var(--font-title)', color: lb ? 'var(--c-text-bright)' : 'var(--c-text-dim)' } },
           lb ? (lb.count + ' 个 ' + lb.face) : '任意起叫'),
       ),
+      // v134：叫点历史（最近 6 条，越早越淡）——判断局势/虚吹的依据不再只靠记性
+      (dst.bidLog || []).length > 0 && h('div', { style: { display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 480 } },
+        dst.bidLog.slice(-6).map((b, i, arr) => {
+          const bp = dst.players[b.pid];
+          return h('span', { key: i, style: { fontSize: 11, color: i === arr.length - 1 ? 'var(--c-text)' : 'var(--c-text-faint)', opacity: 0.45 + 0.55 * (i + 1) / arr.length, background: 'rgba(0,0,0,0.2)', border: '1px solid var(--c-border-soft)', borderRadius: 10, padding: '2px 9px' } },
+            (bp ? bp.name : '?') + ' ' + b.count + '个' + b.face);
+        }),
+      ),
       h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' } },
         me.alive ? (me.dice.length ? me.dice.map((v, i) => h(DiceFace, { key: i, v: v, size: 46 })) : [0, 1, 2, 3, 4].map(i => h('div', { key: 'm' + i, style: { width: 46, height: 46, borderRadius: 9, background: 'var(--c-border)', border: '2px solid hsl(0 12% 24%)' } }))) : h('span', { style: { fontSize: 12, color: 'var(--c-text-faint)' } }, '你已出局（观局中）')),
       h('span', { style: { fontSize: 12, color: 'var(--c-text-dim)' } }, me.alive ? ('你的「' + (lb ? lb.face : bidFace) + '」：' + me.dice.filter(d => d === (lb ? lb.face : bidFace)).length + ' 个') : ''),
@@ -1829,7 +1837,10 @@ function Game() {
     screen === 'playing' && gameKind === 'dice' && dst && h(DiceTable, { dst, dispatch: sendDiceAction, onQuit: quitGame, onRouletteDone: onDiceRouletteDone, myPid: (mode === 'multiplayer' && !isHost && localPlayerIdRef.current != null) ? localPlayerIdRef.current : 0, skipPenalty: skipPenaltyRef.current }),
     screen === 'playing' && active && h('div', { key: 'screen-playing', style: { animation: 'fade-in 0.35s ease' } }, //：对局屏切入淡入（Fragment→div 包裹；纯 opacity 不影响 fixed 子元素与布局）
       // v133 P0-③：对局内房号（掉线/杀后台后重新加入的锚点）
-      mode === 'multiplayer' && roomIdRef.current && h('div', { style: { position: 'fixed', top: 8, right: 10, zIndex: 30, fontSize: 11, color: 'var(--c-text-faint)', background: 'rgba(0,0,0,0.25)', padding: '2px 10px', borderRadius: 10, pointerEvents: 'none' } }, '房间 ' + roomIdRef.current),
+      mode === 'multiplayer' && roomIdRef.current && h('div', {
+        title: '点击复制房号', onClick: () => { try { navigator.clipboard.writeText(roomIdRef.current); toast.info('房号已复制'); } catch (e) {} },
+        style: { position: 'fixed', top: 8, right: 10, zIndex: 30, fontSize: 11, color: 'var(--c-text-faint)', background: 'rgba(0,0,0,0.25)', padding: '2px 10px', borderRadius: 10, pointerEvents: 'auto', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, userSelect: 'none' } },
+        '房间 ' + roomIdRef.current, h(Icon.Copy, { size: 10 })),
       // v133 P0-②：断线横幅（host 本地判定 + client 经 meta 同步；1s tick 倒计时）
       mode === 'multiplayer' && leftAnn && h(LeftBanner, { key: 'left-banner', name: leftAnn.name, deadline: leftAnn.deadline }),
       st.frenzy && h('div', { className: 'frenzy-overlay' }),
@@ -1954,6 +1965,9 @@ function Game() {
             },
               dead ? h('div', { style: { color: 'var(--c-text-faint)' } }, h(Icon.Skull, { size: isCur ? 22 : 18 })) : h('div', { style: { color: 'var(--c-accent)' } }, aiCrest(opp, isCur ? 24 : 20) || h(Icon.User, { size: isCur ? 22 : 18 })),
               isCur && !dead && h('div', { style: { position: 'absolute', bottom: -4, right: -4, width: 12, height: 12, borderRadius: '50%', background: 'var(--c-danger)', border: '2px solid hsl(0 30% 3%)' } }),
+              // v134：掉线角标——横幅之外常驻提示（头像左上，黄点+断线图标），重连即随 leftAnn 清除
+              !dead && leftAnn && leftAnn.pid === opp.id && h('div', { title: opp.name + ' 掉线中', style: { position: 'absolute', top: -4, left: -4, width: 16, height: 16, borderRadius: '50%', background: 'hsl(40 85% 55%)', border: '2px solid hsl(0 20% 8%)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5, animation: 'pulse-glow 1.5s ease-in-out infinite' } },
+                h(Icon.WifiOff || Icon.Wifi, { size: 9, style: { color: 'hsl(0 20% 8%)' } })),
             ),
             h('span', { style: { fontSize: 12, fontWeight: 500, color: dead ? 'var(--c-text-faint)' : 'var(--c-text)', textDecoration: dead ? 'line-through' : 'none' } }, opp.name),
             !dead && h('div', { key: 'hand' + handLen, className: 'num-pop', style: { display: 'flex', gap: 2, alignItems: 'center' } },

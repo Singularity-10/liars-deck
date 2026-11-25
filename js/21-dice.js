@@ -39,6 +39,7 @@ function newDiceState({ difficulty, players, shots = 0, round = 1 }) {
     phase: 'bid',            // bid(叫点) | reveal(开盅演出) | roulette(惩罚) | won | lost
     curPlayer: 0,
     lastBid: null,           // { count, face, pid }
+    bidLog: [],              // v134：叫点历史 [{pid,count,face}]（开盅后保留展示，新一轮重开清空）
     callResult: null,        // { callerPid, openPid, loserPid, total, needed, win } 开盅结果
     shots,                   // 转盘累计弹数（存活递增，死亡清零，cards 同构）
     round,
@@ -123,6 +124,7 @@ function diceReducer(st, act) {
       return {
         ...st,
         lastBid: { count: act.count, face: act.face, pid: act.pid },
+        bidLog: [...(st.bidLog || []), { pid: act.pid, count: act.count, face: act.face }], // v134
         curPlayer: diceNextAlive(st, act.pid),
       };
     }
@@ -182,7 +184,7 @@ function diceReducer(st, act) {
       const nextShots = pend.isHit ? st.shots : st.shots + 1;
       const alive = ps.filter(p => p.alive);
       if (alive.length <= 1) {
-        return { ...st, phase: 'won', winner: alive[0] || null, players: ps, shots: 0, roulettePending: null, lastBid: null, callResult: null };
+        return { ...st, phase: 'won', winner: alive[0] || null, players: ps, shots: 0, roulettePending: null, lastBid: null, callResult: null, bidLog: [] };
       }
       // 幸存者全员重摇，从受罚者下家重新起叫
       const reshuffled = ps.map(p => p.alive ? { ...p, dice: rollDice(DICE_PER_HAND) } : p);
@@ -193,6 +195,7 @@ function diceReducer(st, act) {
         players: reshuffled,
         curPlayer: cur,
         lastBid: null,
+        bidLog: [], // v134
         callResult: null,
         shots: nextShots,
         roulettePending: null,
