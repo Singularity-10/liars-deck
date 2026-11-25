@@ -61,7 +61,7 @@ git checkout gh-pages 2> /dev/null || git checkout -b gh-pages origin/gh-pages
 cp -r dist-pages/. .
 # 只提交站点产物，绝不把 dist/ 与 dist-pages/ 构建目录带上
 # （否则 /dist-pages/index.html 会作为重复落地页被公开索引，稀释 SEO）
-git add -A -- . ':(exclude)dist' ':(exclude)dist-pages'
+git add -A  # .gitignore 已忽略 dist*/，exclude pathspec 反而会触发 ignored 报错中止（v134 实锤）
 if git diff --cached --quiet; then
   echo '   gh-pages 无变化，跳过'
 else
