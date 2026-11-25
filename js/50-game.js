@@ -69,6 +69,7 @@ const EMOTE_LIST = [
 const EMOTE_VALID = new Set(EMOTE_LIST.map(e => e.id));
 const EMOTE_LIVE_MS = 2500;   // 气泡存活时长
 const EMOTE_CD_MS = 3000;     // 发送冷却（防刷屏）
+const EMOTE_GLOBAL_MS = 1500; // v135：全桌节流——多人各自 3s 冷却叠加仍可 0.75s/个，host 层再压一道
 
 // ── v106：断线超时自动离席（竞品 forfeit 思路，host 侧调度）──────────
 // 纯函数：给定断线时状态，返回需要依次 dispatch 的合成动作序列
@@ -428,6 +429,7 @@ function Game() {
   const [emotes, setEmotes] = useState([]);
   const [emoteOpen, setEmoteOpen] = useState(false);
   const emoteCdRef = useRef(0);
+  const emoteGateRef = useRef(0); // v135：全桌表情节流闸（host 权威）
   const aiHonestRef = useRef({});   // pid -> true(诚实) | false(撒谎) | undefined(未知)
   const emoteTimersRef = useRef([]);
   const [replayOpen, setReplayOpen] = useState(null); // D1：null 关闭 | { data } 回放查看器（data=null 表示用本局日志）
@@ -782,6 +784,11 @@ function Game() {
         } else if (data?.type === 'emote') {
           // v110：表情互动——host 校验合法性与发送者存活后入列、调度 AI 反应并广播
           if (!EMOTE_VALID.has(data.emote)) return;
+          { // v135：全桌节流（host 权威）——超频直接丢弃，不广播不气泡
+            const now = Date.now();
+            if (now - emoteGateRef.current < EMOTE_GLOBAL_MS) return;
+            emoteGateRef.current = now;
+          }
           const pid = c.playerId;
           const s = stRef.current;
           const sender = s && s.players && s.players[pid];
@@ -938,9 +945,13 @@ function Game() {
     pushEmote(me.id, emoteId);
     scheduleAiEmoteReaction(emoteId, null);
     if (mode === 'multiplayer' && isHost) {
-      mpRef.current && mpRef.current.conns && mpRef.current.conns.forEach(ec => {
-        if (ec.open) try { ec.send({ type: 'emote', pid: me.id, emote: emoteId }); } catch (e) {}
-      });
+      const now2 = Date.now();
+      if (now2 - emoteGateRef.current >= EMOTE_GLOBAL_MS) { // v135：全桌节流同闸
+        emoteGateRef.current = now2;
+        mpRef.current && mpRef.current.conns && mpRef.current.conns.forEach(ec => {
+          if (ec.open) try { ec.send({ type: 'emote', pid: me.id, emote: emoteId }); } catch (e) {}
+        });
+      }
     }
   }, [mode, isHost, pushEmote, scheduleAiEmoteReaction]);
 
@@ -1554,13 +1565,16 @@ function Game() {
   // G1 成就：终局判定 + 解锁持久化 + toast（单机 / 联机房主；每局只算一次）
   useEffect(() => {
     if (st.phase !== 'won' && st.phase !== 'lost' && st.phase !== 'draw') return;
-    if (mode === 'multiplayer' && !isHost) return;
     const key = st.phase + ':' + ((st.stats || {}).totalGames ?? 0);
     if (achDoneRef.current === key) return;
     achDoneRef.current = key;
-    const newly = unlockAchievements(st);
-    newly.slice(0, 3).forEach(a => toast.success('解锁成就「' + a.name + '」'));
-    if (newly.length > 3) toast.info('另解锁 ' + (newly.length - 3) + ' 个成就，主菜单可查看');
+    // v135：成就保持 单机/host（判定依赖部分私密字段，客户端公开态不全）；对局历史改为全员记录——
+    // 此前联机 client 的结算「累计战绩」tab 永远空（host-only 写入），各自存档独立不冲突
+    if (mode !== 'multiplayer' || isHost) {
+      const newly = unlockAchievements(st);
+      newly.slice(0, 3).forEach(a => toast.success('解锁成就「' + a.name + '」'));
+      if (newly.length > 3) toast.info('另解锁 ' + (newly.length - 3) + ' 个成就，主菜单可查看');
+    }
     // D2：对局历史 + ELO（与成就同 key 去重，防 StrictMode/重渲染重复记录）
     try {
       const meIdx = st.players.findIndex(p => p.isHuman && p.isLocal);
