@@ -95,7 +95,7 @@ const LDAnalytics = (function () {
     try { return typeof v === 'string' ? v : JSON.stringify(v); } catch (e) { return String(v); }
   }
 
-  /** 动态插入第三方脚本（不用 innerHTML，避免 </script> 截断与 XSS） */
+  /** 动态插入第三方脚本（不用 innerHTML，避免 script 标签截断与 XSS） */
   function addScript(src, attrs) {
     if (!hasDom()) return null;
     try {
