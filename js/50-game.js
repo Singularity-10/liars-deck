@@ -849,10 +849,23 @@ function Game() {
       // v131：联机大话骰——host 权威：host 建局摇骰广播；client 由 dice_state_sync 接管
       setGameKind('dice');
       dispatch({ type: 'RESTART' }); // 清牌局残留（v118 同款，骰局不复用 st）
+      // v137：AI 补位——①大厅手动加的 AI 酒客保留 isAI 标记（此前被强转 isAI:false，无 conn
+      // 无动作源，轮到即卡死到断线超时——存量 bug）②真人+AI 不满 4 人时按酒客池自动补齐。
+      // AI 动作由既有 host 权威 effect 驱动，dst 变化自动广播 client，无需新协议
+      const humanN = pls.filter(p => !p.isAI).length;
+      const totalN = pls.length;
+      const fillPool = ['独眼杰克', '瘸腿老汤姆', '红发玛丽'].filter(n => !pls.some(p => p.name === n));
+      const aiFill = fillPool.slice(0, Math.max(0, 4 - totalN));
+      const DICE_PERSONAS = ['conservative', 'aggressive', 'impatient'];
       diceDispatch({
         type: 'DICE_START',
         difficulty: difficulty,
-        players: pls.map(p => ({ name: p.name, isAI: false })),
+        players: [
+          ...pls.map(p => p.isAI
+            ? { name: p.name, isAI: true, personality: DICE_PERSONAS[totalN % 3] }
+            : { name: p.name, isAI: false }),
+          ...aiFill.map((name, i) => ({ name: name, isAI: true, personality: DICE_PERSONAS[(totalN + i) % 3] })),
+        ],
       });
       startMusic();
       return;

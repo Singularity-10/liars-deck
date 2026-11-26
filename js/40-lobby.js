@@ -700,7 +700,7 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
         h('button', {
           className: 'btn btn-primary btn-lg',
           // v131：牌局固定 4 人；骰局 2~4 人
-          disabled: players.length < (mpPlayMode === 'dice' ? 2 : 4) || players.length > 4 || !players.every(p => p.ready) || players.some(p => (p.reputation ?? 100) < 30),
+          disabled: players.length < (mpPlayMode === 'dice' ? 1 : 4) || players.length > 4 || !players.every(p => p.ready) || players.some(p => (p.reputation ?? 100) < 30), // v137：骰局下限 2→1（AI 补位至 4 人）；ready/信誉检查两玩法保持一致
           onClick: () => {
             if (players.some(p => (p.reputation ?? 100) < 30)) { toast.error('有玩家信誉分低于30，无法开始'); return; }
             if (mpRef.current?.conns) {
@@ -712,7 +712,9 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
             onMultiStart(roomId, players, isHost, mpRef.current, mpDifficulty, mpPlayMode);
           },
           style: { width: '100%', marginTop: 8 }
-        }, players.length < (mpPlayMode === 'dice' ? 2 : 4) ? (mpPlayMode === 'dice' ? `需要2~4名玩家（当前${players.length}）` : `需要4名玩家（当前${players.length}/4）`) : (!players.every(p => p.ready) ? '等待所有玩家准备' : (players.some(p => (p.reputation ?? 100) < 30) ? '有玩家信誉分不足' : '开始游戏'))),
+        }, mpPlayMode === 'dice'
+          ? (players.length >= 4 ? '开始游戏（满员）' : `开始游戏（AI 补位 ${4 - players.length} 名）`)
+          : (players.length < 4 ? `需要4名玩家（当前${players.length}/4）` : (!players.every(p => p.ready) ? '等待所有玩家准备' : (players.some(p => (p.reputation ?? 100) < 30) ? '有玩家信誉分不足' : '开始游戏')))),
       ) :
       h('button', {
         className: players.find(p => p.isLocal)?.ready ? 'btn btn-outline btn-lg' : 'btn btn-primary btn-lg',
