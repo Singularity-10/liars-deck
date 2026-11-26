@@ -394,9 +394,9 @@ function DealingAnimation({ players, onComplete }) {
       }
     }, '发牌中...'),
     // P3-7：跳过提示（点击任意处即可）
-    deckN > 0 && h('div', {
+    deckN > 0 && h('div', { // v136：挪底部中央——原 right:20/bottom:18 与表情快捷钮（right:16/bottom:16）重叠
       style: {
-        position: 'absolute', right: 20, bottom: 18,
+        position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: 18,
         padding: '8px 16px', borderRadius: 8,
         border: '1px solid rgba(200,160,50,0.4)', background: 'rgba(0,0,0,0.45)',
         fontSize: 12, color: 'rgba(200,160,50,0.9)', letterSpacing: '0.1em',
