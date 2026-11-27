@@ -2,7 +2,7 @@
 // ═══ 联机大厅 ═══════════════════════════════════════════════════
 // 依赖：依赖 40-icons（Icon）+ 40-audio（Sfx）
 // ── 联机大厅 ──────────────────────────────────────────────────────────
-function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
+function Lobby({ onStart, onMultiStart, onBack, user, onLogout, entryMode }) { // v140：entryMode={playMode,difficulty} 门户预选
   const [view, setView] = useState('menu');
   const [roomId, setRoomId] = useState('');
   const [code, setCode] = useState(() => { try { return localStorage.getItem('ld_last_room') || ''; } catch (e) { return ''; } }); // v134：预填上次房号
@@ -13,8 +13,8 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout }) {
   const [netTest, setNetTest] = useState({ running: false, result: null, error: null });
   const [myPlayerId, setMyPlayerId] = useState(null);
   const myPlayerIdRef = useRef(null);
-  const [mpDifficulty, setMpDifficulty] = useState('normal');
-  const [mpPlayMode, setMpPlayMode] = useState('cards'); // v131：联机玩法——cards 牌局 | dice 大话骰（host 权威，game_start 携带）
+  const [mpDifficulty, setMpDifficulty] = useState((entryMode && entryMode.difficulty) || 'normal'); // v140：预选
+  const [mpPlayMode, setMpPlayMode] = useState((entryMode && entryMode.playMode) || 'cards'); // v131/v140：联机玩法（门户预选）
   const [joining, setJoining] = useState(false);
   const playersRef = useRef([]);
   useEffect(() => { playersRef.current = players; }, [players]);

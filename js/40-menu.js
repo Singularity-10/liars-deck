@@ -176,8 +176,8 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
   const [settingsR, settingsClosing] = useExitAnim(settings, 250);
   const [diff, setDiff] = useState('normal');
   const [playMode, setPlayMode] = useState('cards'); // v111：单机玩法——cards 经典牌局 | dice 大话骰
-  const [setupView, setSetupView] = useState(null); // v115：玩法拆分——null=酒馆门户 | 'cards'/'dice'=对应玩法配置屏
-  const [selMode, setSelMode] = useState(null); // v117：门户卡两步交互——首次点选中高亮，再点进入
+  const [setupView, setSetupView] = useState(null); // v140：null=酒馆门户 | 'setup'=游戏配置屏（玩法/难度/模式三段）
+  const [mpMode, setMpMode] = useState(false); // v140：配置屏模式——false=单机 | true=联机
   const [menuMode, setMenuMode] = useState('single'); //：开始游戏=单机/联机合并入口，下方选择模式
   const [showAch, setShowAch] = useState(false);
   const [achR, achClosing] = useExitAnim(showAch, 250);
@@ -381,83 +381,84 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
 
     // ── v116：配置屏左上角固定返回酒馆 ──
     setupView && h('button', { className: 'btn btn-ghost', style: { position: 'absolute', top: 18, left: 16, zIndex: 20, fontSize: 12, color: 'hsl(35 25% 72%)', display: 'flex', alignItems: 'center', gap: 4 }, onClick: function () { setSetupView(null); } }, '◀ 返回酒馆'),
-    // ═══ v115：酒馆门户 / 玩法配置屏 双态渲染 ═══
+    // ═══ v140：酒馆门户 / 游戏配置屏 双态渲染（入口合一：开始游戏 → 玩法/难度/模式）═══
     setupView === null ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 300, opacity: 0, animation: 'enter-rise 0.5s ease 2s forwards' } },
-      // 玩法选择两大卡（选后进入对应配置屏）
-      [
-        { id: 'cards', label: '经典牌局', icon: 'Cylinder', desc: '唬牌声称 · 命运转盘 · 角色与随机事件', accent: true },
-        { id: 'dice', label: '大话骰', icon: 'Dices', desc: '骰盅叫点 · 加码或叫开 · 输家上转盘', accent: false },
-      ].map(function (m) {
-        const sel = selMode === m.id; // v117：选中态
-        return h('button', {
-          key: m.id,
-          onClick: function () { if (sel) { setPlayMode(m.id); setSetupView(m.id); } else setSelMode(m.id); }, // 两步：选中 → 进入
-          style: { display: 'flex', alignItems: 'center', gap: 14, padding: '18px 18px', borderRadius: 12, cursor: 'pointer', textAlign: 'left', background: 'transparent', border: '1.5px solid ' + (sel ? 'var(--c-accent-bright)' : 'rgba(176,141,87,0.45)'), boxShadow: sel ? '0 0 16px rgba(220,170,60,0.25)' : 'inset 0 1px 0 rgba(233,200,119,0.08)', transition: 'all 0.2s' },
-        },
-          h('span', { style: { display: 'inline-flex', color: m.accent ? 'var(--c-danger)' : 'var(--c-accent)', flexShrink: 0 } }, h(Icon[m.icon], { size: 34 })),
-          h('span', { style: { flex: 1 } },
-            h('span', { style: { display: 'block', fontSize: 18, fontWeight: 800, fontFamily: 'var(--font-title)', color: 'var(--c-accent-bright)' } }, m.label), // v116：亮色（默认继承 button 黑字看不清）
-            h('span', { style: { display: 'block', fontSize: 12, color: 'hsl(35 15% 68%)', marginTop: 3 } }, m.desc),
-          ),
-          h('span', { style: { color: sel ? 'var(--c-accent-bright)' : 'var(--c-accent)', fontSize: 18 } }, '▶'), // v129：不做动画（闪烁/晃动两轮反馈后干脆静态）
-        );
-      }),
-      selMode && h('p', { style: { fontSize: 12, color: 'var(--c-accent-bright)', textAlign: 'center', letterSpacing: '0.1em', margin: 0 } }, '再次点击「' + (selMode === 'cards' ? '经典牌局' : '大话骰') + '」进入'),
-      // 联机对战（牌局规则，走大厅）
-      h('button', { className: 'btn btn-outline', style: { width: '100%', padding: '13px 0', fontSize: 14, justifyContent: 'center', borderRadius: '0.75rem' }, onClick: onMultiplayer },
-        h(Icon.Wifi, { size: 16 }), t('ui.modeMulti')),
+      h('button', { className: 'btn btn-primary btn-lg', style: { width: '100%', padding: '18px 0', fontSize: 17, letterSpacing: '0.1em', borderRadius: '0.9rem', justifyContent: 'center' }, onClick: function () { setSetupView('setup'); } },
+        h(Icon.Play, { size: 20 }), '开始游戏'),
       h('button', { className: 'btn btn-outline btn-lg', style: { width: '100%' }, onClick: function () { setAchData(loadAch()); setShowAch(true); } }, h(Icon.Trophy, { size: 16 }), t('ui.ach')),
       h('button', { className: 'btn btn-outline btn-lg', style: { width: '100%' }, onClick: function () { setShowStats(true); } }, h(Icon.Swords, { size: 16 }), t('ui.stats')), // P1-2
     ) : h('div', { style: { display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 300, opacity: 0, animation: 'enter-rise 0.5s ease 1.9s forwards' } },
-      // ── 玩法配置屏：难度（语境徽章）+ 开始（返回钮已固定左上角）──
-      h('div', { style: { display: 'flex', gap: 10, marginBottom: (diff === 'hard' || diff === 'easy') ? 12 : 0 } },
-        h('button', {
-          className: 'btn ' + (diff === 'easy' ? 'btn-primary' : 'btn-outline'),
-          style: { flex: 1, padding: '10px 0', fontSize: 14, borderRadius: 8 },
-          onClick: function () { setDiff('easy'); }
+      // ── ① 玩法 ──
+      h('p', { style: { margin: 0, fontSize: 11, color: 'var(--c-text-faint)', letterSpacing: '0.2em' } }, '玩法'),
+      [
+        { id: 'cards', label: '经典牌局', icon: 'Cylinder', desc: '唬牌 · 转盘 · 角色', accent: true },
+        { id: 'dice', label: '大话骰', icon: 'Dices', desc: '叫点 · 开盅 · 转盘', accent: false },
+      ].map(function (m) {
+        const sel = playMode === m.id;
+        return h('button', {
+          key: m.id,
+          onClick: function () { setPlayMode(m.id); },
+          style: { display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 10, cursor: 'pointer', textAlign: 'left', background: 'transparent', border: '1.5px solid ' + (sel ? 'var(--c-accent-bright)' : 'rgba(176,141,87,0.45)'), boxShadow: sel ? '0 0 16px rgba(220,170,60,0.25)' : 'none', transition: 'all 0.2s' },
         },
-          h('span', { style: { marginRight: 4, display: 'inline-flex' } }, h(Icon.Clover, { size: 14 })), t('ui.diffEasy')),
-        h('button', {
-          className: 'btn ' + (diff === 'normal' ? 'btn-primary' : 'btn-outline'),
-          style: { flex: 1, padding: '10px 0', fontSize: 14, borderRadius: 8 },
-          onClick: function () { setDiff('normal'); }
-        },
-          h('span', { style: { marginRight: 4, display: 'inline-flex' } }, h(Icon.Swords, { size: 14 })), t('ui.diffNormal')),
-        h('button', {
-          className: 'btn ' + (diff === 'hard' ? 'btn-primary' : 'btn-outline'),
-          style: { flex: 1, padding: '10px 0', fontSize: 14, borderRadius: 8 },
-          onClick: function () { setDiff('hard'); }
-        },
-          h('span', { style: { marginRight: 4, display: 'inline-flex' } }, h(Icon.Flame, { size: 14 })), t('ui.diffHard')),
+          h('span', { style: { display: 'inline-flex', color: m.accent ? 'var(--c-danger)' : 'var(--c-accent)', flexShrink: 0 } }, h(Icon[m.icon], { size: 26 })),
+          h('span', { style: { flex: 1 } },
+            h('span', { style: { display: 'block', fontSize: 15, fontWeight: 800, fontFamily: 'var(--font-title)', color: 'var(--c-accent-bright)' } }, m.label),
+            h('span', { style: { display: 'block', fontSize: 11, color: 'hsl(35 15% 68%)', marginTop: 2 } }, m.desc),
+          ),
+          sel && h('span', { style: { color: 'var(--c-accent-bright)' } }, '✓'),
+        );
+      }),
+      // ── ② 难度 ──
+      h('p', { style: { margin: '4px 0 0', fontSize: 11, color: 'var(--c-text-faint)', letterSpacing: '0.2em' } }, '难度'),
+      h('div', { style: { display: 'flex', gap: 10 } },
+        [['easy', 'diffEasy', Icon.Clover], ['normal', 'diffNormal', Icon.Swords], ['hard', 'diffHard', Icon.Flame]].map(function (d) {
+          const D = d[2];
+          return h('button', {
+            key: d[0],
+            className: 'btn ' + (diff === d[0] ? 'btn-primary' : 'btn-outline'),
+            style: { flex: 1, padding: '10px 0', fontSize: 14, borderRadius: 8, justifyContent: 'center' },
+            onClick: function () { setDiff(d[0]); }
+          },
+            h('span', { style: { marginRight: 4, display: 'inline-flex' } }, h(D, { size: 14 })), t('ui.' + d[1]));
+        }),
       ),
       diff === 'easy' && h('div', { style: { display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' } },
         h('span', { style: { fontSize: 12, color: 'var(--c-success)', background: 'rgba(34,139,80,0.12)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(34,139,80,0.25)' } }, 'AI 20% 失误率'),
         h('span', { style: { fontSize: 12, color: 'var(--c-success)', background: 'rgba(34,139,80,0.12)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(34,139,80,0.25)' } }, '适合熟悉规则'),
       ),
       diff === 'hard' && h('div', { style: { display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' } },
-        (setupView === 'dice'
+        (playMode === 'dice'
           ? ['AI 叫点更刁钻', '掀桌更果断', 'AI 判断更准']
           : ['AI质疑率+50%', '目标牌更少', '轮盘双子弹']
         ).map(function (txt, bi) {
           return h('span', { key: bi, style: { fontSize: 12, color: 'var(--c-danger-bright)', background: 'rgba(180,30,30,0.12)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(180,30,30,0.25)' } }, txt);
         }),
       ),
-      setupView === 'dice' && h('div', { style: { display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' } },
-        h('span', { style: { fontSize: 12, color: 'var(--c-accent)', background: 'rgba(200,160,50,0.10)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(180,30,30,0.22)' } }, '每人 5 骰 · 偷看'),
-        h('span', { style: { fontSize: 12, color: 'var(--c-accent)', background: 'rgba(200,160,50,0.10)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(180,30,30,0.22)' } }, '只能加码或叫开'),
+      // ── ③ 模式 ──
+      h('p', { style: { margin: '4px 0 0', fontSize: 11, color: 'var(--c-text-faint)', letterSpacing: '0.2em' } }, '模式'),
+      h('div', { style: { display: 'flex', gap: 10 } },
+        [[false, '单机 · 与 AI 对饮', Icon.User], [true, '联机 · 与好友同桌', Icon.Wifi]].map(function (m) {
+          const M = m[2];
+          return h('button', {
+            key: String(m[0]),
+            className: 'btn ' + (mpMode === m[0] ? 'btn-primary' : 'btn-outline'),
+            style: { flex: 1, padding: '10px 0', fontSize: 13, borderRadius: 8, justifyContent: 'center' },
+            onClick: function () { setMpMode(m[0]); }
+          },
+            h('span', { style: { marginRight: 4, display: 'inline-flex' } }, h(M, { size: 14 })), m[1]);
+        }),
       ),
-      // 酒客配置入口（面板由设置内开关控制，此处提示行）
-      h('button', { className: 'btn btn-outline', style: { width: '100%', justifyContent: 'center' }, onClick: function () { setShowAIConfig(function (v) { return !v; }); } },
+      // 酒客配置（仅单机）
+      !mpMode && h('button', { className: 'btn btn-outline', style: { width: '100%', justifyContent: 'center' }, onClick: function () { setShowAIConfig(function (v) { return !v; }); } },
         h(Icon.Users, { size: 14 }), '选择酒客对手'),
-      h('div', { style: { width: '100%', borderRadius: '0.75rem', overflow: 'hidden', boxShadow: '0 4px 12px var(--c-danger-shadow)' } },
-        h('button', { className: 'btn btn-primary', style: { width: '100%', borderRadius: 0, padding: '13px 0', fontSize: 14 }, onClick: function () { handleStart(setupView); } },
-          h(Icon.Play, { size: 16 }), setupView === 'dice' ? '开始骰局' : t('ui.startGame')),
-      ),
+      // 开始（单机=handleStart；联机=进大厅并携带玩法/难度）
+      h('button', { className: 'btn btn-primary', style: { width: '100%', borderRadius: '0.75rem', padding: '13px 0', fontSize: 14, justifyContent: 'center', boxShadow: '0 4px 12px var(--c-danger-shadow)' }, onClick: function () { mpMode ? onMultiplayer(playMode, diff) : handleStart(playMode); } },
+        h(Icon.Play, { size: 16 }), mpMode ? (playMode === 'dice' ? '进联机大厅 · 大话骰' : '进联机大厅 · 经典牌局') : (playMode === 'dice' ? '开始骰局' : t('ui.startGame'))),
     ),
     h('p', { style: { marginTop: 32, fontSize: 12, color: 'var(--c-text-dim)', opacity: 0, textAlign: 'center', animation: 'enter-fade 0.8s ease 2.6s forwards' } },
       // v115：随玩法语境切换（门户=双玩法总览；cards/dice=各自口径）
-      setupView === 'dice' ? '每人 5 骰 · 全场 20 骰 · 叫「N 个 X」 · 加码或叫开 · 输家上命运转盘'
-      : setupView === 'cards' ? '4 名玩家 · 64 张牌 · 每人 16 张牌库 · A/K/Q 目标 · J 万能 · 天使&恶魔衍生牌'
+      setupView === 'setup' ? (playMode === 'dice' ? '每人 5 骰 · 全场 20 骰 · 叫「N 个 X」 · 加码或叫开 · 输家上命运转盘'
+        : '4 名玩家 · 64 张牌 · 每人 16 张牌库 · A/K/Q 目标 · J 万能 · 天使&恶魔衍生牌')
       : '两大玩法 · 经典牌局与大话骰 · 单机 AI 与好友联机'),
     !fast && !hintGone && !skipAnim && h('p', { key: 'fastHint', style: { marginTop: 14, fontSize: 12, color: 'var(--c-text-faint)', letterSpacing: '0.15em', textAlign: 'center', opacity: 0, animation: 'enter-fade 0.6s ease 1s forwards, hint-breath 2.2s ease-in-out 1.8s infinite' } }, t('ui.fastHint')),
     achR && h('div', { className: 'overlay' + (achClosing ? ' overlay-exit' : ''), onClick: function (e) { if (e.target === e.currentTarget) setShowAch(false); } },

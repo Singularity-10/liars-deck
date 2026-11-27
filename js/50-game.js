@@ -418,6 +418,7 @@ function Game() {
   const [endHistory, setEndHistory] = useState(null); // D2：本机对局历史快照
   const [quitConfirm, setQuitConfirm] = useState(false); // P1-1：退出二次确认
   const [leftAnn, setLeftAnn] = useState(null); // v133：断线横幅 {pid,name,deadline}（host 本地+client 经 meta 同步）
+  const mpEntryRef = useRef({ playMode: 'cards', difficulty: 'normal' }); // v140：门户配置屏→大厅预选
   const [srMsg, setSrMsg] = useState(''); // v109：读屏播报（aria-live，视觉隐藏）
   const srPrevRef = useRef({ phase: '', rid: '' });
   const [mpPlayers, setMpPlayers] = useState([]);
@@ -1846,7 +1847,8 @@ function Game() {
     ),
     screen === 'idle' && h(MainMenu, {
       onStart: startSingle,
-      onMultiplayer: () => {
+      onMultiplayer: (pm, diff) => { // v140：配置屏携带玩法/难度进大厅预选
+        mpEntryRef.current = { playMode: pm || 'cards', difficulty: diff || 'normal' };
         if (currentUser) setScreen('lobby');
         else setAuthMode(true);
       },
@@ -1858,7 +1860,7 @@ function Game() {
     authR && h(AuthModal, { onCloseWrap: authClosing,  onAuth: (u) => { setCurrentUser(u);
         setAuthMode(false);
         setScreen('lobby'); }, onClose: () => setAuthMode(false) }),
-    screen === 'lobby' && h(Lobby, { onStart: startSingle, onMultiStart: startMulti, onBack, user: currentUser, onLogout: () => { clearSession();
+    screen === 'lobby' && h(Lobby, { entryMode: mpEntryRef.current, onStart: startSingle, onMultiStart: startMulti, onBack, user: currentUser, onLogout: () => { clearSession();
         setCurrentUser(null); } }),
     // ── v111：骰子模式对局屏（平行状态机 dst 驱动，单机限定）──
     screen === 'playing' && gameKind === 'dice' && dst && h(DiceTable, { dst, dispatch: sendDiceAction, onQuit: quitGame, onRouletteDone: onDiceRouletteDone, myPid: (mode === 'multiplayer' && !isHost && localPlayerIdRef.current != null) ? localPlayerIdRef.current : 0, skipPenalty: skipPenaltyRef.current }),
