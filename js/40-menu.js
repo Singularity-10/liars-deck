@@ -275,7 +275,7 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
   return h('div', {
     className: skipAnim ? 'no-enter-anim' : (fast ? 'menu-fast' : ''),
     onClick: function () { setFast(true); }, //：点击加速入场动画（氛围层是兄弟节点不受波及）
-    style: { position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '3rem 1rem' }
+    style: { position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100svh', padding: '3rem 1rem' }
   },
     h('div', {
       style: { position: 'absolute', top: 20, right: 20, display: 'flex', alignItems: 'center', gap: 8, opacity: 0, animation: 'enter-settings 0.5s ease 2.2s forwards', zIndex: 20 }

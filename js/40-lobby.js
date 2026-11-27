@@ -391,7 +391,7 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout, entryMode }) { /
 
   if (view === 'menu') return h('div', {
     className: 'animate-fade-in',
-    style: { position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '3rem 1rem' }
+    style: { position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100svh', padding: '3rem 1rem' }
   },
     user && h('div', {
       style: { position: 'absolute', top: 20, right: 20, display: 'flex', alignItems: 'center', gap: 8, background: 'var(--c-panel-bg)', padding: '4px 12px', borderRadius: 16, border: '1px solid hsl(30 15% 25%)', zIndex: 20 }
@@ -420,7 +420,7 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout, entryMode }) { /
 
   if (view === 'create') return h('div', {
     className: 'animate-fade-in',
-    style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '3rem 1rem', gap: 16 }
+    style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100svh', padding: '3rem 1rem', gap: 16 }
   },
     h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 18, fontWeight: 'bold' } }, '创建房间'),
     h('input', {
@@ -454,7 +454,7 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout, entryMode }) { /
   // 浏览公开房间视图（beacon 槽位探测）
   if (view === 'browse') return h('div', {
     className: 'animate-fade-in',
-    style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '3rem 1rem', gap: 16 }
+    style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100svh', padding: '3rem 1rem', gap: 16 }
   },
     h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 18, fontWeight: 'bold' } }, '公开房间'),
     h('div', { style: { display: 'flex', alignItems: 'center', gap: 10, minHeight: 22 } },
@@ -498,7 +498,7 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout, entryMode }) { /
 
   if (view === 'join') return h('div', {
     className: 'animate-fade-in',
-    style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '3rem 1rem', gap: 16 }
+    style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100svh', padding: '3rem 1rem', gap: 16 }
   },
     h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 18, fontWeight: 'bold' } }, '加入房间'),
     h('input', {
@@ -534,7 +534,7 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout, entryMode }) { /
 
   return h('div', {
     className: 'animate-fade-in',
-    style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '3rem 1rem', gap: 16 }
+    style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100svh', padding: '3rem 1rem', gap: 16 }
   },
     h('h2', { style: { fontFamily: 'var(--font-title)', fontSize: 18, fontWeight: 'bold', marginBottom: 4 } }, '等待大厅'),
     h('div', {

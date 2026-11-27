@@ -1803,7 +1803,7 @@ function Game() {
     delay: -Math.random() * 9,
   })), []);
 
-  return h('div', { style: { position: 'relative', minHeight: '100vh', overflow: 'hidden', zIndex: 2 } },
+  return h('div', { style: { position: 'relative', minHeight: '100svh', overflow: 'hidden', zIndex: 2 } },
     // v109：读屏播报区（视觉隐藏，aria-live 对状态变化自动念出）
     h('div', { className: 'sr-only', 'aria-live': 'polite', role: 'status' }, srMsg),
     h('div', { className: 'bg-ambient', style: { position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 } },
