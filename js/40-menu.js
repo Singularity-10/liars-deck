@@ -306,7 +306,8 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
         style: { marginTop: 16, height: 2, background: 'linear-gradient(90deg, transparent, var(--c-accent) 20%, var(--c-accent-bright) 50%, var(--c-accent) 80%, transparent)', borderRadius: 4, opacity: 0, width: 0, margin: '16px auto 0', animation: 'enter-divider 0.6s ease 1.5s forwards' }
       }),
     ),
-    h('div', { style: { width: '100%', maxWidth: 480, marginBottom: 28, opacity: 0, animation: 'enter-rise 0.6s ease 1.6s forwards' } },
+    // v143：规则介绍仅保留在配置屏（门户删除入口；语境过滤 dice/cards 分支沿用）
+    setupView && h('div', { style: { width: '100%', maxWidth: 480, marginBottom: 28, opacity: 0, animation: 'enter-rise 0.6s ease 1.6s forwards' } },
       h('button', {
         className: 'btn btn-outline',
         style: { width: '100%', justifyContent: 'space-between' },
@@ -316,9 +317,9 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
         h('span', { style: { transform: rules ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.25s' } }, '▼'),
       ),
       rulesR && h('div', { className: 'panel animate-slide-up' + (rulesClosing ? ' panel-exit' : ''), style: { marginTop: 12, padding: 20, background: 'var(--c-panel-strong)' } },
-        GAME_RULES.filter(function (r0) { // v115：规则随玩法语境过滤（门户=全部；cards=牌局卡；dice=骰卡）
+        GAME_RULES.filter(function (r0) { // v115/v143：规则随玩法语境过滤（v143 起 setupView 恒 'setup'，改由 playMode 驱动）
           if (!setupView) return true;
-          return setupView === 'dice' ? r0.icon === 'Dices' : r0.icon !== 'Dices';
+          return playMode === 'dice' ? r0.icon === 'Dices' : r0.icon !== 'Dices';
         }).map(function (r0, i, arr) { var r = Object.assign({}, r0, (I18N[getLang()].rules[r0.icon] || r0));
           return h('div', {
             key: i,
@@ -427,6 +428,9 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
         diff === 'easy' ? [
           h('span', { key: 'e0', style: { fontSize: 12, color: 'var(--c-success)', background: 'rgba(34,139,80,0.12)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(34,139,80,0.25)' } }, 'AI 20% 失误率'),
           h('span', { key: 'e1', style: { fontSize: 12, color: 'var(--c-success)', background: 'rgba(34,139,80,0.12)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(34,139,80,0.25)' } }, '适合熟悉规则'),
+        ] : diff === 'normal' ? [
+          h('span', { key: 'n0', style: { fontSize: 12, color: 'var(--c-accent)', background: 'rgba(200,160,50,0.10)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(200,160,50,0.28)' } }, '标准规则'),
+          h('span', { key: 'n1', style: { fontSize: 12, color: 'var(--c-accent)', background: 'rgba(200,160,50,0.10)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(200,160,50,0.28)' } }, 'AI 平衡强度'),
         ] : diff === 'hard' ? (playMode === 'dice'
           ? ['AI 叫点更刁钻', '掀桌更果断', 'AI 判断更准']
           : ['AI质疑率+50%', '目标牌更少', '轮盘双子弹']
