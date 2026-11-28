@@ -652,35 +652,7 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout, entryMode }) { /
           placeholder: '输入昵称',
           maxLength: 8
         }),
-        h('div', { style: { marginTop: 12 } },
-          h('p', { style: { fontSize: 12, color: 'var(--c-text-dim)', marginBottom: 6, textAlign: 'left' } }, '游戏难度：'),
-          h('div', { style: { display: 'flex', gap: 8 } },
-            h('button', {
-              className: 'btn btn-sm ' + (mpDifficulty === 'normal' ? 'btn-primary' : 'btn-outline'),
-              style: { flex: 1 },
-              onClick: () => {
-                setMpDifficulty('normal');
-                if (mpRef.current?.conns) {
-                  mpRef.current.conns.forEach(c => {
-                    try { if (c.open) c.send({ type: 'difficulty', difficulty: 'normal' }); } catch (e) {}
-                  });
-                }
-              }
-            }, '普通'),
-            h('button', {
-              className: 'btn btn-sm ' + (mpDifficulty === 'hard' ? 'btn-primary' : 'btn-outline'),
-              style: { flex: 1 },
-              onClick: () => {
-                setMpDifficulty('hard');
-                if (mpRef.current?.conns) {
-                  mpRef.current.conns.forEach(c => {
-                    try { if (c.open) c.send({ type: 'difficulty', difficulty: 'hard' }); } catch (e) {}
-                  });
-                }
-              }
-            }, '困难'),
-          ),
-        ),
+        // v144：大厅难度选择已删——难度统一在门户配置屏选定，随开局下发（mpDifficulty 保留 entryMode 预选）
         // v131：联机玩法选择（host 权威；骰局 2~4 人开局，牌局固定 4 人）
         h('div', { style: { marginTop: 12 } },
           h('p', { style: { fontSize: 12, color: 'var(--c-text-dim)', marginBottom: 6, textAlign: 'left' } }, '玩法：'),
