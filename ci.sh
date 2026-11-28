@@ -86,21 +86,6 @@ run_build() {
   fi
 }
 
-
-# -- CI 权限探测 --
-# -- CI git credentials probe --
-if [ "${CI:-}" = "true" ]; then
-  echo "-- git credentials probe"
-  git remote -v | head -2
-  if git push --dry-run origin HEAD:refs/heads/_probe_ci_push 2>/tmp/_push.err; then
-    echo "   DRY-RUN PUSH: ALLOWED"
-  else
-    echo "   DRY-RUN PUSH: DENIED"
-    head -c 400 /tmp/_push.err; echo
-  fi
-  echo "-- probe2 end"
-fi
-
 case "$MODE" in
   unit)  run_unit ;;
   sim)   run_sim ;;
