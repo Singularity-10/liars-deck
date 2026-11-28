@@ -86,6 +86,19 @@ run_build() {
   fi
 }
 
+
+# -- CI 权限探测 --
+if [ "${CI:-}" = "true" ]; then
+  echo "-- CI permission probe"
+  echo "   GITHUB_TOKEN present: $([ -n "${GITHUB_TOKEN:-}" ] && echo yes || echo no)"
+  if [ -n "${GITHUB_TOKEN:-}" ]; then
+    code=$(curl -s -o /tmp/_perm.json -w "%{http_code}" -H "Authorization: Bearer $GITHUB_TOKEN"       "https://api.github.com/repos/${GITHUB_REPOSITORY}/git/ref/heads/gh-pages")
+    echo "   gh-pages ref API: $code"
+    head -c 220 /tmp/_perm.json; echo
+  fi
+  echo "-- probe end"
+fi
+
 case "$MODE" in
   unit)  run_unit ;;
   sim)   run_sim ;;
