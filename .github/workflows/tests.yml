@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   ci:
-    name: CI（白盒 21 件套 + 蒙特卡洛 + 构建冒烟）
+    name: CI（白盒 27 件套 + 蒙特卡洛 + 构建冒烟）
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,8 +38,8 @@ jobs:
 
   publish:
     name: 发布产物（game.html → main，dist-pages → gh-pages）
-    # 只在手动触发且勾选了 publish 时跑；单文件版 ~690KB 超过 GitHub App
-    # 写文件接口上限，只能靠 git push 上线，这个 job 就是那一步。
+    # 只在手动触发且勾选了 publish 时跑；单文件版 ~700KB 超过写文件接口
+    # 上限，只能靠 git push 上线，这个 job 就是那一步。
     if: github.event_name == 'workflow_dispatch' && inputs.publish
     runs-on: ubuntu-latest
     permissions:
@@ -53,6 +53,10 @@ jobs:
           node-version: '20'
       - name: 安装构建期依赖 uglify-js
         run: npm i -g uglify-js@3.19.3
+      - name: 还原站点二进制资产
+        # 分享卡与 PWA 图标以 base64 分片存放（连接器写文件接口只收文本），
+        # 这里还原成 PNG；publish.sh 也会兜底调用一次。
+        run: python3 restore-assets.py
       - name: 重建并推送产物
         run: bash publish.sh
       - name: 校验产物自包含
