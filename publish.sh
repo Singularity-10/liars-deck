@@ -21,6 +21,9 @@ if ! command -v uglifyjs > /dev/null 2>&1; then
   exit 1
 fi
 
+echo '── 还原站点二进制资产（分享卡 / PWA 图标）'
+python3 restore-assets.py
+
 echo '── 重建单文件版 game.html'
 python3 build-single.py --title "$WEB_TITLE" --out game.html
 
@@ -37,16 +40,21 @@ if [ ! -d .git ]; then
   exit 0
 fi
 
-echo '── 提交 game.html → main'
+echo '── 提交 game.html 与站点资产 → main'
 # CI 里 actions/checkout 可能是 detached HEAD，先确保在 main 上，否则 commit 会落空
 if ! git rev-parse --abbrev-ref HEAD | grep -q '^main$'; then
   git checkout main 2> /dev/null || git checkout -b main origin/main
 fi
+# game.html 是重建产物；web/ 下的 PNG 分享卡与 PWA 图标是二进制资产，
+# 必须进仓库——gh-pages 的整站产物依赖它们，且 og:image 指向线上绝对路径。
 git add game.html
+# 分享卡与 PWA 图标是二进制资产，连接器写文件接口只收文本，
+# 因此以 base64 分片落到 web/.assets/，由 restore-assets.py 在这里还原。
+git add web/og-image.png web/icon-192.png web/icon-512.png web/apple-touch-icon.png 2> /dev/null || true
 if git diff --cached --quiet; then
   echo '   game.html 无变化，跳过'
 else
-  git commit -m "build: 重建单文件版 game.html（$(python3 - <<'PY'
+  git commit -m "build: 重建单文件版 game.html + 站点图标资产（$(python3 - <<'PY'
 import re, pathlib
 m = re.search(r"const GAME_VERSION\s*=\s*'([^']+)'", pathlib.Path('js/00-constants.js').read_text(encoding='utf-8'))
 print(m.group(1) if m else '')
