@@ -67,7 +67,9 @@ build-og-image.py   生成 og-image.png 与各尺寸图标（Chromium 渲染，�
 build-single.py     单文件版构建脚本
 build-pages.py      gh-pages 整站构建脚本（落地页 + 单文件版 + 统计模块）
 ci.sh               本地/CI 三合一检查（白盒 + 蒙特卡洛 + 构建冒烟）
-publish.sh          一键发布（重建产物 + 推 main 与 gh-pages 两个分支）
+publish.sh          一键发布（还原资产 + 重建产物 + 推 main 与 gh-pages 两个分支）
+restore-assets.py   从 base64 分片还原站点二进制资产（分享卡 / PWA 图标）+ sha256 校验
+web/.assets/        站点 PNG 的 base64 分片（PNG 本体不进仓库，发布时还原）
 diag-persona.js     人格诊断脚本（开发调试用）
 .github/workflows/  CI（白盒测试 + 蒙特卡洛 + 单文件构建冒烟）
 tsconfig.json
@@ -158,6 +160,12 @@ bash ci.sh build   # 只跑构建检查
 python3 build-og-image.py    # 需要 playwright + chromium
 ```
 
+> **PNG 为什么不在仓库里？** 分享卡与 PWA 图标是二进制，GitHub 写文件接口只接受文本
+> （会按 UTF-8 重编码，字节直接损坏），单请求还有约 480KB 上限。因此这 4 个 PNG 以
+> **base64 分片**存在 `web/.assets/`，发布时由 `restore-assets.py` 还原成真正的 PNG，
+> 并用 `web/.assets/checksums.sha256` 里的 sha256 指纹逐个校验——分片被截断或损坏会
+> 当场中止，不会把花掉的分享卡推上线。想重新生成而非还原，跑 `build-og-image.py`。
+
 改完站点资产后跑 `bash publish.sh` 才会真正上线（产物随 dist-pages/ 一起推）。
 
 > 注意：`robots.txt` 在 GitHub Pages **项目页**上不生效（爬虫只读域名根的 robots.txt），
@@ -166,8 +174,18 @@ python3 build-og-image.py    # 需要 playwright + chromium
 
 ## 发布
 
+线上站点的内容 100% 由仓库生成，不手工改 HTML。两条等价路径，任选其一：
+
+**路径 A —— 网页点两下（无需本地环境）**
+
+1. 打开仓库 **Actions** 页 → 选 `tests` 工作流 → 右侧 **Run workflow**
+2. 分支选 `main`，把输入项 **publish** 勾上（默认关闭，必须勾开）
+3. 等 `publish` job 变绿：它会还原 PNG、重建产物，并把整站推到 `gh-pages`
+
+**路径 B —— 本地一条命令**
+
 ```bash
-bash publish.sh              # 重建产物 + 推 main 与 gh-pages
+bash publish.sh              # 还原资产 + 重建产物 + 推 main 与 gh-pages
 bash publish.sh --build-only # 只构建，不动 git
 ```
 
