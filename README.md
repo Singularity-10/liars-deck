@@ -151,7 +151,8 @@ bash ci.sh build   # 只跑构建检查
 - **白盒测试**：逐个执行 27 件套 `tests/test-*.js`（零依赖，不需要 npm install）
 - **蒙特卡洛**：`SIM_STRICT=1 node sim-roles.js 2000` + `sim-persona.js` + `sim-discard.js`
 - **单文件构建冒烟**：构建 `build-single.py`，校验产物**无任何外链**（script/字体必须内联），
-  并校验仓库里的 `game.html` 与源码一致——改完源码忘了重新构建，CI 会直接报错
+  并校验仓库里的 `game.html` 与源码一致——**版本不同**说明产物还没发布（跑 `bash publish.sh` 重建并推送）；
+  **版本相同却内容不一致**说明产物被改坏了，CI 直接报错
 
 `.github/workflows/tests.yml` 在 push / PR / 每周定时自动跑 `ci.sh`（需 `uglifyjs` 在 PATH：
 `npm i -g uglify-js@3.19.3`）。CI 挂了先在本地跑一遍 `bash ci.sh` 复现。
