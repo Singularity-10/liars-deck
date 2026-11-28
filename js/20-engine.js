@@ -223,8 +223,16 @@ function makePlayers(cfgs, selectedAIs, mpPlayers) {
         bluffSuccessCount: 0,
       };
       if (p.isAI) {
+        // v145：联机 AI 必须带 aiIdx——参数层按 aiIdx 取，不按座位序取；
+        // 人格层（AI_PERSONAS）同样要绑，否则补位 AI 会退化成没有性格的「参数 AI」。
+        // 没有 aiIdx 时按名字反查（大厅手动加的 AI 酒客走这条路）。
+        const byIdx = (typeof p.aiIdx === 'number' && p.aiIdx >= 0 && p.aiIdx < AI_PRESETS.length) ? p.aiIdx : -1;
+        const byName = AI_NAMES.indexOf(p.name);
+        const aiIdx = byIdx >= 0 ? byIdx : (byName >= 0 ? byName : (i % AI_PRESETS.length));
+        base.aiIdx = aiIdx;
         base.personality = 'custom';
-        base.customConfig = { ...AI_PRESETS[i % AI_PRESETS.length] };
+        base.customConfig = { ...AI_PRESETS[aiIdx] };
+        base.persona = AI_PERSONAS[aiIdx] || null; // v145：人格层绑定（与单机同源）
       }
       return base;
     });
@@ -290,6 +298,44 @@ function makePlayers(cfgs, selectedAIs, mpPlayers) {
   return ps;
 }
 
+
+/**
+ * 联机 AI 补位（v145 短板 1）
+ * 真人不足目标人数时，从酒客池（8 位 AI）挑 AI 补齐——
+ * 此前只有大话骰分支有补位，扑克联机 2 人开桌就真的只有 2 个人。
+ * @param {Array} players - 当前玩家（真人 + 手动加入的 AI 酒客）
+ * @param {number} [target] - 目标人数，默认 4
+ * @returns {Array} 补位 AI 描述 [{ name, isAI: true, aiIdx }]
+ */
+function aiFillPlayers(players, target = 4) {
+  const list = players || [];
+  const need = target - list.length;
+  if (need <= 0) return [];
+  const used = new Set(list.map(p => p && p.name));
+  const out = [];
+  for (let i = 0; i < AI_NAMES.length && out.length < need; i++) {
+    if (used.has(AI_NAMES[i])) continue;
+    out.push({ name: AI_NAMES[i], isAI: true, aiIdx: i });
+  }
+  return out;
+}
+
+/**
+ * 渲染用可见手牌（v145 短板 4）
+ * 联机 host 是权威端，引擎内部持有全量手牌用于质疑裁决；
+ * 但界面不展示他人手牌——与 client 收到 toPublicState 的口径完全一致，
+ * 消除「房主能直接看到对手牌」这种可感知的作弊观感。
+ * 单机口径不变（能看 AI 的牌是单机既有设计）。
+ * @param {Object|null} curP - 当前展示的玩家
+ * @param {Object} [opts] - { multiplayer, isHost }
+ * @returns {Array} 可见手牌
+ */
+function visibleHand(curP, opts) {
+  const o = opts || {};
+  if (!curP) return [];
+  if (o.multiplayer && o.isHost && !curP.isLocal) return [];
+  return curP.hand || [];
+}
 
 // ── 牌组与发牌（核心逻辑） ──────────────────────────────────────────
 

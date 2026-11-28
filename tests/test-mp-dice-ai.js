@@ -12,7 +12,7 @@ const g50 = fs.readFileSync('js/50-game.js','utf8');
 A('骰局分支保留 isAI', g50.includes("p.isAI\n            ? { name: p.name, isAI: true"));
 A('补位池避让重名', g50.includes("filter(n => !pls.some(p => p.name === n))"));
 const gLobby = fs.readFileSync('js/40-lobby.js','utf8');
-A('骰局 1 人可开局', gLobby.includes("mpPlayMode === 'dice' ? 1 : 4"));
+A('开局只需 1 名真人（v145：两玩法统一，AI 补位到 4）', gLobby.includes("players.filter(p => !p.isAI).length < 1"));
 A('按钮显示补位数', gLobby.includes("AI 补位"));
 
 // 行为断言：AI 玩家可被 host 权威 effect 驱动（isAI 字段贯通状态机）

@@ -873,7 +873,12 @@ function Game() {
     }
     setGameKind('cards');
     diceDispatch({ type: 'DICE_RESET' });
-    dispatch({ type: 'START', difficulty: difficulty, mpPlayers: pls, incrementalRoulette: true, autoSortHand: true }); // v86：两项锁定开启（host 权威，SYNC_STATE 广播覆盖 client 本地壳值）
+    // v145 短板 1：扑克模式 AI 补位（此前只有大话骰分支有）——「不用等凑齐人，随时开局」。
+    // 只有 host 补位：client 端状态由 host 广播覆盖，本地补位只会造成短暂不一致。
+    const aiFill = host ? aiFillPlayers(pls, 4) : [];
+    const mpStart = aiFill.length ? [...pls, ...aiFill] : pls;
+    if (aiFill.length) toast.info('人数不足，已补 ' + aiFill.length + ' 位 AI 酒客');
+    dispatch({ type: 'START', difficulty: difficulty, mpPlayers: mpStart, incrementalRoulette: true, autoSortHand: true }); // v86：两项锁定开启（host 权威，SYNC_STATE 广播覆盖 client 本地壳值）
     startMusic();
   }, [startMusic]);
 
@@ -2225,7 +2230,8 @@ function Game() {
         );
       })(),
       h(PlayerHand, {
-        hand: curP?.hand ?? [],
+        // v145 短板 4：联机 host 视角不展示他人手牌（引擎内部仍持全量牌用于质疑裁决）
+        hand: visibleHand(curP, { multiplayer: mode === 'multiplayer', isHost: isHost }),
         targetSuit: st.targetSuit,
         onPlay,
         disabled: canAct,

@@ -173,6 +173,8 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout, entryMode }) { /
               capacity: 4,
               inGame: !!mpRef.current?.inGame,
               difficulty: mpDifficultyRef.current,
+              // v145 短板 5：准备进度进房间卡片——玩家不进房间也知道还差谁
+              readyCount: playersRef.current.filter(p => p.ready).length,
             }), { onReclaim: (rc) => { if (mpRef.current) mpRef.current.slotPeer = rc.peer; } }).then(claimed => {
               if (claimed && mpRef.current) {
                 mpRef.current.slotPeer = claimed.peer;
@@ -287,6 +289,8 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout, entryMode }) { /
             setMyPlayerId(data.playerId);
             myPlayerIdRef.current = data.playerId;
             setPlayers(prev => prev.map(p => ({ ...p, isLocal: p.id === data.playerId })));
+            // v145 短板 5：加入即准备——省掉一次点击，也让房主在大厅列表里就能看到还差谁
+            try { conn.send({ type: 'ready', playerId: data.playerId, name: name, ready: true }); } catch (e) {}
           } else if (data?.type === 'player_list') {
             setPlayers(prev => {
               const myOld = prev.find(p => p.isLocal);
@@ -367,19 +371,57 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout, entryMode }) { /
   }, [code, cleanup, name, user]);
 
 
-  // 公开房间探测（beacon 槽位协议）：进入浏览页自动刷新一次
+  // 公开房间探测（beacon 槽位协议）
+  // v145 短板 2/3：①首房即时渲染（不等整轮扫完）②常态轮询（不必手动点刷新）
+  //            ③溢出区起点轮转（槽位挤满时房间不再隐身）④跨轮合并（列表不闪烁）
+  const probeOffsetRef = useRef(0);   // 溢出区扫描起点：每轮 +8 步进，36 槽全覆盖
+  const seenRoomsRef = useRef({});     // code -> { room, lastSeen }：跨轮合并，30s 未见即下线
+  const sortRooms = useCallback((list) => [...(list || [])].sort(
+    (a, b) => ((a.inGame ? 1 : 0) - (b.inGame ? 1 : 0)) || String(a.code).localeCompare(String(b.code))
+  ), []);
   const browseRooms = useCallback(() => {
-    setRooms(null);
     setBrowsing(true);
+    const rotOffset = probeOffsetRef.current;
+    const flush = () => setRooms(sortRooms(Object.values(seenRoomsRef.current).map(x => x.room)));
     try {
-      probeLobbyRooms(Peer, ICE_CONFIG, { timeout: 15000 }).then(list => {
-        const sorted = [...(list || [])].sort((a, b) => ((a.inGame ? 1 : 0) - (b.inGame ? 1 : 0)) || String(a.code).localeCompare(String(b.code)));
-        setRooms(sorted);
+      probeLobbyRooms(Peer, ICE_CONFIG, {
+        timeout: 15000,
+        hotSlots: 12,   // 热区：最新开的房，每轮都扫
+        rotSlots: 8,    // 溢出区：每轮换起点
+        rotOffset: rotOffset,
+        onFound: (room) => {
+          // 首个房间落地就渲染——不用等整轮 20 槽扫完
+          seenRoomsRef.current[String(room.code)] = { room, lastSeen: Date.now() };
+          flush();
+        },
+      }).then(list => {
+        const now = Date.now();
+        (list || []).forEach(r => { seenRoomsRef.current[String(r.code)] = { room: r, lastSeen: now }; });
+        // 连续 3 轮（30s）没再出现 → 认定房主已下线
+        Object.keys(seenRoomsRef.current).forEach(code => {
+          if (now - seenRoomsRef.current[code].lastSeen > 30000) delete seenRoomsRef.current[code];
+        });
+        flush();
         setBrowsing(false);
+        // 下一轮换溢出区起点
+        probeOffsetRef.current = (probeOffsetRef.current + 8) % 36;
       });
     } catch (e) { setRooms([]); setBrowsing(false); }
-  }, []);
-  useEffect(() => { if (view === 'browse') browseRooms(); }, [view, browseRooms]);
+  }, [sortRooms]);
+  // 首次进入浏览页：清缓存 + 立即探测
+  useEffect(() => {
+    if (view !== 'browse') return;
+    seenRoomsRef.current = {};
+    probeOffsetRef.current = 0;
+    setRooms(null);
+    browseRooms();
+  }, [view, browseRooms]);
+  // 常态轮询：每 10 秒静默扫一轮（列表有变化才更新，不闪）
+  useEffect(() => {
+    if (view !== 'browse') return;
+    const t = setInterval(() => browseRooms(), 10000);
+    return () => clearInterval(t);
+  }, [view, browseRooms]);
 
   const addAI = () => {
     if (players.length >= 4) return;
@@ -461,11 +503,15 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout, entryMode }) { /
       h('button', { className: 'btn btn-outline btn-sm', onClick: browseRooms, disabled: browsing },
         h(Icon.RefreshCw, { size: 14 }), browsing ? '搜索中...' : '刷新'),
       browsing && h(Icon.Loader2, { size: 15 }),
+      // v145：扫描进度实时可见——不再是「空白等待 15 秒」
+      rooms !== null && rooms.length > 0 && h('span', { style: { fontSize: 12, color: 'var(--c-text-dim)' } },
+        browsing ? '已找到 ' + rooms.length + ' 桌，继续扫描中…' : '已找到 ' + rooms.length + ' 桌（每 10 秒自动刷新）'),
     ),
     rooms === null
       ? h('p', { style: { fontSize: 14, color: 'var(--c-text-dim)' } }, '正在搜索公开房间...')
       : rooms.length === 0
-        ? h('p', { style: { fontSize: 14, color: 'var(--c-text-dim)' } }, '暂无公开房间——可以让朋友先开一个')
+        ? h('p', { style: { fontSize: 14, color: 'var(--c-text-dim)' } },
+            browsing ? '正在搜索公开房间...' : '暂无公开房间——可以让朋友先开一个')
         : h('div', { style: { display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 340 } },
             rooms.map(r => {
               const full = (r.playerCount ?? 0) >= (r.capacity ?? 4);
@@ -484,7 +530,10 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout, entryMode }) { /
                 h('div', { style: { fontFamily: 'monospace', fontSize: 18, fontWeight: 'bold', letterSpacing: '0.15em' } }, r.code),
                 h('div', { style: { flex: 1, minWidth: 0 } },
                   h('div', { style: { fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, (r.hostName || '房主') + ' 的房间'),
-                  h('div', { style: { fontSize: 12, color: 'hsl(0 0% 55%)' } }, `${r.playerCount ?? 1}/${r.capacity ?? 4} 人`),
+                  h('div', { style: { fontSize: 12, color: 'hsl(0 0% 55%)' } },
+                    `${r.playerCount ?? 1}/${r.capacity ?? 4} 人` +
+                    // v145：准备进度直接显示在列表里
+                    (r.readyCount != null ? ` · ${r.readyCount} 人已准备` : '')),
                 ),
                 h('span', {
                   style: { fontSize: 12, padding: '2px 8px', borderRadius: 8, fontWeight: 600, color: r.inGame ? 'var(--c-text-dim)' : full ? 'hsl(30 20% 50%)' : 'hsl(142 60% 45%)', border: '1px solid hsl(30 15% 25%)' }
@@ -567,6 +616,9 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout, entryMode }) { /
     h('div', { style: { width: '100%', maxWidth: 340 } },
       h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, padding: '0 4px' } },
         h('span', { style: { fontSize: 14, fontWeight: 600, color: 'hsl(30 15% 80%)' } }, h(Icon.Users, { size: 13 }), ` 玩家 (${players.length}/4)`),
+        // v145：准备进度实时可见——不用挨个问「好了吗」
+        h('span', { style: { fontSize: 12, color: 'var(--c-text-dim)' } },
+          `已准备 ${players.filter(p => p.ready).length}/${players.filter(p => !p.isAI).length} 人`),
         isHost && players.length < 4 && h('button', { className: 'btn btn-sm btn-outline', onClick: addAI, style: { padding: '4px 10px', fontSize: 12 } }, h(Icon.Bot, { size: 12 }), '添加AI'),
       ),
       players.map((p, i) => h('div', {
@@ -672,7 +724,8 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout, entryMode }) { /
         h('button', {
           className: 'btn btn-primary btn-lg',
           // v131：牌局固定 4 人；骰局 2~4 人
-          disabled: players.length < (mpPlayMode === 'dice' ? 1 : 4) || players.length > 4 || !players.every(p => p.ready) || players.some(p => (p.reputation ?? 100) < 30), // v137：骰局下限 2→1（AI 补位至 4 人）；ready/信誉检查两玩法保持一致
+          // v145 短板 1/5：扑克不再硬卡 4 名真人——AI 会补位到 4（v137 只给骰局放开了这道门槛）
+          disabled: players.filter(p => !p.isAI).length < 1 || players.length > 4 || !players.every(p => p.ready) || players.some(p => (p.reputation ?? 100) < 30),
           onClick: () => {
             if (players.some(p => (p.reputation ?? 100) < 30)) { toast.error('有玩家信誉分低于30，无法开始'); return; }
             if (mpRef.current?.conns) {
@@ -686,7 +739,8 @@ function Lobby({ onStart, onMultiStart, onBack, user, onLogout, entryMode }) { /
           style: { width: '100%', marginTop: 8 }
         }, mpPlayMode === 'dice'
           ? (players.length >= 4 ? '开始游戏（满员）' : `开始游戏（AI 补位 ${4 - players.length} 名）`)
-          : (players.length < 4 ? `需要4名玩家（当前${players.length}/4）` : (!players.every(p => p.ready) ? '等待所有玩家准备' : (players.some(p => (p.reputation ?? 100) < 30) ? '有玩家信誉分不足' : '开始游戏')))),
+          // v145：扑克同样支持 AI 补位，不再要求凑满 4 名真人
+          : (players.length < 4 ? `开始游戏（AI 补位 ${4 - players.length} 名）` : (!players.every(p => p.ready) ? '等待所有玩家准备' : (players.some(p => (p.reputation ?? 100) < 30) ? '有玩家信誉分不足' : '开始游戏')))),
       ) :
       h('button', {
         className: players.find(p => p.isLocal)?.ready ? 'btn btn-outline btn-lg' : 'btn btn-primary btn-lg',

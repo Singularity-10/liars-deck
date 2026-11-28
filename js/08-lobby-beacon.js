@@ -13,7 +13,10 @@
  */
 'use strict';
 
-const LOBBY_SLOTS = 24;
+// v145 短板 3：24 → 48。真正的瓶颈不是槽位数量，而是「信令限帧下能扫几个槽」
+// （0.peerjs.com 按 IP 限帧，实测安全节奏 400ms/次）。扩到 48 槽后，
+// 前 12 槽当「热区」（最新开的房永远能被发现），其余 36 槽当溢出区（起点轮转扫描）。
+const LOBBY_SLOTS = 48;
 const lobbySlotId = (i) => `ld-lobby-${i}`;
 
 /**
@@ -99,6 +102,15 @@ function claimLobbySlot(PeerCtor, config, info, opts = {}) {
  */
 function probeLobbyRooms(PeerCtor, config, opts = {}) {
   const timeout = opts.timeout ?? 15000;
+  // v145：双段扫描——热区（最新房间，永远扫）+ 溢出区（起点轮转，避免槽位挤满后房间隐身）
+  const hotSlots = Math.max(0, Math.min(opts.hotSlots ?? 12, LOBBY_SLOTS));
+  const rotSpan = Math.max(0, LOBBY_SLOTS - hotSlots);
+  const rotSlots = Math.max(0, Math.min(opts.rotSlots ?? 8, rotSpan));
+  const rotOffset = Math.max(0, opts.rotOffset ?? 0);
+  const onFound = typeof opts.onFound === 'function' ? opts.onFound : null;
+  const scanSlots = [];
+  for (let i = 0; i < hotSlots; i++) scanSlots.push(i);
+  for (let i = 0; i < rotSlots && rotSpan > 0; i++) scanSlots.push(hotSlots + ((rotOffset + i) % rotSpan));
   return new Promise((resolve) => {
     let peer;
     try {
@@ -144,17 +156,21 @@ function probeLobbyRooms(PeerCtor, config, opts = {}) {
           conn.on('open', () => { try { conn.send({ type: 'query' }); } catch (e) {} });
           conn.on('data', (data) => {
             if (data && data.type === 'room_info' && data.code) {
-              found.set(String(data.code), { ...data });
+              const room = { ...data };
+              found.set(String(data.code), room);
               clearTimeout(guard); bail();
-              if (!foundTimer) foundTimer = setTimeout(finish2, 3000); // 首房后 3s 收尾窗：收集相邻房
+              // v145：首房即时回调——前端不等整轮扫完就能渲染第一个房间
+              if (onFound) { try { onFound(room); } catch (e) {} }
             }
           });
         });
       };
-      const MAX_PROBE = Math.min(8, LOBBY_SLOTS); //：只扫前 8 槽——信令按 IP 限帧，全扫必触限流丢包（实测）
+      // v145：只扫本轮计划的槽位（热区 + 轮转区）；仍保持 400ms/槽的串行节奏——
+      // 0.peerjs.com 按 IP 限帧，并发全扫必触限流丢包（实测），这个节奏不能动。
+      const MAX_PROBE = scanSlots.length;
       const step = () => {
         if (done || i >= MAX_PROBE) { finish2(); return; }
-        probeSlot(i); i++;
+        probeSlot(scanSlots[i]); i++;
         setTimeout(step, 400);
       };
       step();

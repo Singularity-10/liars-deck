@@ -74,8 +74,8 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   console.log('\n===== test-lobby-beacon =====');
 
   // T1 基础
-  assert(LOBBY_SLOTS === 24, `T1 槽位总数 = 24（实际 ${LOBBY_SLOTS}）`);
-  assert(lobbySlotId(0) === 'ld-lobby-0' && lobbySlotId(23) === 'ld-lobby-23', 'T1 槽位 ID 格式');
+  assert(LOBBY_SLOTS === 48, `T1 槽位总数 = 48（v145 由 24 扩到 48，实际 ${LOBBY_SLOTS}）`);
+  assert(lobbySlotId(0) === 'ld-lobby-0' && lobbySlotId(47) === 'ld-lobby-47', 'T1 槽位 ID 格式');
 
   // T2 认领 + 信息应答
   {
@@ -146,7 +146,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     assert(rooms.length === 0, 'T6 私密房间不出现在列表');
   }
 
-  // T7 空信令快速返回（提前收齐：24 槽全部 peer-unavailable）
+  // T7 空信令快速返回（提前收齐：本轮计划槽位全部 peer-unavailable）
   {
     const broker = new FakeBroker();
     const t0 = Date.now();
@@ -160,6 +160,42 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     const t0 = Date.now();
     const rooms = await probeLobbyRooms(hangCtor, CFG, { timeout: 150 });
     assert(Array.isArray(rooms) && Date.now() - t0 < 7000, 'T8 外层兜底在 timeout+5s 内返回');
+  }
+
+  // T9 v145：热区优先——最新开的房永远落在扫描窗口里
+  {
+    const broker = new FakeBroker();
+    const h1 = await claimLobbySlot(mkCtor(broker), CFG, () => ({ code: 'HOT01' }));
+    const h2 = await claimLobbySlot(mkCtor(broker), CFG, () => ({ code: 'HOT02' }));
+    const h3 = await claimLobbySlot(mkCtor(broker), CFG, () => ({ code: 'HOT03' }));
+    const rooms = await probeLobbyRooms(mkCtor(broker), CFG, { timeout: 3000, hotSlots: 3, rotSlots: 0 });
+    assert(rooms.length === 3, 'T9 热区扫描命中全部最新房间（实得 ' + rooms.length + '）');
+    assert(rooms.map(r => r.code).sort().join(',') === 'HOT01,HOT02,HOT03', 'T9 房号完整');
+    h1.peer.destroy(); h2.peer.destroy(); h3.peer.destroy();
+  }
+
+  // T10 v145：溢出区轮转——槽位挤满后，溢出房间靠轮转起点才能被发现
+  {
+    const broker = new FakeBroker();
+    const hs = [];
+    for (let i = 0; i < 4; i++) hs.push(await claimLobbySlot(mkCtor(broker), CFG, () => ({ code: 'OV' + i })));
+    const hotOnly = await probeLobbyRooms(mkCtor(broker), CFG, { timeout: 3000, hotSlots: 2, rotSlots: 0 });
+    assert(hotOnly.length === 2, 'T10 只扫热区时只看到窗口内的房间（实得 ' + hotOnly.length + '）');
+    const withRot = await probeLobbyRooms(mkCtor(broker), CFG, { timeout: 3000, hotSlots: 2, rotSlots: 2, rotOffset: 0 });
+    assert(withRot.length === 4, 'T10 叠加溢出区轮转后，溢出房间也能被发现（实得 ' + withRot.length + '）');
+    hs.forEach(h => h.peer.destroy());
+  }
+
+  // T11 v145：onFound 实时回调——首个房间落地即可渲染，不等整轮扫完
+  {
+    const broker = new FakeBroker();
+    const h1 = await claimLobbySlot(mkCtor(broker), CFG, () => ({ code: 'LIVE1' }));
+    const h2 = await claimLobbySlot(mkCtor(broker), CFG, () => ({ code: 'LIVE2' }));
+    const seen = [];
+    await probeLobbyRooms(mkCtor(broker), CFG, { timeout: 3000, hotSlots: 2, rotSlots: 0, onFound: r => seen.push(r.code) });
+    assert(seen.length === 2, 'T11 onFound 每找到一个房间回调一次（实得 ' + seen.length + '）');
+    assert(seen.includes('LIVE1') && seen.includes('LIVE2'), 'T11 回调携带房号');
+    h1.peer.destroy(); h2.peer.destroy();
   }
 
   console.log(`\n${fail ? '✗' : '✓'} ${pass}/${pass + fail} 项断言通过`);
