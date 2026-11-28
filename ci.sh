@@ -88,15 +88,17 @@ run_build() {
 
 
 # -- CI 权限探测 --
+# -- CI git credentials probe --
 if [ "${CI:-}" = "true" ]; then
-  echo "-- CI permission probe"
-  echo "   GITHUB_TOKEN present: $([ -n "${GITHUB_TOKEN:-}" ] && echo yes || echo no)"
-  if [ -n "${GITHUB_TOKEN:-}" ]; then
-    code=$(curl -s -o /tmp/_perm.json -w "%{http_code}" -H "Authorization: Bearer $GITHUB_TOKEN"       "https://api.github.com/repos/${GITHUB_REPOSITORY}/git/ref/heads/gh-pages")
-    echo "   gh-pages ref API: $code"
-    head -c 220 /tmp/_perm.json; echo
+  echo "-- git credentials probe"
+  git remote -v | head -2
+  if git push --dry-run origin HEAD:refs/heads/_probe_ci_push 2>/tmp/_push.err; then
+    echo "   DRY-RUN PUSH: ALLOWED"
+  else
+    echo "   DRY-RUN PUSH: DENIED"
+    head -c 400 /tmp/_push.err; echo
   fi
-  echo "-- probe end"
+  echo "-- probe2 end"
 fi
 
 case "$MODE" in
