@@ -182,6 +182,13 @@ python3 build-og-image.py    # 需要 playwright + chromium
 2. 分支选 `main`，把输入项 **publish** 勾上（默认关闭，必须勾开）
 3. 等 `publish` job 变绿：它会还原 PNG、重建产物，并把整站推到 `gh-pages`
 
+**路径 C —— 只补 4 个 PNG（网页拖拽，最省事）**
+
+若只缺分享卡与 PWA 图标：打开仓库的 **gh-pages** 分支 → **Add file → Upload files**
+→ 拖入 `og-image.png` / `icon-192.png` / `icon-512.png` / `apple-touch-icon.png`
+→ 直接 commit。Pages 几十秒内自动重建上线，无需 git 凭据、无需跑脚本。
+（这 4 个文件在仓库里是 base64 分片，用 `python3 restore-assets.py` 还原即可。）
+
 **路径 B —— 本地一条命令**
 
 ```bash
