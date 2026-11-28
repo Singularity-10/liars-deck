@@ -422,17 +422,17 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
             h('span', { style: { marginRight: 4, display: 'inline-flex' } }, h(D, { size: 14 })), t('ui.' + d[1]));
         }),
       ),
-      diff === 'easy' && h('div', { style: { display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' } },
-        h('span', { style: { fontSize: 12, color: 'var(--c-success)', background: 'rgba(34,139,80,0.12)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(34,139,80,0.25)' } }, 'AI 20% 失误率'),
-        h('span', { style: { fontSize: 12, color: 'var(--c-success)', background: 'rgba(34,139,80,0.12)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(34,139,80,0.25)' } }, '适合熟悉规则'),
-      ),
-      diff === 'hard' && h('div', { style: { display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' } },
-        (playMode === 'dice'
+      // v142：徽章常驻槽（minHeight 恒定）——难度切换时上下内容零位移
+      h('div', { style: { display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap', minHeight: 26, alignItems: 'flex-start' } },
+        diff === 'easy' ? [
+          h('span', { key: 'e0', style: { fontSize: 12, color: 'var(--c-success)', background: 'rgba(34,139,80,0.12)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(34,139,80,0.25)' } }, 'AI 20% 失误率'),
+          h('span', { key: 'e1', style: { fontSize: 12, color: 'var(--c-success)', background: 'rgba(34,139,80,0.12)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(34,139,80,0.25)' } }, '适合熟悉规则'),
+        ] : diff === 'hard' ? (playMode === 'dice'
           ? ['AI 叫点更刁钻', '掀桌更果断', 'AI 判断更准']
           : ['AI质疑率+50%', '目标牌更少', '轮盘双子弹']
         ).map(function (txt, bi) {
           return h('span', { key: bi, style: { fontSize: 12, color: 'var(--c-danger-bright)', background: 'rgba(180,30,30,0.12)', padding: '3px 10px', borderRadius: 12, border: '1px solid rgba(180,30,30,0.25)' } }, txt);
-        }),
+        }) : null,
       ),
       // ── ③ 模式 ──
       h('p', { style: { margin: '4px 0 0', fontSize: 11, color: 'var(--c-text-faint)', letterSpacing: '0.2em' } }, '模式'),
@@ -460,7 +460,9 @@ function MainMenu({ onStart, onMultiplayer, user, onLogout, skipAnim }) {
       setupView === 'setup' ? (playMode === 'dice' ? '每人 5 骰 · 全场 20 骰 · 叫「N 个 X」 · 加码或叫开 · 输家上命运转盘'
         : '4 名玩家 · 64 张牌 · 每人 16 张牌库 · A/K/Q 目标 · J 万能 · 天使&恶魔衍生牌')
       : '两大玩法 · 经典牌局与大话骰 · 单机 AI 与好友联机'),
-    !fast && !hintGone && !skipAnim && h('p', { key: 'fastHint', style: { marginTop: 14, fontSize: 12, color: 'var(--c-text-faint)', letterSpacing: '0.15em', textAlign: 'center', opacity: 0, animation: 'enter-fade 0.6s ease 1s forwards, hint-breath 2.2s ease-in-out 1.8s infinite' } }, t('ui.fastHint')),
+    // v142：fast 时淡出但保留占位（条件卸载会触发门户整体重排位移）
+    // v142：提示常驻占位（fast 点击/3.4s 到点均淡出、不卸载；skipAnim 首帧即跳过时才不渲染）
+    !skipAnim && h('p', { key: 'fastHint', style: { marginTop: 14, fontSize: 12, color: 'var(--c-text-faint)', letterSpacing: '0.15em', textAlign: 'center', opacity: 0, animation: (fast || hintGone) ? 'fade-out 0.15s ease forwards' : 'enter-fade 0.6s ease 1s forwards, hint-breath 2.2s ease-in-out 1.8s infinite' } }, t('ui.fastHint')),
     achR && h('div', { className: 'overlay' + (achClosing ? ' overlay-exit' : ''), onClick: function (e) { if (e.target === e.currentTarget) setShowAch(false); } },
       h('div', { className: 'panel animate-slide-up' + (achClosing ? ' panel-exit' : ''), style: { width: '90%', maxWidth: 440, maxHeight: '80vh', overflow: 'auto', padding: 24 } },
         h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 } },
